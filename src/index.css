@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eefbf7;
+  --color-brand-100: #d5f5ea;
+  --color-brand-500: #14a37f;
+  --color-brand-600: #0d8a6b;
+  --color-brand-700: #0b6e57;
+  --color-brand-900: #073b30;
+  --color-accent-400: #ffb547;
+  --color-accent-500: #f59e0b;
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+  }
+}
