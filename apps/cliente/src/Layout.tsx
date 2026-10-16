@@ -67,7 +67,7 @@ export default function Layout() {
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
           transparente ? 'bg-transparent text-marfil' : 'border-b border-linea/70 bg-marfil/85 text-espresso backdrop-blur-md'
-        } ${sinCabecera ? 'lg:bg-transparent lg:border-transparent lg:backdrop-blur-0' : ''}`}
+        }`}
       >
         <div className="contenedor flex h-[72px] items-center gap-10">
           <Marca claro={transparente} />

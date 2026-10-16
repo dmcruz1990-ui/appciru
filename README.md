@@ -50,8 +50,10 @@ confirmación de correo ni los de recuperación de contraseña.
 
 ### Diseño
 El sitio usa un estilo editorial clínico: paleta marfil y espresso, tipografías Instrument Serif y Geist, fotos a sangre,
-animaciones con `motion` y desplazamiento suave con `lenis`. Las fotos de los procedimientos son provisionales (Unsplash).
-Desde el panel (Catálogo → Editar → Subir foto) se reemplazan por fotos propias, que quedan en el bucket `px-imagenes`.
+animaciones con `motion` y desplazamiento suave con `lenis`. El sitio no usa fotos de banco: mientras no haya fotos propias se
+muestra una composición abstracta generada en el navegador (`Lienzo`, en `componentes/base.tsx`), sin cuerpos ni pacientes.
+Las fotos reales se suben desde el panel (Catálogo → Editar → Subir foto) y quedan en el bucket `px-imagenes`. Usar solo
+fotos propias o con licencia y consentimiento, revisadas por el médico antes de publicarlas.
 
 ### Primer acceso al panel
 1. Abre el panel → **Crear cuenta** → confirma el correo si Supabase lo pide.

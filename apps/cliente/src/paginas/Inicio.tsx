@@ -3,11 +3,8 @@ import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react'
 import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
-import { EnlaceFlecha, Flecha, Foto, Revelar, Rotulo } from '../componentes/base'
+import { EnlaceFlecha, Flecha, Foto, Lienzo, Revelar, Rotulo } from '../componentes/base'
 import OfertaCard from '../componentes/OfertaCard'
-
-const HERO = 'https://images.unsplash.com/photo-1629909613654-28e377c37b09'
-const RECUPERACION = 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3'
 
 const pasos = [
   ['Explora', 'Compara procedimientos, instituciones y profesionales con información clara y rangos orientativos.'],
@@ -44,7 +41,8 @@ export default function Inicio() {
       {/* Hero a sangre */}
       <section ref={heroRef} className="relative h-[100svh] min-h-[640px] overflow-hidden bg-tinta text-marfil">
         <motion.div style={{ scale: escala, opacity: opacidad }} className="absolute inset-0">
-          <Foto src={HERO} alt="" ancho={2000} prioridad className="h-full w-full" />
+          <Lienzo semilla="inicio" tono="oscuro" />
+          <div className="grano" />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-tinta/50 via-tinta/20 to-tinta/80" />
         <div className="contenedor relative flex h-full flex-col justify-end pb-14 md:pb-20">
@@ -143,7 +141,10 @@ export default function Inicio() {
 
       {/* Recuperación */}
       <section className="grid md:grid-cols-2">
-        <Foto src={RECUPERACION} alt="" ancho={1400} className="aspect-[4/5] md:aspect-auto md:min-h-[720px]" />
+        <div className="relative aspect-[4/5] overflow-hidden md:aspect-auto md:min-h-[720px]">
+          <Lienzo semilla="recuperacion" />
+          <div className="grano" />
+        </div>
         <div className="flex flex-col justify-center px-6 py-24 md:px-20">
           <Rotulo n="05">Si vienes de otra ciudad</Rotulo>
           <h2 className="display mt-6 text-5xl md:text-6xl">

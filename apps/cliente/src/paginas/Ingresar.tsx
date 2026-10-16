@@ -1,12 +1,10 @@
 import { supabase } from '@plastinex/shared'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { Foto } from '../componentes/base'
+import { Lienzo } from '../componentes/base'
 import { useSesion } from '../sesion'
 
 type Modo = 'entrar' | 'registro' | 'olvido'
-
-const IMAGEN = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d'
 
 /** Destino seguro tras ingresar: solo rutas internas. */
 export const destinoSeguro = (v: string | null) => (v && v.startsWith('/') && !v.startsWith('//') ? v : '/cuenta')
@@ -65,7 +63,8 @@ export default function Ingresar() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="relative hidden lg:block">
-        <Foto src={IMAGEN} alt="" ancho={1400} className="absolute inset-0" prioridad />
+        <Lienzo semilla="ingresar" tono="oscuro" />
+        <div className="grano" />
         <div className="absolute inset-0 bg-gradient-to-t from-tinta/70 via-tinta/10 to-transparent" />
         <div className="absolute right-12 bottom-12 left-12 text-marfil">
           <p className="display max-w-md text-4xl">“La mejor decisión es la que tomas bien informada.”</p>

@@ -51,12 +51,76 @@ export function Foto({
           className={`absolute inset-0 h-full w-full object-cover transition duration-[1.2s] ease-(--ease-suave) ${zoom ? 'group-hover:scale-[1.04]' : ''}`}
         />
       ) : (
-        <div className="absolute inset-0 flex items-end bg-gradient-to-br from-arena to-linea p-5">
-          <span className="font-serif text-4xl text-espresso/30 italic">{respaldo ?? 'PLASTINEX'}</span>
-        </div>
+        <>
+          <Lienzo semilla={respaldo ?? alt} />
+          {respaldo && (
+            <div className="absolute inset-0 flex items-end p-5">
+              <span className="font-serif text-4xl text-espresso/35 italic">{respaldo}</span>
+            </div>
+          )}
+        </>
       )}
       <div className="grano" />
     </div>
+  )
+}
+
+/** Generador pseudoaleatorio estable a partir de un texto, para que cada lienzo sea siempre igual. */
+function aleatorio(semilla: string) {
+  let h = 2166136261
+  for (const c of semilla) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507)
+    h = Math.imul(h ^ (h >>> 13), 3266489909)
+    return ((h ^= h >>> 16) >>> 0) / 4294967296
+  }
+}
+
+const TONOS = {
+  claro: { fondo: ['#efe8dc', '#e2d8c8'], luz: ['#fbf7f0', '#d9c3a5'], linea: '#a8835c' },
+  oscuro: { fondo: ['#2b2420', '#161210'], luz: ['#8a6a4a', '#3d322b'], linea: '#d9c3a5' },
+} as const
+
+/**
+ * Composición abstracta propia (luz y líneas de seda) que reemplaza a la fotografía cuando no hay una real.
+ * No representa cuerpos, pacientes ni procedimientos.
+ */
+export function Lienzo({ semilla = 'plastinex', tono = 'claro', className = '' }: { semilla?: string; tono?: keyof typeof TONOS; className?: string }) {
+  const t = TONOS[tono]
+  const r = aleatorio(semilla)
+  const id = `l${Math.floor(r() * 1e9)}`
+  const luces = [0, 1].map(() => ({ x: 15 + r() * 70, y: 15 + r() * 95, rad: 45 + r() * 35 }))
+  const base = 20 + r() * 40
+  const a = (r() - 0.5) * 70
+  const b = (r() - 0.5) * 70
+  const lineas = Array.from({ length: 22 }, (_, i) => {
+    const y = base + i * 3.2
+    return `M-10 ${y} C 30 ${y + a + i * 0.9}, 70 ${y + b - i * 0.6}, 110 ${y + (a + b) / 3}`
+  })
+  return (
+    <svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" className={`absolute inset-0 h-full w-full ${className}`} aria-hidden>
+      <defs>
+        <linearGradient id={`${id}f`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={t.fondo[0]} />
+          <stop offset="1" stopColor={t.fondo[1]} />
+        </linearGradient>
+        {luces.map((_, i) => (
+          <radialGradient key={i} id={`${id}l${i}`}>
+            <stop offset="0" stopColor={t.luz[i]} stopOpacity="0.85" />
+            <stop offset="1" stopColor={t.luz[i]} stopOpacity="0" />
+          </radialGradient>
+        ))}
+      </defs>
+      <rect width="100" height="125" fill={`url(#${id}f)`} />
+      {luces.map((l, i) => (
+        <circle key={i} cx={l.x} cy={l.y} r={l.rad} fill={`url(#${id}l${i})`} />
+      ))}
+      <g fill="none" stroke={t.linea} strokeWidth="1" vectorEffect="non-scaling-stroke">
+        {lineas.map((d, i) => (
+          <path key={i} d={d} vectorEffect="non-scaling-stroke" opacity={0.12 + 0.28 * Math.sin((i / lineas.length) * Math.PI)} />
+        ))}
+      </g>
+    </svg>
   )
 }
 
