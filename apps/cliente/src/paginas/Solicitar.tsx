@@ -19,9 +19,10 @@ export default function Solicitar() {
   const [procedimientoId, setProcedimientoId] = useState(params.get('procedimiento') ?? '')
   const [ciudadId, setCiudadId] = useState(params.get('ciudad') ?? '')
   const [fecha, setFecha] = useState('')
-  const [quiereAlojamiento, setQuiereAlojamiento] = useState(false)
-  const [alojamientoId, setAlojamientoId] = useState('')
-  const [noches, setNoches] = useState<number | ''>('')
+  const [quiereAlojamiento, setQuiereAlojamiento] = useState(Boolean(params.get('alojamiento')))
+  const [alojamientoId, setAlojamientoId] = useState(params.get('alojamiento') ?? '')
+  const [noches, setNoches] = useState<number | ''>(Number(params.get('noches')) || '')
+  const [presupuesto, setPresupuesto] = useState(params.get('presupuesto')?.replace(/\D/g, '') ?? '')
   const [servicioIds, setServicioIds] = useState<string[]>([])
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -60,6 +61,7 @@ export default function Solicitar() {
         noches: aloj ? n : undefined,
         servicio_ids: servicioIds,
         mensaje: mensaje.trim() || undefined,
+        presupuesto: presupuesto ? Number(presupuesto) : undefined,
         canal: 'web',
         utm: leerUTM(),
       })
@@ -144,10 +146,23 @@ export default function Solicitar() {
                 </label>
               </div>
             )}
-            <label className="mt-8 block max-w-xs">
-              <span className="etiqueta">Fecha tentativa (opcional)</span>
-              <input type="date" min={minFecha} value={fecha} onChange={(e) => setFecha(e.target.value)} className="campo" />
-            </label>
+            <div className="mt-8 grid gap-8 sm:grid-cols-2">
+              <label className="block">
+                <span className="etiqueta">Fecha tentativa (opcional)</span>
+                <input type="date" min={minFecha} value={fecha} onChange={(e) => setFecha(e.target.value)} className="campo" />
+              </label>
+              <label className="block">
+                <span className="etiqueta">Tu presupuesto total (opcional)</span>
+                <input
+                  inputMode="numeric"
+                  value={presupuesto ? Number(presupuesto).toLocaleString('es-CO') : ''}
+                  onChange={(e) => setPresupuesto(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="$ 0"
+                  className="campo"
+                />
+                <span className="mt-1 block text-xs text-niebla">Lo compartimos con la institución para que te proponga opciones a tu medida.</span>
+              </label>
+            </div>
           </Paso>
 
           <Paso n="02" titulo="Tu estadía (opcional)">
@@ -220,6 +235,7 @@ export default function Solicitar() {
               <Linea t="Procedimiento" v={oferta ? textoPrecio(oferta.oferta.precio_min, oferta.oferta.precio_max) : 'Según valoración'} />
               {aloj && <Linea t={`Alojamiento · ${n} noches`} v={costoAloj ? formatoCOP(costoAloj) : 'Por cotizar'} />}
               {servicioIds.length > 0 && <Linea t={`Servicios (${servicioIds.length})`} v={formatoCOP(costoServ)} />}
+              {presupuesto && <Linea t="Tu presupuesto" v={formatoCOP(Number(presupuesto))} />}
             </dl>
             {costoAloj + costoServ > 0 && (
               <div className="mt-6 flex items-baseline justify-between border-t border-linea pt-6">

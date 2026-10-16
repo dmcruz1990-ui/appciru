@@ -1,4 +1,4 @@
-import { detallarOfertas, nombreCiudad, nombreTipoAlojamiento, nombreTipoInstitucion, textoPrecio } from '@plastinex/shared'
+import { detallarOfertas, formatoCOP, nombreCiudad, nombreTipoAlojamiento, nombreTipoInstitucion, textoPrecio } from '@plastinex/shared'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { Foto, Revelar, Rotulo } from '../componentes/base'
@@ -55,6 +55,14 @@ export default function InstitucionPagina() {
             <div>
               <dt className="etiqueta">Código de habilitación (REPS)</dt>
               <dd className="mt-1 font-serif text-2xl">{inst.codigo_reps ?? 'No informado'}</dd>
+            </div>
+            <div>
+              <dt className="etiqueta">Primera valoración</dt>
+              <dd className="mt-1">{inst.valoracion_precio == null ? 'Consultar' : inst.valoracion_precio === 0 ? 'Sin costo' : formatoCOP(inst.valoracion_precio)}</dd>
+            </div>
+            <div>
+              <dt className="etiqueta">Financiación</dt>
+              <dd className="mt-1">{inst.financiacion ? 'Disponible' : 'No informada'}</dd>
             </div>
             {inst.direccion && (
               <div>

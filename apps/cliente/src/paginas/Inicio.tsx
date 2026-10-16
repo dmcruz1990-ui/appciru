@@ -211,15 +211,17 @@ function BuscadorHero() {
   const navigate = useNavigate()
   const [p, setP] = useState('')
   const [c, setC] = useState('')
+  const [b, setB] = useState('')
   const enviar = (e: FormEvent) => {
     e.preventDefault()
     const q = new URLSearchParams()
     if (p) q.set('procedimiento', p)
     if (c) q.set('ciudad', c)
-    navigate(`/explorar?${q}`)
+    if (b) q.set('presupuesto', b)
+    navigate(`/planear?${q}`)
   }
   return (
-    <form onSubmit={enviar} className="flex w-full flex-col gap-2 rounded-[28px] bg-marfil/95 p-2 text-espresso backdrop-blur sm:flex-row sm:items-center sm:rounded-full md:w-[560px]">
+    <form onSubmit={enviar} className="flex w-full flex-col gap-2 rounded-[28px] bg-marfil/95 p-2 text-espresso backdrop-blur sm:flex-row sm:items-center sm:rounded-full md:w-[680px]">
       <select value={p} onChange={(e) => setP(e.target.value)} aria-label="Procedimiento" className="flex-1 cursor-pointer bg-transparent px-5 py-3 text-sm outline-none">
         <option value="">Todos los procedimientos</option>
         {datos?.procedimientos.map((x) => (
@@ -237,6 +239,15 @@ function BuscadorHero() {
           </option>
         ))}
       </select>
+      <span className="hidden h-6 w-px bg-linea sm:block" />
+      <input
+        inputMode="numeric"
+        aria-label="Presupuesto"
+        value={b ? Number(b).toLocaleString('es-CO') : ''}
+        onChange={(e) => setB(e.target.value.replace(/\D/g, '').slice(0, 10))}
+        placeholder="Tu presupuesto"
+        className="w-full bg-transparent px-5 py-3 text-sm outline-none placeholder:text-piedra sm:w-36"
+      />
       <button className="btn !px-7">Buscar</button>
     </form>
   )

@@ -49,6 +49,11 @@ export default function OfertaCard({ d, indice }: { d: OfertaDetallada; indice?:
           <div className="mt-1">
             <EstadoVerificacion v={institucion.verificacion} />
           </div>
+          {(institucion.valoracion_precio === 0 || institucion.financiacion) && (
+            <div className="mt-1 text-xs text-piedra">
+              {[institucion.valoracion_precio === 0 && 'Valoración sin costo', institucion.financiacion && 'Financiación'].filter(Boolean).join(' · ')}
+            </div>
+          )}
         </div>
         <Link to={`/solicitar?oferta=${oferta.id}`} className="text-sm whitespace-nowrap text-espresso underline decoration-espresso/30 underline-offset-4 hover:decoration-espresso">
           Solicitar valoración

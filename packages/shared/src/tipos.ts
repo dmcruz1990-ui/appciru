@@ -58,6 +58,9 @@ export interface Institucion {
   es_demo: boolean
   publicado: boolean
   creado_en: string
+  financiacion: boolean
+  /** Valor de la primera valoración en COP; 0 = gratis; null = no informado. */
+  valoracion_precio: number | null
 }
 
 export interface Profesional {
@@ -162,6 +165,7 @@ export interface Solicitud {
   asistio: boolean | null
   motivo_cierre: string | null
   paciente_id: string | null
+  presupuesto: number | null
 }
 
 export interface EventoSolicitud {
@@ -240,6 +244,7 @@ export interface NuevaSolicitud {
   noches?: number
   servicio_ids: string[]
   mensaje?: string
+  presupuesto?: number
   canal?: string
   utm?: Record<string, string>
 }

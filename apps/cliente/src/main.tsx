@@ -7,6 +7,7 @@ import { SesionProvider } from './sesion'
 import Layout from './Layout'
 import Inicio from './paginas/Inicio'
 import Explorar from './paginas/Explorar'
+import Planear from './paginas/Planear'
 import ProcedimientoPagina from './paginas/Procedimiento'
 import InstitucionPagina from './paginas/Institucion'
 import ProfesionalPagina from './paginas/Profesional'
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
             <Route element={<Layout />}>
               <Route index element={<Inicio />} />
               <Route path="explorar" element={<Explorar />} />
+              <Route path="planear" element={<Planear />} />
               <Route path="procedimiento/:id" element={<ProcedimientoPagina />} />
               <Route path="institucion/:id" element={<InstitucionPagina />} />
               <Route path="profesional/:id" element={<ProfesionalPagina />} />

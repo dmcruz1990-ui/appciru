@@ -251,6 +251,7 @@ export default function SolicitudDetalle() {
             <Dato t="Ciudad" v={datos.ciudades.find((c) => c.id === s.ciudad_id)?.nombre ?? '—'} />
             <Dato t="Fecha tentativa" v={s.fecha_tentativa ? formatoFecha(s.fecha_tentativa) : '—'} />
             {oferta && <Dato t="Rango publicado" v={textoPrecio(oferta.precio_min, oferta.precio_max)} />}
+            <Dato t="Presupuesto del paciente" v={s.presupuesto ? formatoCOP(s.presupuesto) : 'No indicado'} />
           </div>
 
           <div className="tarjeta p-5 text-sm">

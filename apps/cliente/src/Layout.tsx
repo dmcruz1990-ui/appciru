@@ -7,6 +7,7 @@ import { useSesion } from './sesion'
 
 const enlaces = [
   { to: '/explorar', t: 'Procedimientos' },
+  { to: '/planear', t: 'Planear por presupuesto' },
   { to: '/#como', t: 'Cómo funciona' },
   { to: '/para-clinicas', t: 'Para clínicas' },
 ]

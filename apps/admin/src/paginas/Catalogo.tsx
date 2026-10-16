@@ -83,6 +83,8 @@ const colecciones: Coleccion[] = [
       { k: 'ciudad_id', t: 'Ciudad', tipo: 'select', requerido: true, opciones: ciudades },
       { k: 'direccion', t: 'Dirección', tipo: 'texto' },
       { k: 'codigo_reps', t: 'Código REPS', tipo: 'texto' },
+      { k: 'valoracion_precio', t: 'Valor primera valoración (0 = gratis)', tipo: 'numero', ayuda: 'Vacío = no informado' },
+      { k: 'financiacion', t: 'Ofrece financiación', tipo: 'bool' },
       { k: 'telefono_publico', t: 'Teléfono público', tipo: 'texto' },
       { k: 'sitio_web', t: 'Sitio web', tipo: 'texto' },
       { k: 'imagen_url', t: 'Foto principal', tipo: 'imagen', ancho: true },

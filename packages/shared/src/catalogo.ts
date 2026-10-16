@@ -148,3 +148,17 @@ export function urlImagen(url: string | null | undefined, ancho = 1200): string 
   }
   return url
 }
+
+// ---------- Tiempo de respuesta (cifras agregadas, sin datos personales) ----------
+
+export interface TiempoRespuesta {
+  institucion_id: string
+  mediana_horas: number
+  solicitudes: number
+}
+
+export async function tiemposRespuesta(): Promise<TiempoRespuesta[]> {
+  const { data, error } = await supabase.rpc('px_tiempos_respuesta')
+  if (error) return []
+  return (data as TiempoRespuesta[] | null) ?? []
+}

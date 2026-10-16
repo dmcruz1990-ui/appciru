@@ -1,4 +1,4 @@
-import { detallarOfertas, nombreCategoria } from '@plastinex/shared'
+import { detallarOfertas, formatoCOP, guiaPrecios, nombreCategoria } from '@plastinex/shared'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { Foto, Revelar, Rotulo } from '../componentes/base'
@@ -12,6 +12,7 @@ export default function ProcedimientoPagina() {
   if (!datos || !proc) return <NoEncontrado texto="Este procedimiento no está disponible." />
 
   const opciones = detallarOfertas(datos).filter((d) => d.procedimiento.id === proc.id)
+  const guia = guiaPrecios(datos, proc.id)
   const datosClave = [
     ['Duración aproximada', proc.duracion_aprox],
     ['Anestesia habitual', proc.anestesia],
@@ -45,6 +46,50 @@ export default function ProcedimientoPagina() {
         </Revelar>
       </section>
 
+      {guia && (
+        <section className="bg-papel py-24">
+          <div className="contenedor grid gap-14 lg:grid-cols-[1fr_1.2fr]">
+            <div>
+              <Rotulo>Guía de precios</Rotulo>
+              <h2 className="display mt-5 text-5xl">
+                Precio de <em>{proc.nombre.toLowerCase()}</em>
+              </h2>
+              <p className="mt-6 text-sm leading-relaxed text-piedra">
+                Promedio calculado a partir de los rangos que publican {guia.opciones} {guia.opciones === 1 ? 'prestador' : 'prestadores'} de la red.
+                El valor final depende de tu valoración, la técnica, la anestesia y la hospitalización.
+              </p>
+              <div className="mt-10 grid grid-cols-3 border-t border-espresso pt-6">
+                <Cifra t="Promedio" v={formatoCOP(guia.promedio)} />
+                <Cifra t="Desde" v={formatoCOP(guia.minimo)} />
+                <Cifra t="Hasta" v={formatoCOP(guia.maximo)} />
+              </div>
+              <Link to={`/planear?procedimiento=${proc.id}`} className="btn mt-10">
+                Planear con mi presupuesto
+              </Link>
+            </div>
+            <div>
+              <div className="etiqueta">Por ciudad</div>
+              <table className="mt-4 w-full text-sm">
+                <tbody className="divide-y divide-linea border-y border-linea">
+                  {guia.porCiudad.map((c) => (
+                    <tr key={c.ciudad}>
+                      <td className="py-4 font-serif text-2xl">{c.ciudad}</td>
+                      <td className="py-4 text-piedra">
+                        {formatoCOP(c.minimo)} – {formatoCOP(c.maximo)}
+                      </td>
+                      <td className="py-4 text-right">
+                        <span className="text-xs text-piedra">promedio</span>
+                        <div>{formatoCOP(c.promedio)}</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="contenedor border-t border-linea py-24">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
@@ -68,5 +113,14 @@ export default function ProcedimientoPagina() {
         </div>
       </section>
     </>
+  )
+}
+
+function Cifra({ t, v }: { t: string; v: string }) {
+  return (
+    <div>
+      <div className="etiqueta">{t}</div>
+      <div className="mt-2 font-serif text-2xl md:text-3xl">{v}</div>
+    </div>
   )
 }

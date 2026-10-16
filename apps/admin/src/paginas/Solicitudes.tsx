@@ -1,4 +1,4 @@
-import { etapas, formatoFecha, type Etapa, type Solicitud } from '@plastinex/shared'
+import { etapas, formatoCOP, formatoFecha, type Etapa, type Solicitud } from '@plastinex/shared'
 import { Columns3, List } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EtapaBadge, Titulo } from '../componentes/ui'
@@ -105,6 +105,7 @@ export default function Solicitudes() {
                       </div>
                       <div className="text-xs text-stone-600">{proc(s)}</div>
                       {instNombre(s) && <div className="truncate text-xs text-stone-400">{instNombre(s)}</div>}
+                      {s.presupuesto && <div className="mt-1 text-xs text-oro-osc">Presupuesto {formatoCOP(s.presupuesto)}</div>}
                       <div className="mt-2 flex items-center justify-between text-[11px] text-stone-400">
                         <span className={e.id === 'nueva' && Date.now() - new Date(s.creado_en).getTime() > 86_400_000 ? 'font-medium text-rose-600' : ''}>
                           {antiguedad(s.creado_en)}
