@@ -37,6 +37,22 @@ npm run dev:admin         # panel
 npm run build             # compila las dos apps (dist/ en cada una)
 ```
 
+### Cuentas de paciente
+Para solicitar una valoración el paciente debe **crear su cuenta** (correo y contraseña). Luego pasa por un paso obligatorio
+en el que da sus datos de contacto y acepta de forma expresa cuatro cosas: la condición de intermediario de PLASTINEX, los
+términos y la limitación de responsabilidad, la confidencialidad y el tratamiento de datos (Ley 1581). La fecha y la versión de
+cada aceptación quedan guardadas en `px_pacientes` y se ven en el panel, en el detalle de cada solicitud. El catálogo se
+puede explorar sin cuenta.
+
+En Supabase → Authentication → URL Configuration → **Redirect URLs** deben estar las dos apps:
+`https://plastinex-cliente.vercel.app/**` y `https://plastinex-admin.vercel.app/**`. Sin eso no funcionan los enlaces de
+confirmación de correo ni los de recuperación de contraseña.
+
+### Diseño
+El sitio usa un estilo editorial clínico: paleta marfil y espresso, tipografías Instrument Serif y Geist, fotos a sangre,
+animaciones con `motion` y desplazamiento suave con `lenis`. Las fotos de los procedimientos son provisionales (Unsplash).
+Desde el panel (Catálogo → Editar → Subir foto) se reemplazan por fotos propias, que quedan en el bucket `px-imagenes`.
+
 ### Primer acceso al panel
 1. Abre el panel → **Crear cuenta** → confirma el correo si Supabase lo pide.
 2. Al entrar, la cuenta aparece como *pendiente*. El primer usuario puede pulsar **«Ser el primer
