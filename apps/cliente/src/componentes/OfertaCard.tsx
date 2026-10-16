@@ -1,50 +1,56 @@
-import { nombreCategoria, nombreTipoInstitucion, textoPrecio, type OfertaDetallada } from '@plastinex/shared'
-import { MapPin, Video } from 'lucide-react'
+import { nombreCategoria, textoPrecio, type OfertaDetallada } from '@plastinex/shared'
 import { Link } from 'react-router-dom'
+import { Foto } from './base'
 import { EstadoVerificacion, EtiquetaDemo } from './Insignias'
 
-export default function OfertaCard({ d }: { d: OfertaDetallada }) {
+/** Tarjeta editorial: foto vertical, procedimiento en serif, datos mínimos. */
+export default function OfertaCard({ d, indice }: { d: OfertaDetallada; indice?: number }) {
   const { oferta, procedimiento, institucion, profesional, ciudad } = d
-  const tienePrecio = oferta.precio_min != null || oferta.precio_max != null
+  const imagen = institucion.imagen_url ?? procedimiento.imagen_url
   return (
-    <article className="flex flex-col border border-arena bg-white transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-12px_rgba(17,18,16,0.25)]">
-      <Link to={`/procedimiento/${procedimiento.id}`} className="relative flex h-32 flex-col justify-end bg-gradient-to-br from-tinta to-tinta-2 p-4 text-white">
-        <span className="kicker !text-[10px]">{nombreCategoria[procedimiento.categoria]}</span>
-        <span className="titulo text-xl leading-tight">{procedimiento.nombre}</span>
+    <article className="group flex flex-col">
+      <Link to={`/solicitar?oferta=${oferta.id}`} className="block" aria-label={`${procedimiento.nombre} en ${institucion.nombre}`}>
+        <Foto src={imagen} alt={procedimiento.nombre} ancho={800} className="aspect-[4/5]" zoom respaldo={procedimiento.nombre} />
+      </Link>
+      <div className="mt-5 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="rotulo !text-[10px]">
+            {indice != null && <span className="mr-2 text-arcilla">{String(indice + 1).padStart(2, '0')}</span>}
+            {nombreCategoria[procedimiento.categoria]} · {ciudad.nombre}
+          </div>
+          <h3 className="mt-2 font-serif text-[28px] leading-tight">
+            <Link to={`/procedimiento/${procedimiento.id}`} className="hover:italic">
+              {procedimiento.nombre}
+            </Link>
+          </h3>
+          <div className="mt-1 text-sm text-piedra">
+            <Link to={`/institucion/${institucion.id}`} className="hover:text-espresso">
+              {institucion.nombre}
+            </Link>
+            {profesional && (
+              <>
+                {' · '}
+                <Link to={`/profesional/${profesional.id}`} className="hover:text-espresso">
+                  {profesional.nombre}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
         {institucion.es_demo && (
-          <span className="absolute top-3 right-3">
+          <span className="shrink-0 pt-1">
             <EtiquetaDemo />
           </span>
         )}
-      </Link>
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      </div>
+      <div className="mt-4 flex items-end justify-between gap-4 border-t border-linea pt-4">
         <div>
-          <div className="text-[11px] tracking-[0.12em] text-piedra uppercase">{nombreTipoInstitucion[institucion.tipo]}</div>
-          <Link to={`/institucion/${institucion.id}`} className="titulo text-lg leading-snug hover:text-oro-osc">
-            {institucion.nombre}
-          </Link>
-          <div className="mt-0.5 flex items-center gap-1 text-xs text-piedra">
-            <MapPin size={12} /> {ciudad.nombre}
+          <div className="text-[15px]">{textoPrecio(oferta.precio_min, oferta.precio_max)}</div>
+          <div className="mt-1">
+            <EstadoVerificacion v={institucion.verificacion} />
           </div>
         </div>
-        {profesional && (
-          <Link to={`/profesional/${profesional.id}`} className="text-sm hover:underline">
-            {profesional.nombre}
-            {profesional.valoracion_virtual && (
-              <span className="ml-2 inline-flex items-center gap-1 text-xs text-piedra">
-                <Video size={12} /> virtual
-              </span>
-            )}
-          </Link>
-        )}
-        <EstadoVerificacion v={institucion.verificacion} />
-        <div className="mt-auto border-t border-arena pt-3">
-          <div className={`font-medium ${tienePrecio ? '' : 'text-piedra'}`}>{textoPrecio(oferta.precio_min, oferta.precio_max)}</div>
-          <div className="text-[11px] text-piedra">
-            {tienePrecio ? 'Rango orientativo, no es una cotización.' : 'No inventamos precios: consulta al prestador.'}
-          </div>
-        </div>
-        <Link to={`/solicitar?oferta=${oferta.id}`} className="btn-borde w-full">
+        <Link to={`/solicitar?oferta=${oferta.id}`} className="text-sm whitespace-nowrap text-espresso underline decoration-espresso/30 underline-offset-4 hover:decoration-espresso">
           Solicitar valoración
         </Link>
       </div>

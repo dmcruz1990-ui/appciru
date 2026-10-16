@@ -24,7 +24,7 @@ export function VerifBadge({ v }: { v: Verificacion }) {
 export function Titulo({ children, accion }: { children: ReactNode; accion?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h1 className="font-serif text-2xl">{children}</h1>
+      <h1 className="font-serif text-4xl tracking-tight">{children}</h1>
       {accion}
     </div>
   )

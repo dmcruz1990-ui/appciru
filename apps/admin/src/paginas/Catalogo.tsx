@@ -8,6 +8,7 @@ import {
 import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
+import SubirImagen from '../componentes/SubirImagen'
 import { Modal, Titulo, VerifBadge } from '../componentes/ui'
 import { useDatos, type DatosPanel } from '../datos'
 
@@ -16,7 +17,7 @@ type Fila = Record<string, unknown> & { id: string }
 interface CampoDef {
   k: string
   t: string
-  tipo: 'texto' | 'area' | 'numero' | 'select' | 'bool' | 'lista' | 'fecha'
+  tipo: 'texto' | 'area' | 'numero' | 'select' | 'bool' | 'lista' | 'fecha' | 'imagen'
   opciones?: (d: DatosPanel) => { v: string; t: string }[]
   requerido?: boolean
   ayuda?: string
@@ -84,7 +85,7 @@ const colecciones: Coleccion[] = [
       { k: 'codigo_reps', t: 'Código REPS', tipo: 'texto' },
       { k: 'telefono_publico', t: 'Teléfono público', tipo: 'texto' },
       { k: 'sitio_web', t: 'Sitio web', tipo: 'texto' },
-      { k: 'imagen_url', t: 'URL de imagen', tipo: 'texto' },
+      { k: 'imagen_url', t: 'Foto principal', tipo: 'imagen', ancho: true },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
       { k: 'servicios', t: 'Servicios (separados por comas)', tipo: 'lista', ancho: true },
       { k: 'es_demo', t: 'Perfil de demostración', tipo: 'bool' },
@@ -112,6 +113,7 @@ const colecciones: Coleccion[] = [
       { k: 'sociedad', t: 'Sociedad científica', tipo: 'texto', ayuda: 'Ej.: SCCP' },
       { k: 'anios_experiencia', t: 'Años de experiencia', tipo: 'numero' },
       { k: 'idiomas', t: 'Idiomas (separados por comas)', tipo: 'lista' },
+      { k: 'foto_url', t: 'Retrato', tipo: 'imagen', ancho: true },
       { k: 'bio', t: 'Presentación', tipo: 'area', ancho: true },
       { k: '_instituciones', t: 'Instituciones donde atiende', tipo: 'lista', ancho: true, ayuda: 'Selecciona abajo' },
       { k: 'valoracion_virtual', t: 'Ofrece valoración virtual', tipo: 'bool' },
@@ -141,6 +143,7 @@ const colecciones: Coleccion[] = [
       { k: 'anestesia', t: 'Anestesia habitual', tipo: 'texto' },
       { k: 'recuperacion', t: 'Recuperación orientativa', tipo: 'texto' },
       { k: 'estadia_sugerida_dias', t: 'Estadía sugerida (días)', tipo: 'numero' },
+      { k: 'imagen_url', t: 'Foto del procedimiento (ambiente, nunca resultados)', tipo: 'imagen', ancho: true },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
@@ -390,6 +393,13 @@ function Editor({
           }
           const valor = f[c.k]
           const clase = c.ancho ? 'sm:col-span-2' : ''
+          if (c.tipo === 'imagen')
+            return (
+              <div key={c.k} className={clase}>
+                <span className="etiqueta">{c.t}</span>
+                <SubirImagen valor={(valor as string | null) ?? null} carpeta={col.id} onChange={(u) => set(c.k, u)} />
+              </div>
+            )
           if (c.tipo === 'bool')
             return (
               <label key={c.k} className={`flex items-center gap-2 text-sm ${clase}`}>

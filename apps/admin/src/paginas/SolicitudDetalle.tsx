@@ -10,6 +10,7 @@ import {
   useCarga,
   type Etapa,
   type EventoSolicitud,
+  type Paciente,
   type Solicitud,
 } from '@plastinex/shared'
 import { ArrowLeft, Mail, MessageCircle, Phone } from 'lucide-react'
@@ -35,6 +36,13 @@ export default function SolicitudDetalle() {
     async () =>
       sinError<EventoSolicitud[]>(await supabase.from('px_solicitud_eventos').select('*').eq('solicitud_id', id!).order('creado_en', { ascending: false })),
     [id, s?.actualizado_en],
+  )
+  const ficha = useCarga(
+    async () =>
+      s?.paciente_id
+        ? sinError<Paciente | null>(await supabase.from('px_pacientes').select('*').eq('id', s.paciente_id).maybeSingle())
+        : null,
+    [s?.paciente_id],
   )
   const [texto, setTexto] = useState('')
   const [tipo, setTipo] = useState<'nota_interna' | 'mensaje_paciente'>('nota_interna')
@@ -220,9 +228,19 @@ export default function SolicitudDetalle() {
               </a>
             </div>
             {s.mensaje && <p className="mt-3 rounded-md bg-stone-50 p-2">“{s.mensaje}”</p>}
-            <div className="mt-3 text-xs text-stone-400">
-              Autorización de datos {s.consentimiento_version} · {formatoFechaHora(s.consentimiento_en)}
-            </div>
+            {ficha.datos ? (
+              <div className="mt-4 space-y-1 border-t border-[#ece6db] pt-3 text-xs text-stone-500">
+                <div className="font-medium text-stone-700">Documentos aceptados ({ficha.datos.terminos_version})</div>
+                <div>Términos y responsabilidad · {formatoFechaHora(ficha.datos.terminos_aceptados_en)}</div>
+                <div>Intermediación · {formatoFechaHora(ficha.datos.intermediacion_aceptada_en)}</div>
+                <div>Confidencialidad · {formatoFechaHora(ficha.datos.confidencialidad_aceptada_en)}</div>
+                <div>Tratamiento de datos · {formatoFechaHora(ficha.datos.datos_sensibles_autorizado_en)}</div>
+              </div>
+            ) : (
+              <div className="mt-3 text-xs text-stone-400">
+                Autorización de datos {s.consentimiento_version} · {formatoFechaHora(s.consentimiento_en)}
+              </div>
+            )}
           </div>
 
           <div className="tarjeta p-5 text-sm">

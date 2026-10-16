@@ -36,6 +36,7 @@ export interface Procedimiento {
   estadia_sugerida_dias: number | null
   orden: number
   publicado: boolean
+  imagen_url: string | null
 }
 
 export interface Institucion {
@@ -160,6 +161,7 @@ export interface Solicitud {
   cita_valoracion_en: string | null
   asistio: boolean | null
   motivo_cierre: string | null
+  paciente_id: string | null
 }
 
 export interface EventoSolicitud {
@@ -203,11 +205,33 @@ export interface SolicitudPublica {
   eventos: { creado_en: string; tipo: TipoEvento; etapa: Etapa | null; texto: string | null }[]
 }
 
-export interface NuevaSolicitud {
+export interface Paciente {
+  id: string
   nombre: string
-  email: string
   telefono: string
   pais: string
+  terminos_version: string
+  terminos_aceptados_en: string
+  intermediacion_aceptada_en: string
+  confidencialidad_aceptada_en: string
+  datos_sensibles_autorizado_en: string
+  creado_en: string
+  /** true si aceptó la versión vigente de los documentos. */
+  terminos_vigentes?: boolean
+}
+
+export interface RegistroPaciente {
+  nombre: string
+  telefono: string
+  pais: string
+  acepta_terminos: boolean
+  acepta_intermediacion: boolean
+  acepta_confidencialidad: boolean
+  autoriza_datos: boolean
+}
+
+/** Los datos de contacto salen de la ficha del paciente autenticado. */
+export interface NuevaSolicitud {
   procedimiento_id?: string
   oferta_id?: string
   ciudad_id?: string
@@ -216,8 +240,6 @@ export interface NuevaSolicitud {
   noches?: number
   servicio_ids: string[]
   mensaje?: string
-  consentimiento: boolean
-  consentimiento_version: string
   canal?: string
   utm?: Record<string, string>
 }

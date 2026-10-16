@@ -1,29 +1,20 @@
-import {
-  CONSENTIMIENTO_VERSION,
-  crearSolicitud,
-  detallarOfertas,
-  formatoCOP,
-  nombreTipoAlojamiento,
-  textoPrecio,
-} from '@plastinex/shared'
-import { HeartPulse, Utensils } from 'lucide-react'
+import { crearSolicitud, detallarOfertas, formatoCOP, nombreTipoAlojamiento, textoPrecio } from '@plastinex/shared'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import { Foto } from '../componentes/base'
 import { EstadoVerificacion } from '../componentes/Insignias'
+import { useSesion } from '../sesion'
 import { leerUTM } from '../utm'
-
-const paises = ['Colombia', 'Estados Unidos', 'España', 'Canadá', 'México', 'Panamá', 'Chile', 'Otro']
 
 export default function Solicitar() {
   const { datos } = useCatalogo()
+  const { sesion, paciente, listo, cargando } = useSesion()
   const [params] = useSearchParams()
+  const { pathname, search } = useLocation()
   const navigate = useNavigate()
 
-  const oferta = useMemo(
-    () => (datos ? detallarOfertas(datos).find((d) => d.oferta.id === params.get('oferta')) : undefined),
-    [datos, params],
-  )
+  const oferta = useMemo(() => (datos ? detallarOfertas(datos).find((d) => d.oferta.id === params.get('oferta')) : undefined), [datos, params])
 
   const [procedimientoId, setProcedimientoId] = useState(params.get('procedimiento') ?? '')
   const [ciudadId, setCiudadId] = useState(params.get('ciudad') ?? '')
@@ -32,29 +23,27 @@ export default function Solicitar() {
   const [alojamientoId, setAlojamientoId] = useState('')
   const [noches, setNoches] = useState<number | ''>('')
   const [servicioIds, setServicioIds] = useState<string[]>([])
-  const [contacto, setContacto] = useState({ nombre: '', email: '', telefono: '', pais: 'Colombia' })
   const [mensaje, setMensaje] = useState('')
-  const [acepta, setAcepta] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (!datos) return null
+  if (!datos || cargando) return null
+  const volver = encodeURIComponent(pathname + search)
+  if (!sesion) return <Navigate to={`/ingresar?volver=${volver}&modo=registro`} replace />
+  if (!listo) return <Navigate to={`/cuenta/completar?volver=${volver}`} replace />
 
   const ciudadPlan = oferta?.ciudad.id ?? ciudadId
   const proc = oferta?.procedimiento ?? datos.procedimientos.find((p) => p.id === procedimientoId)
-  const nochesEfectivas = noches === '' ? (proc?.estadia_sugerida_dias ?? 7) : noches
+  const n = noches === '' ? (proc?.estadia_sugerida_dias ?? 7) : noches
   const alojamientos = datos.alojamientos.filter((a) => !ciudadPlan || a.ciudad_id === ciudadPlan)
   const aloj = quiereAlojamiento ? datos.alojamientos.find((a) => a.id === alojamientoId) : undefined
-
-  const estimadoComplementos =
-    (aloj?.precio_noche_desde ?? 0) * (aloj ? nochesEfectivas : 0) +
-    servicioIds.reduce((s, id) => {
-      const sv = datos.servicios.find((x) => x.id === id)
-      if (!sv?.precio_desde) return s
-      return s + (sv.unidad === 'dia' ? sv.precio_desde * nochesEfectivas : sv.precio_desde)
-    }, 0)
-
-  const toggleServicio = (id: string) => setServicioIds((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]))
+  const costoAloj = aloj?.precio_noche_desde ? aloj.precio_noche_desde * n : 0
+  const costoServ = servicioIds.reduce((s, id) => {
+    const sv = datos.servicios.find((x) => x.id === id)
+    if (!sv?.precio_desde) return s
+    return s + (sv.unidad === 'dia' ? sv.precio_desde * n : sv.precio_desde)
+  }, 0)
+  const toggle = (id: string) => setServicioIds((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]))
   const minFecha = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)
 
   const enviar = async (e: FormEvent) => {
@@ -63,21 +52,18 @@ export default function Solicitar() {
     setEnviando(true)
     try {
       const codigo = await crearSolicitud({
-        ...contacto,
         oferta_id: oferta?.oferta.id,
         procedimiento_id: oferta ? undefined : procedimientoId || undefined,
         ciudad_id: oferta ? undefined : ciudadId || undefined,
         fecha_tentativa: fecha || undefined,
         alojamiento_id: aloj?.id,
-        noches: aloj ? nochesEfectivas : undefined,
+        noches: aloj ? n : undefined,
         servicio_ids: servicioIds,
         mensaje: mensaje.trim() || undefined,
-        consentimiento: acepta,
-        consentimiento_version: CONSENTIMIENTO_VERSION,
         canal: 'web',
         utm: leerUTM(),
       })
-      navigate('/solicitud-enviada', { state: { codigo, email: contacto.email.trim().toLowerCase(), nombre: contacto.nombre } })
+      navigate('/solicitud-enviada', { state: { codigo } })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos enviar la solicitud.')
     } finally {
@@ -86,52 +72,56 @@ export default function Solicitar() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-      <div className="kicker">— Solicitud de contacto</div>
-      <h1 className="titulo mt-2 text-4xl">
-        Solicita una <em>valoración.</em>
+    <div className="contenedor pt-36 pb-28">
+      <div className="rotulo">Solicitud de valoración</div>
+      <h1 className="display mt-4 text-6xl md:text-7xl">
+        Cuéntanos qué <em>buscas.</em>
       </h1>
-      <p className="mt-2 max-w-2xl text-sm text-piedra">
-        No incluyas información clínica ni documentos. Un coordinador te contactará para agendar la valoración con el
-        profesional; una solicitud no es una reserva confirmada.
+      <p className="mt-5 max-w-2xl text-piedra">
+        Un coordinador te contactará para agendar la valoración con el especialista. No incluyas información clínica: eso se habla
+        en consulta. Una solicitud no es una reserva confirmada.
       </p>
 
-      <form onSubmit={enviar} className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-6">
-          <Bloque n="1" titulo="¿Qué te interesa?">
+      <form onSubmit={enviar} className="mt-16 grid gap-16 lg:grid-cols-[1fr_380px]">
+        <div className="space-y-20">
+          <Paso n="01" titulo="Tu interés">
             {oferta ? (
-              <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="grid gap-6 sm:grid-cols-[160px_1fr]">
+                <Foto src={oferta.institucion.imagen_url ?? oferta.procedimiento.imagen_url} alt="" ancho={400} className="aspect-[4/5]" />
                 <div>
-                  <div className="titulo text-xl">{oferta.procedimiento.nombre}</div>
-                  <div className="text-sm">
+                  <div className="font-serif text-4xl">{oferta.procedimiento.nombre}</div>
+                  <div className="mt-1 text-piedra">
                     {oferta.institucion.nombre} · {oferta.ciudad.nombre}
+                    {oferta.profesional && ` · ${oferta.profesional.nombre}`}
                   </div>
-                  {oferta.profesional && <div className="text-sm text-piedra">{oferta.profesional.nombre}</div>}
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <EstadoVerificacion v={oferta.institucion.verificacion} />
                   </div>
                   {(oferta.oferta.incluye || oferta.oferta.no_incluye) && (
-                    <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                    <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
                       {oferta.oferta.incluye && (
-                        <p>
-                          <b>Incluye:</b> {oferta.oferta.incluye}
-                        </p>
+                        <div>
+                          <dt className="etiqueta">Incluye</dt>
+                          <dd className="mt-1 text-piedra">{oferta.oferta.incluye}</dd>
+                        </div>
                       )}
                       {oferta.oferta.no_incluye && (
-                        <p>
-                          <b>No incluye:</b> {oferta.oferta.no_incluye}
-                        </p>
+                        <div>
+                          <dt className="etiqueta">No incluye</dt>
+                          <dd className="mt-1 text-piedra">{oferta.oferta.no_incluye}</dd>
+                        </div>
                       )}
-                    </div>
+                    </dl>
                   )}
+                  <Link to="/explorar" className="enlace mt-6 inline-block text-sm text-piedra">
+                    Cambiar opción
+                  </Link>
                 </div>
-                <Link to="/explorar" className="text-xs underline">
-                  Cambiar
-                </Link>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Campo label="Procedimiento">
+              <div className="grid gap-8 sm:grid-cols-2">
+                <label>
+                  <span className="etiqueta">Procedimiento</span>
                   <select value={procedimientoId} onChange={(e) => setProcedimientoId(e.target.value)} className="campo">
                     <option value="">Orientación general</option>
                     {datos.procedimientos.map((p) => (
@@ -140,8 +130,9 @@ export default function Solicitar() {
                       </option>
                     ))}
                   </select>
-                </Campo>
-                <Campo label="Ciudad preferida">
+                </label>
+                <label>
+                  <span className="etiqueta">Ciudad preferida</span>
                   <select value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} className="campo">
                     <option value="">Sin preferencia</option>
                     {datos.ciudades.map((c) => (
@@ -150,156 +141,109 @@ export default function Solicitar() {
                       </option>
                     ))}
                   </select>
-                </Campo>
+                </label>
               </div>
             )}
-            <div className="mt-4 max-w-xs">
-              <Campo label="Fecha tentativa (opcional)">
-                <input type="date" min={minFecha} value={fecha} onChange={(e) => setFecha(e.target.value)} className="campo" />
-              </Campo>
-            </div>
-          </Bloque>
-
-          <Bloque n="2" titulo="Arma tu plan (opcional)">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={quiereAlojamiento} onChange={(e) => setQuiereAlojamiento(e.target.checked)} />
-              Necesito alojamiento durante la recuperación
+            <label className="mt-8 block max-w-xs">
+              <span className="etiqueta">Fecha tentativa (opcional)</span>
+              <input type="date" min={minFecha} value={fecha} onChange={(e) => setFecha(e.target.value)} className="campo" />
             </label>
+          </Paso>
+
+          <Paso n="02" titulo="Tu estadía (opcional)">
+            <Interruptor activo={quiereAlojamiento} onChange={setQuiereAlojamiento}>
+              Necesito alojamiento durante la recuperación
+            </Interruptor>
             {quiereAlojamiento && (
-              <div className="mt-4 space-y-4">
+              <div className="mt-8 space-y-8">
                 {alojamientos.length === 0 ? (
-                  <p className="text-sm text-piedra">Aún no tenemos alojamientos aliados en esta ciudad. El coordinador te orientará.</p>
+                  <p className="text-sm text-piedra">Aún no tenemos alojamientos aliados en esta ciudad; tu coordinador te orientará.</p>
                 ) : (
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="divide-y divide-linea border-y border-linea">
                     {alojamientos.map((a) => (
                       <button
                         type="button"
                         key={a.id}
                         onClick={() => setAlojamientoId(a.id === alojamientoId ? '' : a.id)}
-                        className={`border p-4 text-left transition ${alojamientoId === a.id ? 'border-oro bg-oro/10' : 'border-arena bg-white hover:border-piedra'}`}
+                        className="grid w-full grid-cols-[24px_1fr_auto] items-baseline gap-4 py-5 text-left"
                       >
-                        <div className="etiqueta">{nombreTipoAlojamiento[a.tipo]}</div>
-                        <div className="font-medium">{a.nombre}</div>
-                        <div className="mt-1 flex flex-wrap gap-3 text-xs text-piedra">
-                          {a.incluye_enfermeria && (
-                            <span className="flex items-center gap-1">
-                              <HeartPulse size={12} /> Enfermería
-                            </span>
-                          )}
-                          {a.incluye_alimentacion && (
-                            <span className="flex items-center gap-1">
-                              <Utensils size={12} /> Alimentación
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-2 text-sm">{a.precio_noche_desde ? `Desde ${formatoCOP(a.precio_noche_desde)} / noche` : 'Precio no informado'}</div>
+                        <span className={`h-3 w-3 rounded-full border ${alojamientoId === a.id ? 'border-espresso bg-espresso' : 'border-niebla'}`} />
+                        <span>
+                          <span className="block font-serif text-2xl">{a.nombre}</span>
+                          <span className="text-sm text-piedra">
+                            {nombreTipoAlojamiento[a.tipo]}
+                            {a.incluye_enfermeria && ' · enfermería'}
+                            {a.incluye_alimentacion && ' · alimentación'}
+                          </span>
+                        </span>
+                        <span className="text-sm text-piedra">{a.precio_noche_desde ? `desde ${formatoCOP(a.precio_noche_desde)} / noche` : 'por cotizar'}</span>
                       </button>
                     ))}
                   </div>
                 )}
-                <div className="max-w-[10rem]">
-                  <Campo label="Noches">
-                    <input
-                      type="number"
-                      min={1}
-                      max={60}
-                      value={noches === '' ? nochesEfectivas : noches}
-                      onChange={(e) => setNoches(e.target.value === '' ? '' : Math.min(60, Math.max(1, Number(e.target.value))))}
-                      className="campo"
-                    />
-                  </Campo>
-                </div>
+                <label className="block max-w-[10rem]">
+                  <span className="etiqueta">Noches</span>
+                  <input type="number" min={1} max={60} value={n} onChange={(e) => setNoches(e.target.value === '' ? '' : Math.min(60, Math.max(1, Number(e.target.value))))} className="campo" />
+                </label>
               </div>
             )}
-            <div className="mt-5 etiqueta">Servicios complementarios</div>
-            <div className="grid gap-2">
-              {datos.servicios.map((s) => (
-                <label key={s.id} className="flex cursor-pointer items-start gap-3 border border-arena bg-white p-3 text-sm hover:border-piedra">
-                  <input type="checkbox" checked={servicioIds.includes(s.id)} onChange={() => toggleServicio(s.id)} className="mt-1" />
-                  <span className="flex-1">
-                    <span className="font-medium">{s.nombre}</span>
-                    <span className="block text-xs text-piedra">{s.descripcion}</span>
-                  </span>
-                  <span className="text-xs whitespace-nowrap">
-                    {s.precio_desde ? `Desde ${formatoCOP(s.precio_desde)}${s.unidad === 'dia' ? ' / día' : ''}` : 'Por cotizar'}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </Bloque>
-
-          <Bloque n="3" titulo="Tus datos de contacto">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Campo label="Nombre">
-                <input required maxLength={80} autoComplete="name" value={contacto.nombre} onChange={(e) => setContacto({ ...contacto, nombre: e.target.value })} className="campo" />
-              </Campo>
-              <Campo label="Correo">
-                <input required type="email" maxLength={120} autoComplete="email" value={contacto.email} onChange={(e) => setContacto({ ...contacto, email: e.target.value })} className="campo" />
-              </Campo>
-              <Campo label="Teléfono / WhatsApp">
-                <input required minLength={7} maxLength={30} autoComplete="tel" value={contacto.telefono} onChange={(e) => setContacto({ ...contacto, telefono: e.target.value })} className="campo" />
-              </Campo>
-              <Campo label="País de residencia">
-                <select value={contacto.pais} onChange={(e) => setContacto({ ...contacto, pais: e.target.value })} className="campo">
-                  {paises.map((p) => (
-                    <option key={p}>{p}</option>
-                  ))}
-                </select>
-              </Campo>
-              <div className="sm:col-span-2">
-                <Campo label="Mensaje (opcional, sin información clínica)">
-                  <textarea rows={3} maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} className="campo" placeholder="Ej.: prefiero que me contacten en la tarde." />
-                </Campo>
+            <div className="mt-12">
+              <div className="etiqueta">Servicios complementarios</div>
+              <div className="mt-3 divide-y divide-linea border-y border-linea">
+                {datos.servicios.map((s) => (
+                  <label key={s.id} className="flex cursor-pointer items-baseline gap-4 py-5">
+                    <input type="checkbox" checked={servicioIds.includes(s.id)} onChange={() => toggle(s.id)} className="accent-espresso" />
+                    <span className="flex-1">
+                      <span className="block">{s.nombre}</span>
+                      <span className="text-sm text-piedra">{s.descripcion}</span>
+                    </span>
+                    <span className="text-sm whitespace-nowrap text-piedra">
+                      {s.precio_desde ? `desde ${formatoCOP(s.precio_desde)}${s.unidad === 'dia' ? ' / día' : ''}` : 'por cotizar'}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
-            <label className="mt-4 flex items-start gap-2 text-xs text-piedra">
-              <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="mt-0.5" />
-              <span>
-                Autorizo a PLASTINEX a tratar mis datos de contacto para gestionar esta solicitud y compartirlos con la institución
-                seleccionada, conforme a la Ley 1581 de 2012 y al{' '}
-                <Link to="/privacidad" target="_blank" className="underline">
-                  aviso de privacidad
-                </Link>
-                .
-              </span>
-            </label>
-          </Bloque>
+          </Paso>
+
+          <Paso n="03" titulo="Un mensaje para tu coordinador (opcional)">
+            <textarea rows={3} maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} className="campo resize-none" placeholder="Ej.: prefiero que me contacten en la tarde." />
+          </Paso>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="border border-arena bg-white p-6">
-            <div className="etiqueta">Resumen</div>
-            <div className="titulo text-xl">{proc?.nombre ?? 'Orientación general'}</div>
+        <aside className="lg:sticky lg:top-28 lg:self-start">
+          <div className="bg-papel p-8">
+            <div className="rotulo">Resumen</div>
+            <div className="mt-4 font-serif text-3xl">{proc?.nombre ?? 'Orientación general'}</div>
             {oferta && <div className="text-sm text-piedra">{oferta.institucion.nombre}</div>}
-            <dl className="mt-4 space-y-2 border-t border-arena pt-4 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-piedra">Procedimiento</dt>
-                <dd className="text-right">{oferta ? textoPrecio(oferta.oferta.precio_min, oferta.oferta.precio_max) : 'Según valoración'}</dd>
-              </div>
-              {aloj && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-piedra">Alojamiento · {nochesEfectivas} noches</dt>
-                  <dd>{aloj.precio_noche_desde ? formatoCOP(aloj.precio_noche_desde * nochesEfectivas) : 'Por cotizar'}</dd>
-                </div>
-              )}
-              {servicioIds.length > 0 && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-piedra">Servicios ({servicioIds.length})</dt>
-                  <dd>{formatoCOP(estimadoComplementos - (aloj?.precio_noche_desde ?? 0) * (aloj ? nochesEfectivas : 0))}</dd>
-                </div>
-              )}
+            <dl className="mt-8 space-y-3 border-t border-linea pt-6 text-sm">
+              <Linea t="Procedimiento" v={oferta ? textoPrecio(oferta.oferta.precio_min, oferta.oferta.precio_max) : 'Según valoración'} />
+              {aloj && <Linea t={`Alojamiento · ${n} noches`} v={costoAloj ? formatoCOP(costoAloj) : 'Por cotizar'} />}
+              {servicioIds.length > 0 && <Linea t={`Servicios (${servicioIds.length})`} v={formatoCOP(costoServ)} />}
             </dl>
-            {estimadoComplementos > 0 && (
-              <div className="mt-3 border-t border-arena pt-3 text-sm">
-                Complementos desde <b>{formatoCOP(estimadoComplementos)}</b>
+            {costoAloj + costoServ > 0 && (
+              <div className="mt-6 flex items-baseline justify-between border-t border-linea pt-6">
+                <span className="text-sm text-piedra">Complementos desde</span>
+                <span className="font-serif text-3xl">{formatoCOP(costoAloj + costoServ)}</span>
               </div>
             )}
-            <p className="mt-3 text-[11px] text-piedra">
-              Todos los valores son orientativos y se confirman en una cotización individual después de la valoración.
+            <p className="mt-6 text-xs leading-relaxed text-niebla">
+              Valores orientativos; se confirman en una cotización individual después de la valoración. PLASTINEX actúa como
+              intermediario.
             </p>
-            {error && <p className="mt-3 bg-rose-50 p-2 text-sm text-rose-800">{error}</p>}
-            <button disabled={enviando} className="btn-oro mt-4 w-full">
-              {enviando ? 'Enviando…' : 'Enviar solicitud →'}
+            <div className="mt-6 border-t border-linea pt-6 text-sm">
+              <div className="etiqueta">Te contactaremos como</div>
+              <div className="mt-2">{paciente?.nombre}</div>
+              <div className="text-piedra">
+                {sesion.user.email} · {paciente?.telefono}
+              </div>
+              <Link to={`/cuenta/completar?editar=1&volver=${volver}`} className="enlace mt-2 inline-block text-xs text-piedra">
+                Cambiar mis datos
+              </Link>
+            </div>
+            {error && <p className="mt-4 text-sm text-red-800">{error}</p>}
+            <button disabled={enviando} className="btn mt-8 w-full !py-3.5">
+              {enviando ? 'Enviando…' : 'Enviar solicitud'}
             </button>
           </div>
         </aside>
@@ -308,23 +252,34 @@ export default function Solicitar() {
   )
 }
 
-function Bloque({ n, titulo, children }: { n: string; titulo: string; children: ReactNode }) {
+function Paso({ n, titulo, children }: { n: string; titulo: string; children: ReactNode }) {
   return (
-    <section className="border border-arena bg-white p-6">
-      <h2 className="mb-4 flex items-center gap-3 text-sm font-medium">
-        <span className="titulo text-xl text-oro">0{n}</span>
-        {titulo}
-      </h2>
+    <section>
+      <div className="mb-8 flex items-baseline gap-4 border-b border-espresso pb-4">
+        <span className="font-serif text-2xl text-arcilla italic">{n}</span>
+        <h2 className="font-serif text-3xl">{titulo}</h2>
+      </div>
       {children}
     </section>
   )
 }
 
-function Campo({ label, children }: { label: string; children: ReactNode }) {
+function Interruptor({ activo, onChange, children }: { activo: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
   return (
-    <label className="block">
-      <span className="etiqueta">{label}</span>
-      {children}
-    </label>
+    <button type="button" role="switch" aria-checked={activo} onClick={() => onChange(!activo)} className="flex items-center gap-4 text-left">
+      <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${activo ? 'bg-espresso' : 'bg-linea'}`}>
+        <span className={`absolute top-1 h-4 w-4 rounded-full bg-marfil transition-all duration-300 ${activo ? 'left-6' : 'left-1'}`} />
+      </span>
+      <span>{children}</span>
+    </button>
+  )
+}
+
+function Linea({ t, v }: { t: string; v: string }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt className="text-piedra">{t}</dt>
+      <dd className="text-right">{v}</dd>
+    </div>
   )
 }

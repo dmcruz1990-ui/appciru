@@ -1,23 +1,23 @@
 import { infoVerificacion, type Verificacion } from '@plastinex/shared'
-import { BadgeCheck, Clock3, ShieldAlert } from 'lucide-react'
 
-/** La insignia "verificada" solo aparece tras la revisión documental registrada en el panel. */
-export function EstadoVerificacion({ v, compacto = false }: { v: Verificacion; compacto?: boolean }) {
+/** La marca "verificada" solo aparece tras la revisión documental registrada en el panel. */
+export function EstadoVerificacion({ v, claro = false }: { v: Verificacion; claro?: boolean }) {
   const info = infoVerificacion(v)
-  const estilo =
-    v === 'verificado'
-      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-      : v === 'rechazado'
-        ? 'bg-rose-50 text-rose-800 border-rose-200'
-        : 'bg-arena/60 text-piedra border-arena'
-  const Icono = v === 'verificado' ? BadgeCheck : v === 'rechazado' ? ShieldAlert : Clock3
+  const punto = v === 'verificado' ? 'bg-salvia' : v === 'rechazado' ? 'bg-red-700' : 'bg-niebla'
   return (
-    <span className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[11px] ${estilo}`}>
-      <Icono size={12} /> {compacto && v !== 'verificado' ? info.nombre : info.publico}
+    <span className={`inline-flex items-center gap-2 text-xs ${claro ? 'text-marfil/80' : 'text-piedra'}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${punto}`} />
+      {info.publico}
     </span>
   )
 }
 
-export function EtiquetaDemo() {
-  return <span className="bg-oro/15 px-1.5 py-0.5 text-[10px] font-medium tracking-[0.15em] text-oro-osc">DEMO</span>
+export function EtiquetaDemo({ claro = false }: { claro?: boolean }) {
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-[10px] font-medium tracking-[0.16em] uppercase backdrop-blur ${claro ? 'bg-black/25 text-white' : 'bg-espresso/5 text-piedra'}`}
+    >
+      Perfil demo
+    </span>
+  )
 }

@@ -26,9 +26,9 @@ export default function Layout() {
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-tinta text-stone-300 md:flex">
-        <div className="flex items-center gap-2 px-5 py-5 text-sm font-bold tracking-[0.2em] text-white">
-          <span className="flex h-7 w-7 items-center justify-center border border-oro font-serif text-base tracking-normal text-oro">P</span>
-          PLASTINEX
+        <div className="flex items-baseline gap-2 px-5 py-6 text-white">
+          <span className="font-serif text-3xl tracking-tight">Plastinex</span>
+          <span className="text-[10px] tracking-[0.2em] text-stone-400 uppercase">Panel</span>
         </div>
         <nav className="flex-1 space-y-0.5 px-3">
           {enlaces.map((l) => (

@@ -32,7 +32,7 @@ export default function Ingreso() {
 
   return (
     <Pantalla>
-      <h1 className="font-serif text-2xl">{modo === 'entrar' ? 'Ingresar al panel' : 'Crear cuenta'}</h1>
+      <h1 className="font-serif text-3xl">{modo === 'entrar' ? 'Ingresar al panel' : 'Crear cuenta'}</h1>
       <p className="mt-1 text-sm text-stone-500">Acceso solo para el equipo de PLASTINEX y las clínicas aliadas.</p>
       <form onSubmit={enviar} className="mt-6 space-y-3">
         {modo === 'registro' && (
@@ -82,7 +82,7 @@ export function Pendiente() {
 
   return (
     <Pantalla>
-      <h1 className="font-serif text-2xl">Cuenta pendiente de aprobación</h1>
+      <h1 className="font-serif text-3xl">Cuenta pendiente de aprobación</h1>
       <p className="mt-2 text-sm text-stone-600">
         {perfil?.email} aún no tiene un rol asignado. Un administrador debe darte acceso desde la sección “Usuarios”.
       </p>
@@ -109,10 +109,10 @@ export function Pendiente() {
 function Pantalla({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-tinta p-4">
-      <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-2xl">
-        <div className="mb-6 flex items-center gap-2 text-sm font-bold tracking-[0.2em]">
-          <span className="flex h-7 w-7 items-center justify-center border border-oro font-serif text-base text-oro">P</span>
-          PLASTINEX <span className="font-normal tracking-normal text-stone-400">panel</span>
+      <div className="w-full max-w-sm rounded-xl bg-[#fbf9f5] p-10 shadow-2xl">
+        <div className="mb-8 flex items-baseline gap-2">
+          <span className="font-serif text-4xl tracking-tight">Plastinex</span>
+          <span className="text-[10px] tracking-[0.2em] text-stone-400 uppercase">Panel</span>
         </div>
         {children}
       </div>

@@ -95,4 +95,5 @@ export const iniciales = (nombre: string) =>
     .map((p) => p[0]?.toUpperCase())
     .join('')
 
-export const CONSENTIMIENTO_VERSION = 'v1-2026-10'
+/** Debe coincidir con px_privado.px_version_terminos() en la base de datos. */
+export const TERMINOS_VERSION = 'v1-2026-10'

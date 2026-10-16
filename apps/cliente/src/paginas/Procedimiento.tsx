@@ -1,6 +1,7 @@
 import { detallarOfertas, nombreCategoria } from '@plastinex/shared'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import { Foto, Revelar, Rotulo } from '../componentes/base'
 import NoEncontrado from '../componentes/NoEncontrado'
 import OfertaCard from '../componentes/OfertaCard'
 
@@ -20,36 +21,49 @@ export default function ProcedimientoPagina() {
 
   return (
     <>
-      <section className="bg-tinta text-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-          <div className="kicker">— {nombreCategoria[proc.categoria]}</div>
-          <h1 className="titulo mt-3 text-5xl">{proc.nombre}</h1>
-          <p className="mt-4 max-w-2xl text-white/75">{proc.descripcion}</p>
-          <div className="mt-8 grid max-w-4xl gap-px bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="contenedor grid gap-12 pt-36 pb-20 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+        <div className="flex flex-col">
+          <Link to="/explorar" className="rotulo hover:text-espresso">
+            ← {nombreCategoria[proc.categoria]}
+          </Link>
+          <h1 className="display mt-8 text-6xl md:text-8xl">{proc.nombre}</h1>
+          <p className="mt-8 max-w-xl text-[17px] leading-relaxed text-piedra">{proc.descripcion}</p>
+          <dl className="mt-auto grid grid-cols-2 border-t border-linea pt-2">
             {datosClave.map(([t, v]) => (
-              <div key={t} className="bg-tinta p-4">
-                <div className="etiqueta !text-white/50">{t}</div>
-                <div className="text-sm">{v}</div>
+              <div key={t} className="border-b border-linea py-5 pr-4">
+                <dt className="etiqueta">{t}</dt>
+                <dd className="mt-2 font-serif text-2xl">{v}</dd>
               </div>
             ))}
-          </div>
-          <p className="mt-4 text-xs text-white/50">
+          </dl>
+          <p className="mt-6 text-xs text-niebla">
             Información general y orientativa. Cada caso se evalúa de forma individual; no se garantizan resultados.
           </p>
         </div>
+        <Revelar>
+          <Foto src={proc.imagen_url} alt={proc.nombre} ancho={1200} prioridad className="aspect-[4/5]" respaldo={proc.nombre} />
+        </Revelar>
       </section>
-      <section className="mx-auto max-w-7xl px-4 py-14 md:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="titulo text-3xl">
-            {opciones.length} {opciones.length === 1 ? 'opción' : 'opciones'} para <em>{proc.nombre.toLowerCase()}</em>
-          </h2>
-          <Link to={`/solicitar?procedimiento=${proc.id}`} className="btn-borde">
+
+      <section className="contenedor border-t border-linea py-24">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <Rotulo>
+              {opciones.length} {opciones.length === 1 ? 'opción' : 'opciones'} en la región
+            </Rotulo>
+            <h2 className="display mt-5 text-5xl">
+              ¿Con quién <em>valorarte?</em>
+            </h2>
+          </div>
+          <Link to={`/solicitar?procedimiento=${proc.id}`} className="btn-linea">
             Pedir orientación general
           </Link>
         </div>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {opciones.map((d) => (
-            <OfertaCard key={d.oferta.id} d={d} />
+        <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+          {opciones.map((d, i) => (
+            <Revelar key={d.oferta.id} retraso={(i % 3) * 0.06}>
+              <OfertaCard d={d} />
+            </Revelar>
           ))}
         </div>
       </section>

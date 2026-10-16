@@ -1,6 +1,7 @@
 import { detallarOfertas, nombreCategoria, type Categoria } from '@plastinex/shared'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import { Revelar } from '../componentes/base'
 import OfertaCard from '../componentes/OfertaCard'
 
 export default function Explorar() {
@@ -13,7 +14,6 @@ export default function Explorar() {
   const categoria = (params.get('categoria') ?? '') as Categoria | ''
   const precio = params.get('precio') ?? ''
   const verificadas = params.get('verificadas') === '1'
-  const virtual = params.get('virtual') === '1'
   const orden = params.get('orden') ?? 'relevancia'
 
   const set = (k: string, v: string) => {
@@ -32,126 +32,92 @@ export default function Explorar() {
     if (precio === 'con' && !conPrecio) return false
     if (precio === 'sin' && conPrecio) return false
     if (verificadas && d.institucion.verificacion !== 'verificado') return false
-    if (virtual && !d.profesional?.valoracion_virtual) return false
     return true
   })
   lista = [...lista].sort((a, b) => {
-    if (orden === 'nombre') return a.institucion.nombre.localeCompare(b.institucion.nombre, 'es')
+    if (orden === 'nombre') return a.procedimiento.nombre.localeCompare(b.procedimiento.nombre, 'es')
     if (orden === 'precio') return (a.oferta.precio_min ?? Infinity) - (b.oferta.precio_min ?? Infinity)
     return Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado')
   })
 
   const procs = datos.procedimientos.filter((p) => !categoria || p.categoria === categoria)
+  const activos = [procedimiento, ciudad, categoria, precio, verificadas ? '1' : ''].filter(Boolean).length
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <div className="kicker">— Explorar</div>
-      <h1 className="titulo mt-2 text-4xl">
-        Opciones en el <em>Eje Cafetero</em>
-      </h1>
-
-      <div className="mt-8 grid gap-8 md:grid-cols-[220px_1fr]">
-        <aside className="space-y-6 text-sm">
-          <Grupo titulo="Categoría">
-            <Opcion activa={!categoria} onClick={() => set('categoria', '')}>
-              Todas
-            </Opcion>
-            {(Object.keys(nombreCategoria) as Categoria[]).map((c) => (
-              <Opcion key={c} activa={categoria === c} onClick={() => set('categoria', c)}>
-                {nombreCategoria[c]}
-              </Opcion>
-            ))}
-          </Grupo>
-          <Grupo titulo="Procedimiento">
-            <select value={procedimiento} onChange={(e) => set('procedimiento', e.target.value)} className="campo">
-              <option value="">Todos</option>
-              {procs.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-          </Grupo>
-          <Grupo titulo="Ciudad">
-            <select value={ciudad} onChange={(e) => set('ciudad', e.target.value)} className="campo">
-              <option value="">Todo el Eje Cafetero</option>
-              {datos.ciudades.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-          </Grupo>
-          <Grupo titulo="Precio">
-            <select value={precio} onChange={(e) => set('precio', e.target.value)} className="campo">
-              <option value="">Cualquier estado</option>
-              <option value="con">Con rango orientativo</option>
-              <option value="sin">Sin precio informado</option>
-            </select>
-          </Grupo>
-          <Grupo titulo="Más filtros">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={verificadas} onChange={(e) => set('verificadas', e.target.checked ? '1' : '')} />
-              Solo documentación verificada
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={virtual} onChange={(e) => set('virtual', e.target.checked ? '1' : '')} />
-              Valoración virtual
-            </label>
-          </Grupo>
-        </aside>
-
-        <section>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-arena pb-4 text-sm">
-            <span className="text-piedra">{lista.length} opciones</span>
-            <label className="flex items-center gap-2">
-              Ordenar
-              <select value={orden} onChange={(e) => set('orden', e.target.value)} className="campo !w-auto !py-1.5">
-                <option value="relevancia">Relevancia</option>
-                <option value="nombre">Nombre</option>
-                <option value="precio">Precio menor</option>
-              </select>
-            </label>
-          </div>
-          {lista.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {lista.map((d) => (
-                <OfertaCard key={d.oferta.id} d={d} />
-              ))}
-            </div>
-          ) : (
-            <div className="border border-dashed border-arena bg-white p-12 text-center">
-              <h3 className="titulo text-2xl">No hay opciones con esos filtros</h3>
-              <p className="mt-2 text-sm text-piedra">Prueba otra ciudad o pide orientación a un coordinador.</p>
-              <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn-oro mt-6">
-                Solicitar orientación
-              </Link>
-            </div>
-          )}
-          <p className="mt-8 text-xs text-piedra">
-            Todos los perfiles son de demostración. Los precios son rangos orientativos informados por el prestador y se confirman
-            en una cotización individual.
-          </p>
-        </section>
+    <div className="contenedor pt-36 pb-28">
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <h1 className="display text-6xl md:text-8xl">
+          Procedimientos <em>y opciones</em>
+        </h1>
+        <p className="max-w-xs text-sm text-piedra">Perfiles de demostración. Los precios son rangos informados por cada prestador.</p>
       </div>
+
+      <div className="mt-14 flex gap-8 overflow-x-auto border-b border-linea text-sm whitespace-nowrap">
+        {[['', 'Todas'], ...Object.entries(nombreCategoria)].map(([id, t]) => (
+          <button
+            key={id}
+            onClick={() => set('categoria', id)}
+            className={`-mb-px border-b pb-4 transition ${categoria === id ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:text-espresso'}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
+        <Filtro valor={procedimiento} onChange={(v) => set('procedimiento', v)} opciones={[['', 'Todo procedimiento'], ...procs.map((p) => [p.id, p.nombre] as [string, string])]} />
+        <Filtro valor={ciudad} onChange={(v) => set('ciudad', v)} opciones={[['', 'Toda la región'], ...datos.ciudades.map((c) => [c.id, c.nombre] as [string, string])]} />
+        <Filtro valor={precio} onChange={(v) => set('precio', v)} opciones={[['', 'Cualquier precio'], ['con', 'Con rango orientativo'], ['sin', 'Sin precio informado']]} />
+        <label className="flex cursor-pointer items-center gap-2 text-piedra">
+          <input type="checkbox" checked={verificadas} onChange={(e) => set('verificadas', e.target.checked ? '1' : '')} className="accent-espresso" />
+          Solo verificadas
+        </label>
+        <div className="ml-auto flex items-center gap-6">
+          {activos > 0 && (
+            <button onClick={() => setParams({}, { replace: true })} className="enlace text-piedra">
+              Limpiar filtros
+            </button>
+          )}
+          <Filtro valor={orden} onChange={(v) => set('orden', v)} opciones={[['relevancia', 'Relevancia'], ['precio', 'Precio menor'], ['nombre', 'Nombre']]} />
+        </div>
+      </div>
+
+      <div className="mt-6 text-sm text-piedra">{lista.length} opciones</div>
+
+      {lista.length ? (
+        <div className="mt-12 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+          {lista.map((d, i) => (
+            <Revelar key={d.oferta.id} retraso={(i % 3) * 0.06}>
+              <OfertaCard d={d} />
+            </Revelar>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-16 border-y border-linea py-20 text-center">
+          <p className="display text-4xl">No hay opciones con esos filtros.</p>
+          <p className="mt-3 text-sm text-piedra">Prueba otra ciudad o pide orientación a un coordinador.</p>
+          <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn mt-8">
+            Solicitar orientación
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
 
-function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function Filtro({ valor, onChange, opciones }: { valor: string; onChange: (v: string) => void; opciones: [string, string][] }) {
   return (
-    <div>
-      <div className="etiqueta">{titulo}</div>
-      <div className="flex flex-col items-start gap-1.5">{children}</div>
-    </div>
-  )
-}
-
-function Opcion({ activa, onClick, children }: { activa: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} className={`text-left ${activa ? 'font-semibold text-tinta' : 'text-piedra hover:text-tinta'}`}>
-      {activa && <span className="mr-1 text-oro">—</span>}
-      {children}
-    </button>
+    <select
+      value={valor}
+      onChange={(e) => onChange(e.target.value)}
+      className={`cursor-pointer appearance-none border-b bg-transparent py-1 pr-5 outline-none ${valor ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:text-espresso'}`}
+      style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236e655c'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right center' }}
+    >
+      {opciones.map(([v, t]) => (
+        <option key={v} value={v}>
+          {t}
+        </option>
+      ))}
+    </select>
   )
 }

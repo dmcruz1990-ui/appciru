@@ -1,63 +1,108 @@
-import { Menu, X } from 'lucide-react'
+import Lenis from 'lenis'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useCatalogo } from './catalogo'
-import { Cargando, ErrorCarga } from './componentes/Estados'
+import { Cargando, ErrorCarga } from './componentes/base'
+import { useSesion } from './sesion'
 
 const enlaces = [
-  { to: '/explorar', t: 'Explorar' },
+  { to: '/explorar', t: 'Procedimientos' },
   { to: '/#como', t: 'Cómo funciona' },
-  { to: '/seguimiento', t: 'Mi solicitud' },
   { to: '/para-clinicas', t: 'Para clínicas' },
 ]
 
-export function Marca({ clara = true }: { clara?: boolean }) {
+/** Páginas con foto a sangre bajo la cabecera: la cabecera arranca transparente. */
+const conHeroOscuro = (path: string) => path === '/'
+
+export function Marca({ claro = false, grande = false }: { claro?: boolean; grande?: boolean }) {
   return (
-    <Link to="/" className={`flex items-center gap-2 text-sm font-bold tracking-[0.2em] ${clara ? 'text-white' : 'text-tinta'}`}>
-      <span className="flex h-7 w-7 items-center justify-center border border-oro font-serif text-base text-oro">P</span>
-      PLASTINEX
+    <Link to="/" className={`font-serif tracking-tight ${grande ? 'text-[19vw] leading-none' : 'text-2xl'} ${claro ? 'text-marfil' : 'text-espresso'}`}>
+      Plastinex
     </Link>
   )
 }
 
 export default function Layout() {
   const { cargando, error, recargar } = useCatalogo()
-  const [abierto, setAbierto] = useState(false)
+  const { sesion, paciente } = useSesion()
   const { pathname, hash } = useLocation()
+  const [abierto, setAbierto] = useState(false)
+  const [scroll, setScroll] = useState(false)
+
+  // Desplazamiento suave (se desactiva si la persona prefiere menos movimiento).
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const lenis = new Lenis({ duration: 1.1, smoothWheel: true })
+    let id = 0
+    const raf = (t: number) => {
+      lenis.raf(t)
+      id = requestAnimationFrame(raf)
+    }
+    id = requestAnimationFrame(raf)
+    return () => {
+      cancelAnimationFrame(id)
+      lenis.destroy()
+    }
+  }, [])
+
+  useEffect(() => {
+    const on = () => setScroll(window.scrollY > 40)
+    on()
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
 
   useEffect(() => {
     setAbierto(false)
-    if (hash) document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' })
+    if (hash) setTimeout(() => document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' }), 50)
     else window.scrollTo(0, 0)
   }, [pathname, hash])
 
+  const transparente = conHeroOscuro(pathname) && !scroll && !abierto
+  const sinCabecera = pathname === '/ingresar'
+
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-tinta text-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-4 md:px-8">
-          <Marca />
-          <nav className="ml-auto hidden items-center gap-7 text-sm text-white/80 md:flex">
+      <header
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+          transparente ? 'bg-transparent text-marfil' : 'border-b border-linea/70 bg-marfil/85 text-espresso backdrop-blur-md'
+        } ${sinCabecera ? 'lg:bg-transparent lg:border-transparent lg:backdrop-blur-0' : ''}`}
+      >
+        <div className="contenedor flex h-[72px] items-center gap-10">
+          <Marca claro={transparente} />
+          <nav className="hidden items-center gap-8 text-sm md:flex">
             {enlaces.map((e) => (
-              <NavLink key={e.to} to={e.to} className="hover:text-oro">
+              <NavLink key={e.to} to={e.to} className="opacity-80 transition hover:opacity-100">
                 {e.t}
               </NavLink>
             ))}
           </nav>
-          <Link to="/solicitar" className="hidden border border-oro px-4 py-2 text-xs text-oro hover:bg-oro hover:text-tinta md:inline-flex">
-            Solicitar valoración
-          </Link>
-          <button className="ml-auto md:hidden" onClick={() => setAbierto(!abierto)} aria-label="Menú">
-            {abierto ? <X /> : <Menu />}
+          <div className="ml-auto hidden items-center gap-6 text-sm md:flex">
+            {sesion ? (
+              <Link to="/cuenta" className="opacity-80 hover:opacity-100">
+                {paciente ? `Hola, ${paciente.nombre.split(' ')[0]}` : 'Mi cuenta'}
+              </Link>
+            ) : (
+              <Link to="/ingresar" className="opacity-80 hover:opacity-100">
+                Ingresar
+              </Link>
+            )}
+            <Link to="/solicitar" className={transparente ? 'btn-claro !py-2.5' : 'btn !py-2.5'}>
+              Solicitar valoración
+            </Link>
+          </div>
+          <button className="ml-auto text-sm md:hidden" onClick={() => setAbierto(!abierto)} aria-expanded={abierto}>
+            {abierto ? 'Cerrar' : 'Menú'}
           </button>
         </div>
         {abierto && (
-          <nav className="flex flex-col gap-1 border-t border-white/10 px-4 py-3 text-sm md:hidden">
-            {enlaces.map((e) => (
-              <Link key={e.to} to={e.to} className="py-2">
+          <nav className="contenedor flex flex-col border-t border-linea pt-4 pb-8 md:hidden">
+            {[...enlaces, sesion ? { to: '/cuenta', t: 'Mi cuenta' } : { to: '/ingresar', t: 'Ingresar' }].map((e) => (
+              <Link key={e.to} to={e.to} className="border-b border-linea py-4 font-serif text-3xl">
                 {e.t}
               </Link>
             ))}
-            <Link to="/solicitar" className="btn-oro mt-2">
+            <Link to="/solicitar" className="btn mt-8">
               Solicitar valoración
             </Link>
           </nav>
@@ -66,31 +111,50 @@ export default function Layout() {
 
       <main className="flex-1">{error ? <ErrorCarga mensaje={error} reintentar={recargar} /> : cargando ? <Cargando /> : <Outlet />}</main>
 
-      <footer className="bg-tinta text-white/60">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 text-sm md:grid-cols-[1.2fr_1fr_1fr] md:px-8">
-          <div className="space-y-3">
-            <Marca />
-            <p className="max-w-sm">
-              PLASTINEX no diagnostica, prescribe ni determina si una persona es candidata a cirugía. La indicación, los
-              riesgos, las alternativas y el tratamiento corresponden al profesional de salud competente.
-            </p>
+      {!sinCabecera && (
+        <footer className="overflow-hidden bg-espresso text-marfil">
+          <div className="contenedor grid gap-12 pt-20 pb-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <div>
+              <p className="display max-w-sm text-3xl">Información clara para una decisión que es tuya.</p>
+              <Link to="/solicitar" className="btn-claro mt-8">
+                Solicitar valoración
+              </Link>
+            </div>
+            <Columna titulo="Explorar" enlaces={[['/explorar', 'Procedimientos'], ['/explorar?verificadas=1', 'Instituciones verificadas'], ['/cuenta', 'Mi cuenta']]} />
+            <Columna titulo="PLASTINEX" enlaces={[['/#como', 'Cómo funciona'], ['/para-clinicas', 'Para clínicas'], ['/terminos', 'Términos']]} />
+            <Columna titulo="Legal" enlaces={[['/privacidad', 'Privacidad'], ['/terminos', 'Intermediación y responsabilidad']]} />
           </div>
-          <div className="space-y-2">
-            <div className="kicker">Explorar</div>
-            <Link to="/explorar" className="block hover:text-oro">Procedimientos</Link>
-            <Link to="/seguimiento" className="block hover:text-oro">Consultar mi solicitud</Link>
-            <Link to="/para-clinicas" className="block hover:text-oro">Para clínicas y profesionales</Link>
+          <div className="contenedor">
+            <div className="border-t border-marfil/15 pt-6 pb-4 text-xs leading-relaxed text-marfil/50 md:flex md:justify-between md:gap-10">
+              <p className="max-w-2xl">
+                PLASTINEX es un intermediario entre pacientes y prestadores de salud habilitados. No diagnostica, no prescribe ni
+                determina si una persona es candidata a cirugía. Precios orientativos sujetos a valoración. Perfiles de demostración.
+              </p>
+              <p className="mt-3 md:mt-0">© {new Date().getFullYear()} PLASTINEX · Eje Cafetero, Colombia</p>
+            </div>
+            <div className="pointer-events-none -mb-[3.5vw] select-none" aria-hidden>
+              <span className="block font-serif text-[21vw] leading-[0.8] tracking-tight text-marfil/[0.06]">Plastinex</span>
+            </div>
           </div>
-          <div className="space-y-2">
-            <div className="kicker">Información</div>
-            <Link to="/privacidad" className="block hover:text-oro">Privacidad y tratamiento de datos</Link>
-            <p>Los precios publicados son orientativos y los confirma cada prestador en una cotización individual.</p>
-          </div>
-        </div>
-        <div className="border-t border-white/10 px-4 py-4 text-center text-xs md:px-8">
-          © {new Date().getFullYear()} PLASTINEX · Nombre provisional · Colombia · Perfiles de demostración
-        </div>
-      </footer>
+        </footer>
+      )}
+    </div>
+  )
+}
+
+function Columna({ titulo, enlaces }: { titulo: string; enlaces: [string, string][] }) {
+  return (
+    <div>
+      <div className="rotulo !text-marfil/50">{titulo}</div>
+      <ul className="mt-5 space-y-3 text-sm">
+        {enlaces.map(([to, t]) => (
+          <li key={t}>
+            <Link to={to} className="text-marfil/80 hover:text-marfil">
+              {t}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

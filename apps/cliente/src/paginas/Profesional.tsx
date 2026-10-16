@@ -1,7 +1,7 @@
 import { detallarOfertas, iniciales, nombreCiudad } from '@plastinex/shared'
-import { Languages, Video } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import { Foto, Revelar, Rotulo } from '../componentes/base'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import NoEncontrado from '../componentes/NoEncontrado'
 import OfertaCard from '../componentes/OfertaCard'
@@ -18,71 +18,68 @@ export default function ProfesionalPagina() {
 
   return (
     <>
-      <section className="bg-tinta text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-16 md:flex-row md:items-center md:px-8">
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center border border-oro font-serif text-4xl text-oro">{iniciales(prof.nombre)}</div>
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="kicker">— Perfil profesional</span>
-              {prof.es_demo && <EtiquetaDemo />}
+      <section className="contenedor grid gap-12 pt-36 pb-20 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
+        <Revelar>
+          {prof.foto_url ? (
+            <Foto src={prof.foto_url} alt={prof.nombre} ancho={1000} prioridad className="aspect-[4/5]" />
+          ) : (
+            <div className="flex aspect-[4/5] items-center justify-center bg-arena">
+              <span className="font-serif text-[9rem] text-espresso/25 italic">{iniciales(prof.nombre)}</span>
             </div>
-            <h1 className="titulo mt-2 text-5xl">{prof.nombre}</h1>
-            <div className="mt-1 text-white/70">{prof.especialidad}</div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <EstadoVerificacion v={prof.verificacion} />
-              {prof.valoracion_virtual && (
-                <span className="inline-flex items-center gap-1 border border-white/20 px-2 py-0.5 text-[11px]">
-                  <Video size={12} /> Valoración virtual
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1 border border-white/20 px-2 py-0.5 text-[11px]">
-                <Languages size={12} /> {prof.idiomas.join(', ')}
-              </span>
-            </div>
+          )}
+        </Revelar>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <span className="rotulo">Perfil profesional · {nombreCiudad(datos, prof.ciudad_id)}</span>
+            {prof.es_demo && <EtiquetaDemo />}
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-12 md:grid-cols-3 md:px-8">
-        <div className="border border-arena bg-white p-6 md:col-span-2">
-          <p>{prof.bio}</p>
-          <dl className="mt-6 grid gap-4 border-t border-arena pt-4 text-sm sm:grid-cols-3">
-            <div>
-              <dt className="etiqueta">Registro ReTHUS</dt>
-              <dd>{prof.rethus ?? 'No informado'}</dd>
-            </div>
-            <div>
-              <dt className="etiqueta">Sociedad científica</dt>
-              <dd>{prof.sociedad ?? 'No informada'}</dd>
-            </div>
-            <div>
-              <dt className="etiqueta">Experiencia</dt>
-              <dd>{prof.anios_experiencia ? `${prof.anios_experiencia} años` : 'No informada'}</dd>
-            </div>
-          </dl>
-        </div>
-        <div className="border border-arena bg-white p-6">
-          <div className="etiqueta">Atiende en</div>
-          <ul className="mt-2 space-y-2">
-            {instituciones.map((i) => (
-              <li key={i.id}>
-                <Link to={`/institucion/${i.id}`} className="titulo text-lg hover:text-oro-osc">
-                  {i.nombre}
-                </Link>
-                <div className="text-xs text-piedra">{nombreCiudad(datos, i.ciudad_id)}</div>
-              </li>
+          <h1 className="display mt-8 text-6xl md:text-8xl">{prof.nombre}</h1>
+          <p className="mt-4 text-lg text-piedra">{prof.especialidad}</p>
+          <div className="mt-6">
+            <EstadoVerificacion v={prof.verificacion} />
+          </div>
+          <p className="mt-10 max-w-xl text-[17px] leading-relaxed">{prof.bio}</p>
+          <dl className="mt-auto grid grid-cols-2 border-t border-linea pt-2 md:grid-cols-4">
+            {[
+              ['ReTHUS', prof.rethus ?? '—'],
+              ['Sociedad', prof.sociedad ?? '—'],
+              ['Experiencia', prof.anios_experiencia ? `${prof.anios_experiencia} años` : '—'],
+              ['Idiomas', prof.idiomas.join(', ')],
+            ].map(([t, v]) => (
+              <div key={t} className="border-b border-linea py-5 pr-4">
+                <dt className="etiqueta">{t}</dt>
+                <dd className="mt-2 font-serif text-xl">{v}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
+          {prof.valoracion_virtual && <p className="mt-6 text-sm text-piedra">Ofrece valoración virtual previa al viaje.</p>}
+          {instituciones.length > 0 && (
+            <p className="mt-4 text-sm text-piedra">
+              Atiende en{' '}
+              {instituciones.map((i, k) => (
+                <span key={i.id}>
+                  {k > 0 && ', '}
+                  <Link to={`/institucion/${i.id}`} className="enlace text-espresso">
+                    {i.nombre}
+                  </Link>
+                </span>
+              ))}
+              .
+            </p>
+          )}
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-16 md:px-8">
-        <h2 className="titulo text-3xl">
-          Procedimientos que <em>ofrece</em>
+      <section className="contenedor border-t border-linea py-24">
+        <Rotulo>Procedimientos</Rotulo>
+        <h2 className="display mt-5 text-5xl">
+          Lo que <em>ofrece</em>
         </h2>
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {opciones.map((d) => (
-            <OfertaCard key={d.oferta.id} d={d} />
+        <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+          {opciones.map((d, i) => (
+            <Revelar key={d.oferta.id} retraso={(i % 3) * 0.06}>
+              <OfertaCard d={d} />
+            </Revelar>
           ))}
         </div>
       </section>

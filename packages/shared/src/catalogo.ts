@@ -6,6 +6,8 @@ import type {
   Institucion,
   NuevaSolicitud,
   Oferta,
+  Paciente,
+  RegistroPaciente,
   Procedimiento,
   Profesional,
   Servicio,
@@ -109,7 +111,19 @@ export function detallarOfertas(c: Catalogo, soloPublicas = true): OfertaDetalla
 
 export const nombreCiudad = (c: Catalogo, id: string | null) => c.ciudades.find((x) => x.id === id)?.nombre ?? '—'
 
-// ---------- Solicitudes públicas ----------
+// ---------- Paciente (requiere sesión) ----------
+
+export async function miPaciente(): Promise<Paciente | null> {
+  const { data, error } = await supabase.rpc('px_mi_paciente')
+  if (error) throw new Error(error.message)
+  return (data as Paciente | null) ?? null
+}
+
+export async function registrarPaciente(r: RegistroPaciente): Promise<Paciente> {
+  const { data, error } = await supabase.rpc('px_registrar_paciente', { datos: r })
+  if (error) throw new Error(error.message)
+  return data as Paciente
+}
 
 export async function crearSolicitud(s: NuevaSolicitud): Promise<string> {
   const { data, error } = await supabase.rpc('px_crear_solicitud', { datos: s })
@@ -117,8 +131,20 @@ export async function crearSolicitud(s: NuevaSolicitud): Promise<string> {
   return data as string
 }
 
-export async function consultarSolicitud(codigo: string, email: string): Promise<SolicitudPublica | null> {
-  const { data, error } = await supabase.rpc('px_consultar_solicitud', { p_codigo: codigo, p_email: email })
+export async function misSolicitudes(): Promise<SolicitudPublica[]> {
+  const { data, error } = await supabase.rpc('px_mis_solicitudes')
   if (error) throw new Error(error.message)
-  return (data as SolicitudPublica | null) ?? null
+  return (data as SolicitudPublica[] | null) ?? []
+}
+
+// ---------- Imágenes ----------
+
+/** URL optimizada: a las imágenes de Unsplash les pide el ancho justo; las de Storage se devuelven tal cual. */
+export function urlImagen(url: string | null | undefined, ancho = 1200): string | null {
+  if (!url) return null
+  if (url.includes('images.unsplash.com')) {
+    const base = url.split('?')[0]
+    return `${base}?auto=format&fit=crop&w=${ancho}&q=80`
+  }
+  return url
 }
