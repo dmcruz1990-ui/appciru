@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@source "../../../packages/shared/src";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --color-tinta: #111210;
+  --color-tinta-2: #1c1d1a;
+  --color-oro: #c2a468;
+  --color-oro-osc: #9c8049;
+  --color-crema: #f6f3ed;
+  --color-arena: #ece6da;
+  --color-piedra: #6b675e;
+}
+
+body {
+  background: #f4f3f0;
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .campo {
+    @apply w-full rounded-md border border-stone-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-oro focus:ring-2 focus:ring-oro/25;
+  }
+  .etiqueta {
+    @apply mb-1 block text-xs font-medium text-stone-500;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-tinta px-3 py-1.5 text-sm font-medium text-white hover:bg-tinta-2 disabled:opacity-40;
+  }
+  .btn-sec {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm hover:bg-stone-50 disabled:opacity-40;
+  }
+  .btn-oro {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-oro px-3 py-1.5 text-sm font-medium text-tinta hover:bg-oro-osc hover:text-white disabled:opacity-40;
+  }
+  .tarjeta {
+    @apply rounded-xl border border-stone-200 bg-white;
+  }
+  .tabla {
+    @apply w-full text-sm;
+  }
+  .tabla th {
+    @apply bg-stone-50 px-3 py-2.5 text-left text-xs font-medium text-stone-500;
+  }
+  .tabla td {
+    @apply border-t border-stone-100 px-3 py-2.5 align-top;
+  }
+}

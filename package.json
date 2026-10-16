@@ -1,27 +1,13 @@
 {
-  "name": "appciru",
+  "name": "plastinex",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc -b"
-  },
-  "dependencies": {
-    "lucide-react": "^1.58.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^5.2.0",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.7"
+    "dev:cliente": "npm run dev -w @plastinex/cliente",
+    "dev:admin": "npm run dev -w @plastinex/admin",
+    "build": "npm run build -w @plastinex/cliente && npm run build -w @plastinex/admin",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }

@@ -1,66 +1,68 @@
-# Ciru — marketplace de cirugías en Colombia
+# PLASTINEX
 
-> "Uber no tiene carros, Airbnb no tiene hoteles." Ciru no tiene quirófanos: reúne clínicas, cirujanos,
-> quirófanos y alojamiento de todo Colombia y le vende al paciente **el plan completo**.
+Plataforma de cirugía plástica para el Eje Cafetero. Tiene dos partes:
 
-Nombre de trabajo: *Ciru* (provisional).
+- **El sitio público (cliente).** Estilo marketplace: la persona explora procedimientos, instituciones y profesionales,
+  ve rangos de precio orientativos y solicita una valoración. Si lo necesita, agrega a su solicitud el plan
+  complementario: alojamiento de recobro, traslados y enfermería.
+- **El panel (admin).** Es el CRM de solicitudes, con la ruta comercial del modelo de negocio. Desde ahí se maneja
+  el catálogo, la verificación documental, los clientes B2B (suscripciones) y las métricas.
 
-## Qué hay en este repo (v0.1)
+El plan por fases y las decisiones tomadas están en **[`docs/PLAN_DE_TRABAJO.md`](docs/PLAN_DE_TRABAJO.md)**.
 
-Una sola app web (Vite + React + TypeScript + Tailwind) con dos interfaces que comparten el mismo modelo de datos:
+> PLASTINEX es un nombre de trabajo. Todos los perfiles cargados son **ficticios** (marcados `DEMO`). PLASTINEX no
+> diagnostica ni determina si alguien es candidato a cirugía: eso le corresponde al profesional de salud.
 
-| Interfaz | Ruta | Qué hace |
-|---|---|---|
-| **Cliente** (estilo Amazon/eBay) | `/` | Portada con categorías y planes destacados, buscador con filtros (ciudad, categoría, precio, valoración virtual, clínica acreditada), fichas de procedimiento, cirujano y clínica, **armador de plan** (cirugía + alojamiento + noches + servicios extra con total en COP/USD), confirmación y "Mis solicitudes" con línea de tiempo. |
-| **Panel admin** | `/admin` | KPIs (pipeline, ventas, conversión, comisión), embudo por estado, ventas por ciudad, pedidos con filtros y búsqueda, detalle de pedido (cambiar estado, notas visibles al paciente, WhatsApp), catálogo (publicar/ocultar médicos, clínicas, procedimientos, alojamientos, ofertas; editar precios; crear publicaciones) y configuración (comisión, tasa USD). |
+## Estructura
 
-Por ahora los datos viven en `localStorage` y se sincronizan entre pestañas: si abres el sitio de cliente en
-una pestaña y `/admin` en otra, los pedidos aparecen en vivo. **Todos los nombres de clínicas y médicos son
-ficticios** y los códigos REPS/ReTHUS son de ejemplo.
+```
+apps/
+  cliente/     Sitio público (Vite + React + Tailwind) → http://localhost:5173
+  admin/       Panel interno con inicio de sesión       → http://localhost:5174
+packages/
+  shared/      Tipos, cliente de Supabase, consultas y formatos compartidos
+supabase/
+  migrations/  Esquema px_*, RLS, funciones y datos de demostración
+docs/
+  PLAN_DE_TRABAJO.md
+```
+
+## Cómo correrlo
 
 ```bash
+cp .env.example .env      # URL y clave publicable de Supabase (proyecto itc-colombia)
 npm install
-npm run dev        # http://localhost:5173  y  http://localhost:5173/admin
-npm run build
+npm run dev:cliente       # sitio público
+npm run dev:admin         # panel
+npm run build             # compila las dos apps (dist/ en cada una)
 ```
 
-### Estructura
+### Primer acceso al panel
+1. Abre el panel → **Crear cuenta** → confirma el correo si Supabase lo pide.
+2. Al entrar, la cuenta aparece como *pendiente*. El primer usuario puede pulsar **«Ser el primer
+   administrador»**. Esto solo funciona mientras no exista ningún admin.
+3. Desde **Usuarios**, el admin asigna roles a los demás: `coordinador` o `clinica` (este último ve solo las
+   solicitudes de su institución).
 
-```
-src/
-  shared/   types.ts (modelo de dominio) · seed.ts (datos demo) · store.ts (capa de datos)
-            lookup.ts · format.ts · ui.tsx
-  cliente/  ClienteLayout + pages/ (Inicio, Buscar, Procedimiento, Médico, Clínica, ArmarPlan, …)
-  admin/    AdminLayout + pages/ (Dashboard, Pedidos, PedidoDetalle, Catálogo, Configuración)
-```
+## Backend (Supabase)
 
-La unidad central del marketplace es la **Oferta**: *un médico ofrece un procedimiento en una clínica a un
-precio*. Es el equivalente al "producto" de Amazon; el plan del paciente es Oferta + Alojamiento + Extras.
+- Las tablas llevan el prefijo `px_`, porque el proyecto `itc-colombia` también aloja otra aplicación (`perfiles`,
+  `cursos`, `inscripciones`), que no se toca.
+- **RLS en todas las tablas.**
+  - El público solo lee el catálogo publicado.
+  - Las solicitudes **no** se pueden leer sin sesión. Se crean con `px_crear_solicitud`, que valida los datos,
+    exige la autorización de datos y limita los envíos por correo, y se consultan con
+    `px_consultar_solicitud(código, correo)`, que nunca devuelve las notas internas.
+  - Staff (admin y coordinador) ve y gestiona todo. El rol `clinica` solo ve lo de su institución.
+  - Las suscripciones solo las ve el staff y solo las edita el admin.
+- Un trigger registra cada cambio de etapa en el historial y marca la hora de la primera respuesta.
+- Las funciones auxiliares de RLS viven en el esquema `px_privado`, que no se expone por la API.
 
-## Investigación inicial
-
-- **Mercado:** ISAPS estima ~459 mil procedimientos estéticos en Colombia en 2025 (331 mil quirúrgicos).
-  Alrededor de 27–30 % de los pacientes son extranjeros (mediana mundial ~10 %); Colombia es 2.º–3.º destino del
-  mundo, detrás de México. Principales orígenes: EE. UU., España y Canadá. Más pedidos: liposucción,
-  levantamiento de senos, aumento mamario, párpados y abdominoplastia. Gasto promedio del turista de salud
-  ~USD 3.257 (Anato).
-- **Competencia internacional:** Bookimed (1.700 clínicas, 32 países) cobra comisión a la clínica, no
-  recargo al paciente, y el listado es gratuito pero con selección; PlacidWay y WhatClinic son directorios
-  globales. Ninguno se enfoca en Colombia ni en el **plan completo con alojamiento de recobro**, que es el
-  diferencial.
-- **Confianza = producto.** Tras casos mediáticos de clínicas ilegales, el paciente verifica: clínica
-  habilitada en el **REPS** (MinSalud), especialista con la especialidad registrada en **ReTHUS** y miembro
-  de la **SCCP**. Por eso cada ficha muestra esas insignias y el flujo de alta en el admin debe validarlas.
-- **Legal a considerar:** Ley 1581 de 2012 (datos personales; los de salud son sensibles y requieren
-  autorización expresa — ya incluida en el formulario), Resolución 3100 de 2019 y modificaciones (habilitación),
-  publicidad de servicios de salud, y que la plataforma intermedia pero no presta el servicio médico.
-
-## Próximos pasos propuestos
-
-1. Incorporar la información del doctor (modelo de negocio, aliados, procedimientos reales, precios).
-2. Backend real (Supabase: Postgres + Auth + Storage) con roles: paciente, clínica/médico, coordinador, admin.
-3. Inicio de sesión del paciente (enlace mágico/OTP) y subida segura de fotos para la valoración.
-4. Portal de aliados: que clínicas, médicos y alojamientos administren su propia oferta y disponibilidad de quirófano.
-5. Pagos de anticipo (Wompi / Mercado Pago / Stripe para internacionales) y modelo de comisión.
-6. Versión en inglés (la mayoría del turismo médico viene de EE. UU. y Canadá).
-7. Reseñas verificadas (solo pacientes con cirugía completada) y fotos antes/después con consentimiento.
+## Principios que sigue la interfaz (del documento del doctor)
+- La insignia **«Documentación verificada»** solo aparece después de la revisión en el panel (REPS, ReTHUS y
+  sociedad científica, con su checklist). Mientras tanto se muestra «Pendiente de validación documental».
+- Los precios son **rangos orientativos**, con qué incluyen y qué no, y la fecha de actualización. Si no hay
+  precio, se muestra «Precio no informado» y nunca uno inventado.
+- El formulario pide los datos mínimos, **sin información clínica**, con autorización según la Ley 1581 de 2012.
+  Una solicitud no es una reserva.
+- No se prometen resultados ni «más cirugías garantizadas».

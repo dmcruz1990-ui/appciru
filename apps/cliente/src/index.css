@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@source "../../../packages/shared/src";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --color-tinta: #111210;
+  --color-tinta-2: #1c1d1a;
+  --color-oro: #c2a468;
+  --color-oro-osc: #9c8049;
+  --color-crema: #f6f3ed;
+  --color-arena: #ece6da;
+  --color-piedra: #6b675e;
+}
+
+body {
+  background: var(--color-crema);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .titulo {
+    @apply font-serif font-medium tracking-tight;
+  }
+  .titulo em {
+    @apply text-oro italic;
+  }
+  .kicker {
+    @apply text-[11px] font-medium tracking-[0.2em] text-oro uppercase;
+  }
+  .btn-oro {
+    @apply inline-flex items-center justify-center gap-2 bg-oro px-5 py-3 text-sm font-medium text-tinta transition hover:bg-oro-osc hover:text-white disabled:opacity-50;
+  }
+  .btn-tinta {
+    @apply inline-flex items-center justify-center gap-2 bg-tinta px-5 py-3 text-sm font-medium text-white transition hover:bg-tinta-2 disabled:opacity-50;
+  }
+  .btn-borde {
+    @apply inline-flex items-center justify-center gap-2 border border-tinta/80 px-4 py-2 text-sm transition hover:bg-tinta hover:text-white;
+  }
+  .campo {
+    @apply w-full border border-arena bg-white px-3 py-2.5 text-sm outline-none focus:border-oro;
+  }
+  .etiqueta {
+    @apply mb-1 block text-[11px] font-medium tracking-[0.12em] text-piedra uppercase;
+  }
+}
