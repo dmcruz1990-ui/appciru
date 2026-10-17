@@ -9,7 +9,7 @@ import OfertaCard from '../componentes/OfertaCard'
 const pasos = [
   ['Explora', 'Compara procedimientos, instituciones y profesionales con información clara y rangos orientativos.'],
   ['Crea tu cuenta', 'Aceptas los términos de intermediación y tus datos quedan protegidos.'],
-  ['Solicita tu valoración', 'Un coordinador te contacta y agenda con el especialista que elegiste.'],
+  ['Solicita tu valoración', 'Un coordinador te contacta y agenda con el especialista que elegiste. La clínica te da el presupuesto y contratas directamente con ella.'],
   ['Arma tu estadía', 'Si viajas, suma alojamiento de recobro, traslados y enfermería.'],
 ]
 

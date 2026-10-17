@@ -17,7 +17,7 @@ PLASTINEX es un nombre de trabajo. Su disponibilidad como marca no se ha verific
 
 | Tema | Decisión | Por qué |
 |---|---|---|
-| Quién paga | **Las clínicas, con suscripción B2B** (instalación + mensualidad o servicio administrado). No cobramos comisión por cirugía. | Así lo recomienda el doctor. Los pagos ligados a remisiones o cirugías requieren revisión jurídica. |
+| Quién paga | **La clínica.** El paciente contrata, recibe el presupuesto, firma los consentimientos y paga directamente a la clínica. PLASTINEX LLC factura a la clínica una comisión o tarifa comercial según un contrato de intermediación independiente. PLASTINEX no cobra al paciente. | Modelo definitivo del doctor (octubre 2026). Los pagos ligados a cirugías requieren revisión jurídica del contrato. |
 | Qué recibe el paciente | Información, comparación y **solicitud de valoración**. No es una compra ni una reserva. | La indicación, los riesgos y las alternativas los decide el profesional. |
 | Plan completo | Se mantiene **como complemento opcional** en la solicitud: alojamiento y servicios. | Es el diferencial frente a Bookimed y otros. Se cotiza aparte. |
 | Cobertura inicial | **Eje Cafetero**: Pereira, Dosquebradas, Armenia, Manizales y Cartago. | Así lo dice la estrategia de entrada. El sistema admite más ciudades. |

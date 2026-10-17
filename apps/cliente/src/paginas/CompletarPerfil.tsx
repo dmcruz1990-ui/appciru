@@ -1,4 +1,4 @@
-import { registrarPaciente, TERMINOS_VERSION } from '@plastinex/shared'
+import { EMPRESA, registrarPaciente, TERMINOS_VERSION } from '@plastinex/shared'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useSesion } from '../sesion'
@@ -59,6 +59,12 @@ export default function CompletarPerfil() {
           Para proteger a pacientes y prestadores, necesitamos tus datos de contacto y tu aceptación expresa de los documentos que
           regulan el servicio.
         </p>
+        {paciente && !paciente.terminos_vigentes && (
+          <p className="mt-6 border-l-2 border-arcilla pl-5 text-sm text-piedra">
+            Actualizamos los documentos (versión {TERMINOS_VERSION}): ahora indican quién es el titular de la plataforma y cómo se
+            relacionan el paciente, la clínica y PLASTINEX. Revísalos y acéptalos de nuevo para seguir.
+          </p>
+        )}
 
         <form onSubmit={enviar} className="mt-14 space-y-12">
           <div className="grid gap-8 sm:grid-cols-2">
@@ -82,9 +88,10 @@ export default function CompletarPerfil() {
 
           <div className="border-t border-linea">
             <Casilla v={acepta.intermediacion} on={(v) => setAcepta({ ...acepta, intermediacion: v })} titulo="Entiendo que PLASTINEX es un intermediario">
-              PLASTINEX conecta pacientes con cirujanos e instituciones habilitadas. No presta servicios de salud, no realiza
-              diagnósticos ni determina si soy candidato a una cirugía. La valoración, la indicación, los riesgos y el tratamiento
-              son responsabilidad exclusiva del profesional y de la institución que elija.
+              PLASTINEX ({EMPRESA.razonSocial}) conecta pacientes con cirujanos e instituciones habilitadas. No presta servicios de
+              salud, no realiza diagnósticos ni determina si soy candidato a una cirugía. Contrato directamente con la clínica que
+              elija: ella me da el presupuesto, fija el precio, me cobra y firma conmigo los consentimientos. PLASTINEX no me cobra;
+              recibe de la clínica una comisión o tarifa comercial pactada con ella.
             </Casilla>
             <Casilla v={acepta.terminos} on={(v) => setAcepta({ ...acepta, terminos: v })} titulo="Acepto los términos y la limitación de responsabilidad">
               He leído los{' '}

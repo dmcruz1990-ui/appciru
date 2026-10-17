@@ -1,4 +1,10 @@
+import { EMPRESA } from '@plastinex/shared'
+
 const secciones: [string, string][] = [
+  [
+    'Responsable del tratamiento',
+    `${EMPRESA.razonSocial}, con domicilio en ${EMPRESA.direccion.join(', ')}. Contacto: ${EMPRESA.contacto}.`,
+  ],
   [
     'Qué datos pedimos',
     'Correo y contraseña para tu cuenta; nombre, teléfono y país; el procedimiento o la institución que te interesa, una fecha tentativa y, si los eliges, los servicios complementarios. No pedimos información clínica: la historia médica la maneja el profesional en la valoración.',
@@ -12,8 +18,12 @@ const secciones: [string, string][] = [
     'Con la institución o el profesional seleccionado y, si lo pediste, con el aliado de alojamiento o servicios, solo en lo necesario para atender tu solicitud.',
   ],
   [
+    'Transferencia internacional',
+    'PLASTINEX es una sociedad con domicilio en Estados Unidos y tus datos se guardan en servidores de proveedores de nube que pueden estar fuera de Colombia. Al aceptar este aviso autorizas esa transferencia, con las mismas medidas de seguridad y los mismos derechos.',
+  ],
+  [
     'Tus derechos',
-    'Conforme a la Ley 1581 de 2012 y sus decretos reglamentarios, puedes conocer, actualizar, rectificar y suprimir tus datos, y revocar la autorización. Para ejercerlos escribe al canal de contacto que publique PLASTINEX.',
+    `Conforme a la Ley 1581 de 2012 y sus decretos reglamentarios, puedes conocer, actualizar, rectificar y suprimir tus datos, y revocar la autorización. Para ejercerlos escribe a ${EMPRESA.razonSocial}, ${EMPRESA.direccion.join(', ')}.`,
   ],
   [
     'Seguridad',

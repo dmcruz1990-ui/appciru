@@ -37,6 +37,13 @@ npm run dev:admin         # panel
 npm run build             # compila las dos apps (dist/ en cada una)
 ```
 
+### Titular y modelo
+La plataforma es de **PLASTINEX LLC** (1501 South Greeley Hwy, Ste C #1776, Cheyenne, WY 82007, EE. UU.; contacto: Jaime
+De la Vega). Esos datos están en `EMPRESA` (`packages/shared/src/formato.ts`). El paciente contrata y paga directamente a la
+clínica que elige; la clínica fija el precio y responde por la atención; PLASTINEX factura a la clínica una comisión o tarifa
+comercial según un contrato independiente. Si cambian los términos, sube `TERMINOS_VERSION` y `px_privado.px_version_terminos()`
+a la vez: los pacientes tendrán que aceptarlos de nuevo.
+
 ### Cuentas de paciente
 Para solicitar una valoración el paciente debe **crear su cuenta** (correo y contraseña). Luego pasa por un paso obligatorio
 en el que da sus datos de contacto y acepta de forma expresa cuatro cosas: la condición de intermediario de PLASTINEX, los

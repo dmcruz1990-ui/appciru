@@ -96,4 +96,11 @@ export const iniciales = (nombre: string) =>
     .join('')
 
 /** Debe coincidir con px_privado.px_version_terminos() en la base de datos. */
-export const TERMINOS_VERSION = 'v1-2026-10'
+export const TERMINOS_VERSION = 'v2-2026-10'
+
+/** Titular de la plataforma. */
+export const EMPRESA = {
+  razonSocial: 'PLASTINEX LLC',
+  contacto: 'Jaime De la Vega',
+  direccion: ['1501 South Greeley Hwy', 'Ste C #1776', 'Cheyenne, WY 82007', 'Estados Unidos'],
+} as const

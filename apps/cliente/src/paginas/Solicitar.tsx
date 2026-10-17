@@ -244,8 +244,8 @@ export default function Solicitar() {
               </div>
             )}
             <p className="mt-6 text-xs leading-relaxed text-niebla">
-              Valores orientativos; se confirman en una cotización individual después de la valoración. PLASTINEX actúa como
-              intermediario.
+              Valores orientativos. El presupuesto final te lo entrega la clínica después de la valoración, y contratas y pagas
+              directamente con ella. PLASTINEX actúa como intermediario y no te cobra.
             </p>
             <div className="mt-6 border-t border-linea pt-6 text-sm">
               <div className="etiqueta">Te contactaremos como</div>

@@ -10,11 +10,12 @@ const problemas = [
   ['Sin métricas', 'Informes de contactos, citas, asistencia y conversión por etapa.'],
 ]
 
-// Valores ilustrativos del documento de modelo de negocio; no son tarifas definitivas.
-const planes = [
-  ['Instalación', '$1,5 – 3 M', 'pago único', 'Configuración inicial, CRM, canales y protocolos.'],
-  ['Suscripción tecnológica', '$1 – 2 M', 'COP al mes', 'CRM, automatización, seguimiento e informes.'],
-  ['Servicio administrado', '$2 – 4 M', 'COP al mes', 'Operación comercial y gestión de campañas. La pauta se paga aparte.'],
+/** Reparto de papeles entre PLASTINEX, el paciente y la clínica. */
+const roles = [
+  ['PLASTINEX LLC', 'Plataforma internacional', 'Diseña y explota la tecnología, capta pacientes, facilita el contacto, gestiona las solicitudes y presta servicios de marketing e intermediación comercial.'],
+  ['Paciente y clínica', 'Contrato directo', 'El paciente contrata con la clínica que elige, recibe de ella el presupuesto y firma con ella los consentimientos y documentos asistenciales.'],
+  ['La clínica', 'Prestación sanitaria y cobro', 'Determina la indicación médica, acepta o rechaza al paciente, fija el precio, cobra directamente y responde por la atención conforme a la ley.'],
+  ['Clínica y PLASTINEX', 'Comisión comercial', 'PLASTINEX factura a la clínica su comisión o tarifa comercial, según un contrato de intermediación independiente con reglas de cálculo, facturación y pago.'],
 ]
 
 const ruta = ['Captación', 'Registro', 'Atención inicial', 'Agenda', 'Valoración', 'Seguimiento', 'Analítica']
@@ -72,20 +73,23 @@ export default function ParaClinicas() {
       </section>
 
       <section className="contenedor py-28">
-        <Rotulo n="03">Planes · valores de referencia</Rotulo>
-        <div className="mt-14 grid gap-12 md:grid-cols-3">
-          {planes.map(([t, p, u, d], i) => (
+        <Rotulo n="03">Cómo funciona el acuerdo</Rotulo>
+        <h2 className="display mt-6 max-w-3xl text-5xl md:text-6xl">
+          Cada parte, <em>en su lugar.</em>
+        </h2>
+        <div className="mt-14 grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+          {roles.map(([t, s, d], i) => (
             <Revelar key={t} retraso={i * 0.06} className="border-t border-espresso pt-8">
-              <div className="etiqueta">{t}</div>
-              <div className="display mt-4 text-6xl">{p}</div>
-              <div className="mt-1 text-sm text-piedra">{u}</div>
-              <p className="mt-6 text-sm leading-relaxed text-piedra">{d}</p>
+              <span className="font-serif text-lg text-arcilla italic">{String(i + 1).padStart(2, '0')}</span>
+              <div className="etiqueta mt-4">{t}</div>
+              <h3 className="mt-2 font-serif text-3xl">{s}</h3>
+              <p className="mt-5 text-sm leading-relaxed text-piedra">{d}</p>
             </Revelar>
           ))}
         </div>
         <p className="mt-14 max-w-2xl text-sm text-piedra">
-          Valores ilustrativos en validación con clínicas piloto. No prometemos «más cirugías garantizadas»: la promesa es mejor
-          gestión, trazabilidad y seguimiento de oportunidades.
+          PLASTINEX no cobra al paciente ni recibe el pago de la cirugía. No prometemos «más cirugías garantizadas»: la promesa es
+          mejor gestión, trazabilidad y seguimiento de oportunidades.
         </p>
       </section>
     </>

@@ -1,3 +1,4 @@
+import { EMPRESA } from '@plastinex/shared'
 import Lenis from 'lenis'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -129,9 +130,14 @@ export default function Layout() {
             <div className="border-t border-marfil/15 pt-6 pb-4 text-xs leading-relaxed text-marfil/50 md:flex md:justify-between md:gap-10">
               <p className="max-w-2xl">
                 PLASTINEX es un intermediario entre pacientes y prestadores de salud habilitados. No diagnostica, no prescribe ni
-                determina si una persona es candidata a cirugía. Precios orientativos sujetos a valoración. Perfiles de demostración.
+                determina si una persona es candidata a cirugía. El paciente contrata y paga directamente a la clínica que elige.
+                Precios orientativos sujetos a valoración. Perfiles de demostración.
               </p>
-              <p className="mt-3 md:mt-0">© {new Date().getFullYear()} PLASTINEX · Eje Cafetero, Colombia</p>
+              <p className="mt-3 shrink-0 md:mt-0 md:text-right">
+                © {new Date().getFullYear()} {EMPRESA.razonSocial}
+                <br />
+                {EMPRESA.direccion.slice(0, 3).join(' · ')}
+              </p>
             </div>
             <div className="pointer-events-none -mb-[3.5vw] select-none" aria-hidden>
               <span className="block font-serif text-[21vw] leading-[0.8] tracking-tight text-marfil/[0.06]">Plastinex</span>
