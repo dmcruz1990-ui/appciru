@@ -74,9 +74,9 @@ export default function Solicitar() {
   }
 
   return (
-    <div className="contenedor pt-36 pb-28">
+    <div className="contenedor pt-48 pb-28">
       <div className="rotulo">Solicitud de valoración</div>
-      <h1 className="display mt-4 text-6xl md:text-7xl">
+      <h1 className="display mt-4 text-4xl md:text-5xl">
         Cuéntanos qué <em>buscas.</em>
       </h1>
       <p className="mt-5 max-w-2xl text-piedra">
@@ -272,7 +272,7 @@ function Paso({ n, titulo, children }: { n: string; titulo: string; children: Re
   return (
     <section>
       <div className="mb-8 flex items-baseline gap-4 border-b border-espresso pb-4">
-        <span className="font-serif text-2xl text-arcilla italic">{n}</span>
+        <span className="font-serif text-2xl text-arcilla">{n}</span>
         <h2 className="font-serif text-3xl">{titulo}</h2>
       </div>
       {children}

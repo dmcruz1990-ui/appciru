@@ -49,10 +49,10 @@ export default function CompletarPerfil() {
   }
 
   return (
-    <div className="contenedor pt-36 pb-24">
+    <div className="contenedor pt-48 pb-24">
       <div className="mx-auto max-w-2xl">
         <div className="rotulo">Paso final · {sesion.user.email}</div>
-        <h1 className="display mt-4 text-6xl">
+        <h1 className="display mt-4 text-4xl">
           Antes de <em>continuar.</em>
         </h1>
         <p className="mt-5 text-piedra">
@@ -133,7 +133,7 @@ function Casilla({ v, on, titulo, children }: { v: boolean; on: (v: boolean) => 
       <input type="checkbox" checked={v} onChange={(e) => on(e.target.checked)} className="peer sr-only" />
       <span
         aria-hidden
-        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition peer-focus-visible:ring-2 peer-focus-visible:ring-espresso/30 ${v ? 'border-espresso bg-espresso text-marfil' : 'border-niebla'}`}
+        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-none border transition peer-focus-visible:ring-2 peer-focus-visible:ring-espresso/30 ${v ? 'border-espresso bg-espresso text-marfil' : 'border-niebla'}`}
       >
         {v && (
           <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2">

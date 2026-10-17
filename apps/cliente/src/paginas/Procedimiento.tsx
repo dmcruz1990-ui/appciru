@@ -22,12 +22,12 @@ export default function ProcedimientoPagina() {
 
   return (
     <>
-      <section className="contenedor grid gap-12 pt-36 pb-20 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+      <section className="contenedor grid gap-12 pt-48 pb-20 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
         <div className="flex flex-col">
           <Link to="/explorar" className="rotulo hover:text-espresso">
             ← {nombreCategoria[proc.categoria]}
           </Link>
-          <h1 className="display mt-8 text-6xl md:text-8xl">{proc.nombre}</h1>
+          <h1 className="display mt-8 text-4xl md:text-5xl">{proc.nombre}</h1>
           <p className="mt-8 max-w-xl text-[17px] leading-relaxed text-piedra">{proc.descripcion}</p>
           <dl className="mt-auto grid grid-cols-2 border-t border-linea pt-2">
             {datosClave.map(([t, v]) => (
@@ -51,14 +51,14 @@ export default function ProcedimientoPagina() {
           <div className="contenedor grid gap-14 lg:grid-cols-[1fr_1.2fr]">
             <div>
               <Rotulo>Guía de precios</Rotulo>
-              <h2 className="display mt-5 text-5xl">
+              <h2 className="display mt-5 text-4xl">
                 Precio de <em>{proc.nombre.toLowerCase()}</em>
               </h2>
               <p className="mt-6 text-sm leading-relaxed text-piedra">
                 Promedio calculado a partir de los rangos que publican {guia.opciones} {guia.opciones === 1 ? 'prestador' : 'prestadores'} de la red.
                 El valor final depende de tu valoración, la técnica, la anestesia y la hospitalización.
               </p>
-              <div className="mt-10 grid grid-cols-3 border-t border-espresso pt-6">
+              <div className="mt-10 grid grid-cols-3 gap-4 border-t border-espresso pt-6">
                 <Cifra t="Promedio" v={formatoCOP(guia.promedio)} />
                 <Cifra t="Desde" v={formatoCOP(guia.minimo)} />
                 <Cifra t="Hasta" v={formatoCOP(guia.maximo)} />
@@ -96,7 +96,7 @@ export default function ProcedimientoPagina() {
             <Rotulo>
               {opciones.length} {opciones.length === 1 ? 'opción' : 'opciones'} en la región
             </Rotulo>
-            <h2 className="display mt-5 text-5xl">
+            <h2 className="display mt-5 text-4xl">
               ¿Con quién <em>valorarte?</em>
             </h2>
           </div>
@@ -120,7 +120,7 @@ function Cifra({ t, v }: { t: string; v: string }) {
   return (
     <div>
       <div className="etiqueta">{t}</div>
-      <div className="mt-2 font-serif text-2xl md:text-3xl">{v}</div>
+      <div className="mt-2 font-serif text-lg md:text-2xl">{v}</div>
     </div>
   )
 }

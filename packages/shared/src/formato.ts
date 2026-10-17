@@ -101,6 +101,5 @@ export const TERMINOS_VERSION = 'v2-2026-10'
 /** Titular de la plataforma. */
 export const EMPRESA = {
   razonSocial: 'PLASTINEX LLC',
-  contacto: 'Jaime De la Vega',
   direccion: ['1501 South Greeley Hwy', 'Ste C #1776', 'Cheyenne, WY 82007', 'Estados Unidos'],
 } as const

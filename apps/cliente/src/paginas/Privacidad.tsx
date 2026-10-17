@@ -3,7 +3,7 @@ import { EMPRESA } from '@plastinex/shared'
 const secciones: [string, string][] = [
   [
     'Responsable del tratamiento',
-    `${EMPRESA.razonSocial}, con domicilio en ${EMPRESA.direccion.join(', ')}. Contacto: ${EMPRESA.contacto}.`,
+    `${EMPRESA.razonSocial}, con domicilio en ${EMPRESA.direccion.join(', ')}.`,
   ],
   [
     'Qué datos pedimos',
@@ -33,10 +33,10 @@ const secciones: [string, string][] = [
 
 export default function Privacidad() {
   return (
-    <article className="contenedor pt-36 pb-28">
+    <article className="contenedor pt-48 pb-28">
       <div className="mx-auto max-w-3xl">
         <div className="rotulo">Privacidad</div>
-        <h1 className="display mt-6 text-6xl md:text-7xl">
+        <h1 className="display mt-6 text-4xl md:text-5xl">
           Aviso de privacidad <em>(borrador)</em>
         </h1>
         <p className="mt-8 border-l-2 border-arcilla pl-5 text-sm text-piedra">
@@ -45,7 +45,7 @@ export default function Privacidad() {
         <div className="mt-16 space-y-12">
           {secciones.map(([t, d], i) => (
             <section key={t} className="grid gap-4 border-t border-linea pt-8 md:grid-cols-[60px_1fr]">
-              <span className="font-serif text-2xl text-arcilla italic">{i + 1}</span>
+              <span className="font-serif text-2xl text-arcilla">{i + 1}</span>
               <div>
                 <h2 className="font-serif text-3xl">{t}</h2>
                 <p className="mt-4 leading-relaxed text-piedra">{d}</p>

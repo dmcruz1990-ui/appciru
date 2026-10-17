@@ -57,12 +57,12 @@ export default function Planear() {
   const tiempo = (id: string) => tiempos.datos?.find((t) => t.institucion_id === id)
 
   return (
-    <div className="pt-[72px]">
+    <div className="pt-16 md:pt-[124px]">
       {/* Barra de búsqueda */}
       <section className="border-b border-linea bg-papel">
         <div className="contenedor py-12">
           <div className="rotulo">Planea por presupuesto</div>
-          <h1 className="display mt-4 text-5xl md:text-7xl">
+          <h1 className="display mt-4 text-4xl md:text-5xl">
             ¿Cuánto quieres <em>invertir?</em>
           </h1>
           <p className="mt-4 max-w-2xl text-piedra">
@@ -70,7 +70,7 @@ export default function Planear() {
             y el precio final lo confirma el prestador después de la valoración.
           </p>
 
-          <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-linea bg-linea md:grid-cols-[1.2fr_1fr_1.3fr_auto]">
+          <div className="mt-10 grid gap-px overflow-hidden border border-linea bg-linea md:grid-cols-[1.2fr_1fr_1.3fr_auto]">
             <Celda etiqueta="Procedimiento">
               <select value={procedimiento} onChange={(e) => set('procedimiento', e.target.value)} className="w-full bg-transparent text-[15px] outline-none">
                 <option value="">Todos</option>
@@ -115,7 +115,7 @@ export default function Planear() {
               <button
                 key={v}
                 onClick={() => set('presupuesto', String(v))}
-                className={`rounded-full border px-3.5 py-1.5 text-xs transition ${presupuesto === v ? 'border-espresso bg-espresso text-marfil' : 'border-linea text-piedra hover:border-espresso'}`}
+                className={`border px-3.5 py-1.5 text-xs transition ${presupuesto === v ? 'border-espresso bg-espresso text-marfil' : 'border-linea text-piedra hover:border-espresso'}`}
               >
                 {v / 1_000_000} M
               </button>
@@ -241,7 +241,7 @@ function FilaPlan({ plan, presupuesto, tiempo }: { plan: PlanEstimado; presupues
       </div>
       <div className="flex flex-col justify-between gap-6 border-t border-linea p-7 md:border-t-0 md:border-l">
         <div>
-          <span className={`inline-block rounded-full px-3 py-1 text-[11px] font-medium ${e.c}`}>{e.t}</span>
+          <span className={`inline-block px-3 py-1 text-[10px] tracking-[0.16em] uppercase font-medium ${e.c}`}>{e.t}</span>
           <div className="mt-5 text-xs text-piedra">Plan estimado</div>
           <div className="font-serif text-3xl leading-tight">{desde != null ? (desde === hasta ? formatoCOP(desde) : `${formatoCOP(desde)} – ${formatoCOP(hasta!)}`) : 'Por valorar'}</div>
           <dl className="mt-4 space-y-1.5 text-xs text-piedra">
@@ -265,7 +265,7 @@ function FilaPlan({ plan, presupuesto, tiempo }: { plan: PlanEstimado; presupues
             )}
           </dl>
         </div>
-        <Link to={`/solicitar?${q}`} className="btn w-full">
+        <Link to={`/solicitar?${q}`} className="btn w-full !px-4">
           Solicitar con este plan
         </Link>
       </div>

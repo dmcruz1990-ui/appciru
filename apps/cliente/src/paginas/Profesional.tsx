@@ -18,13 +18,13 @@ export default function ProfesionalPagina() {
 
   return (
     <>
-      <section className="contenedor grid gap-12 pt-36 pb-20 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
+      <section className="contenedor grid gap-12 pt-48 pb-20 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
         <Revelar>
           {prof.foto_url ? (
             <Foto src={prof.foto_url} alt={prof.nombre} ancho={1000} prioridad className="aspect-[4/5]" />
           ) : (
             <div className="flex aspect-[4/5] items-center justify-center bg-arena">
-              <span className="font-serif text-[9rem] text-espresso/25 italic">{iniciales(prof.nombre)}</span>
+              <span className="font-serif text-[9rem] text-espresso/25">{iniciales(prof.nombre)}</span>
             </div>
           )}
         </Revelar>
@@ -33,7 +33,7 @@ export default function ProfesionalPagina() {
             <span className="rotulo">Perfil profesional · {nombreCiudad(datos, prof.ciudad_id)}</span>
             {prof.es_demo && <EtiquetaDemo />}
           </div>
-          <h1 className="display mt-8 text-6xl md:text-8xl">{prof.nombre}</h1>
+          <h1 className="display mt-8 text-4xl md:text-5xl">{prof.nombre}</h1>
           <p className="mt-4 text-lg text-piedra">{prof.especialidad}</p>
           <div className="mt-6">
             <EstadoVerificacion v={prof.verificacion} />
@@ -72,7 +72,7 @@ export default function ProfesionalPagina() {
 
       <section className="contenedor border-t border-linea py-24">
         <Rotulo>Procedimientos</Rotulo>
-        <h2 className="display mt-5 text-5xl">
+        <h2 className="display mt-5 text-4xl">
           Lo que <em>ofrece</em>
         </h2>
         <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">

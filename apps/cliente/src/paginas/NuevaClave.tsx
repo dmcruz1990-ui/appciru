@@ -20,7 +20,7 @@ export default function NuevaClave() {
   return (
     <div className="contenedor flex min-h-[80vh] items-center pt-28">
       <div className="mx-auto w-full max-w-md">
-        <h1 className="display text-6xl">
+        <h1 className="display text-4xl">
           Nueva <em>contraseña.</em>
         </h1>
         {sesion ? (

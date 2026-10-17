@@ -14,11 +14,11 @@ export default function Cuenta() {
   const flujo = etapas.filter((e) => e.id !== 'no_continua')
 
   return (
-    <div className="contenedor pt-36 pb-24">
+    <div className="contenedor pt-48 pb-24">
       <div className="flex flex-wrap items-end justify-between gap-6 border-b border-linea pb-10">
         <div>
           <div className="rotulo">Mi cuenta</div>
-          <h1 className="display mt-4 text-6xl md:text-7xl">
+          <h1 className="display mt-4 text-4xl md:text-5xl">
             Hola, <em>{paciente?.nombre.split(' ')[0]}.</em>
           </h1>
         </div>

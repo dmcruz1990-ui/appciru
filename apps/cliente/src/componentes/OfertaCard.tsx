@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Foto } from './base'
 import { EstadoVerificacion, EtiquetaDemo } from './Insignias'
 
-/** Tarjeta editorial: foto vertical, procedimiento en serif, datos mínimos. */
+/** Tarjeta tipo ficha de producto: foto vertical, nombre en mayúsculas, datos mínimos. */
 export default function OfertaCard({ d, indice }: { d: OfertaDetallada; indice?: number }) {
   const { oferta, procedimiento, institucion, profesional, ciudad } = d
   const imagen = institucion.imagen_url ?? procedimiento.imagen_url
@@ -18,12 +18,12 @@ export default function OfertaCard({ d, indice }: { d: OfertaDetallada; indice?:
             {indice != null && <span className="mr-2 text-arcilla">{String(indice + 1).padStart(2, '0')}</span>}
             {nombreCategoria[procedimiento.categoria]} · {ciudad.nombre}
           </div>
-          <h3 className="mt-2 font-serif text-[28px] leading-tight">
-            <Link to={`/procedimiento/${procedimiento.id}`} className="hover:italic">
+          <h3 className="mt-3 text-[15px] leading-snug font-medium tracking-[0.12em] uppercase">
+            <Link to={`/procedimiento/${procedimiento.id}`} className="underline-offset-4 hover:underline">
               {procedimiento.nombre}
             </Link>
           </h3>
-          <div className="mt-1 text-sm text-piedra">
+          <div className="mt-1.5 text-[13px] text-piedra">
             <Link to={`/institucion/${institucion.id}`} className="hover:text-espresso">
               {institucion.nombre}
             </Link>
@@ -55,7 +55,7 @@ export default function OfertaCard({ d, indice }: { d: OfertaDetallada; indice?:
             </div>
           )}
         </div>
-        <Link to={`/solicitar?oferta=${oferta.id}`} className="text-sm whitespace-nowrap text-espresso underline decoration-espresso/30 underline-offset-4 hover:decoration-espresso">
+        <Link to={`/solicitar?oferta=${oferta.id}`} className="text-[11px] font-medium tracking-[0.2em] whitespace-nowrap text-espresso uppercase underline decoration-espresso/30 underline-offset-[6px] hover:decoration-espresso">
           Solicitar valoración
         </Link>
       </div>

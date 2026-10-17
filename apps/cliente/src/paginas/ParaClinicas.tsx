@@ -24,9 +24,9 @@ export default function ParaClinicas() {
   return (
     <>
       <section className="bg-espresso text-marfil">
-        <div className="contenedor pt-44 pb-28">
+        <div className="contenedor pt-52 pb-28">
           <div className="rotulo !text-marfil/50">Para clínicas y cirujanos</div>
-          <h1 className="display mt-8 max-w-5xl text-6xl md:text-8xl">
+          <h1 className="display mt-8 max-w-5xl text-4xl md:text-5xl">
             Organiza y mide tu gestión comercial, <em>sin tocar el criterio médico.</em>
           </h1>
           <p className="mt-10 max-w-xl text-[17px] leading-relaxed text-marfil/70">
@@ -64,7 +64,7 @@ export default function ParaClinicas() {
           <ol className="mt-14 grid grid-cols-2 gap-y-10 sm:grid-cols-4 lg:grid-cols-7">
             {ruta.map((e, i) => (
               <li key={e} className="border-t border-espresso pt-5 pr-4">
-                <span className="font-serif text-lg text-arcilla italic">{String(i + 1).padStart(2, '0')}</span>
+                <span className="font-serif text-lg text-arcilla">{String(i + 1).padStart(2, '0')}</span>
                 <div className="mt-2 font-serif text-2xl">{e}</div>
               </li>
             ))}
@@ -74,13 +74,13 @@ export default function ParaClinicas() {
 
       <section className="contenedor py-28">
         <Rotulo n="03">Cómo funciona el acuerdo</Rotulo>
-        <h2 className="display mt-6 max-w-3xl text-5xl md:text-6xl">
+        <h2 className="display mt-6 max-w-3xl text-4xl md:text-5xl">
           Cada parte, <em>en su lugar.</em>
         </h2>
         <div className="mt-14 grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {roles.map(([t, s, d], i) => (
             <Revelar key={t} retraso={i * 0.06} className="border-t border-espresso pt-8">
-              <span className="font-serif text-lg text-arcilla italic">{String(i + 1).padStart(2, '0')}</span>
+              <span className="font-serif text-lg text-arcilla">{String(i + 1).padStart(2, '0')}</span>
               <div className="etiqueta mt-4">{t}</div>
               <h3 className="mt-2 font-serif text-3xl">{s}</h3>
               <p className="mt-5 text-sm leading-relaxed text-piedra">{d}</p>

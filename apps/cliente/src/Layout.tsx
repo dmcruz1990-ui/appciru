@@ -16,9 +16,9 @@ const enlaces = [
 /** Páginas con foto a sangre bajo la cabecera: la cabecera arranca transparente. */
 const conHeroOscuro = (path: string) => path === '/'
 
-export function Marca({ claro = false, grande = false }: { claro?: boolean; grande?: boolean }) {
+export function Marca({ claro = false }: { claro?: boolean }) {
   return (
-    <Link to="/" className={`font-serif tracking-tight ${grande ? 'text-[19vw] leading-none' : 'text-2xl'} ${claro ? 'text-marfil' : 'text-espresso'}`}>
+    <Link to="/" aria-label="PLASTINEX, inicio" className={`text-[19px] font-medium tracking-[0.42em] uppercase md:text-[24px] ${claro ? 'text-marfil' : 'text-espresso'}`}>
       Plastinex
     </Link>
   )
@@ -67,40 +67,49 @@ export default function Layout() {
     <div className="flex min-h-screen flex-col">
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-          transparente ? 'bg-transparent text-marfil' : 'border-b border-linea/70 bg-marfil/85 text-espresso backdrop-blur-md'
+          transparente ? 'bg-transparent text-marfil' : 'border-b border-linea bg-marfil text-espresso'
         }`}
       >
-        <div className="contenedor flex h-[72px] items-center gap-10">
-          <Marca claro={transparente} />
-          <nav className="hidden items-center gap-8 text-sm md:flex">
-            {enlaces.map((e) => (
-              <NavLink key={e.to} to={e.to} className="opacity-80 transition hover:opacity-100">
-                {e.t}
-              </NavLink>
-            ))}
-          </nav>
-          <div className="ml-auto hidden items-center gap-6 text-sm md:flex">
+        {/* Fila de marca: cuenta a la izquierda, logotipo centrado, solicitud a la derecha. */}
+        <div className="contenedor relative flex h-16 items-center justify-between md:h-20">
+          <div className="hidden text-[11px] font-medium tracking-[0.22em] uppercase md:block">
             {sesion ? (
               <Link to="/cuenta" className="opacity-80 hover:opacity-100">
-                {paciente ? `Hola, ${paciente.nombre.split(' ')[0]}` : 'Mi cuenta'}
+                {paciente ? paciente.nombre.split(' ')[0] : 'Mi cuenta'}
               </Link>
             ) : (
               <Link to="/ingresar" className="opacity-80 hover:opacity-100">
                 Ingresar
               </Link>
             )}
-            <Link to="/solicitar" className={transparente ? 'btn-claro !py-2.5' : 'btn !py-2.5'}>
-              Solicitar valoración
-            </Link>
           </div>
-          <button className="ml-auto text-sm md:hidden" onClick={() => setAbierto(!abierto)} aria-expanded={abierto}>
+          <button className="text-[11px] font-medium tracking-[0.22em] uppercase md:hidden" onClick={() => setAbierto(!abierto)} aria-expanded={abierto}>
             {abierto ? 'Cerrar' : 'Menú'}
           </button>
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Marca claro={transparente} />
+          </div>
+          <Link to="/solicitar" className="text-[11px] font-medium tracking-[0.22em] uppercase opacity-80 hover:opacity-100">
+            <span className="hidden md:inline">Solicitar valoración</span>
+            <span className="md:hidden">Solicitar</span>
+          </Link>
         </div>
+        {/* Fila de categorías, como en las casas de moda; se oculta al desplazarse. */}
+        <nav
+          className={`hidden justify-center gap-12 overflow-hidden text-[11px] font-medium tracking-[0.22em] uppercase transition-all duration-500 md:flex ${
+            scroll ? 'h-0 opacity-0' : 'h-11 opacity-100'
+          }`}
+        >
+          {enlaces.map((e) => (
+            <NavLink key={e.to} to={e.to} className="pb-4 opacity-80 transition hover:opacity-100">
+              {e.t}
+            </NavLink>
+          ))}
+        </nav>
         {abierto && (
-          <nav className="contenedor flex flex-col border-t border-linea pt-4 pb-8 md:hidden">
+          <nav className="contenedor flex flex-col border-t border-linea bg-marfil pt-4 pb-8 text-espresso md:hidden">
             {[...enlaces, sesion ? { to: '/cuenta', t: 'Mi cuenta' } : { to: '/ingresar', t: 'Ingresar' }].map((e) => (
-              <Link key={e.to} to={e.to} className="border-b border-linea py-4 font-serif text-3xl">
+              <Link key={e.to} to={e.to} className="border-b border-linea py-5 text-[13px] font-medium tracking-[0.2em] uppercase">
                 {e.t}
               </Link>
             ))}
@@ -117,7 +126,7 @@ export default function Layout() {
         <footer className="overflow-hidden bg-espresso text-marfil">
           <div className="contenedor grid gap-12 pt-20 pb-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-              <p className="display max-w-sm text-3xl">Información clara para una decisión que es tuya.</p>
+              <p className="display normal-case max-w-sm text-2xl">Información clara para una decisión que es tuya.</p>
               <Link to="/solicitar" className="btn-claro mt-8">
                 Solicitar valoración
               </Link>
@@ -139,8 +148,8 @@ export default function Layout() {
                 {EMPRESA.direccion.slice(0, 3).join(' · ')}
               </p>
             </div>
-            <div className="pointer-events-none -mb-[3.5vw] select-none" aria-hidden>
-              <span className="block font-serif text-[21vw] leading-[0.8] tracking-tight text-marfil/[0.06]">Plastinex</span>
+            <div className="pt-16 pb-10 text-center text-[13vw] leading-none font-medium tracking-[0.3em] text-marfil/[0.08] uppercase select-none md:text-[9vw]" aria-hidden>
+              Plastinex
             </div>
           </div>
         </footer>
@@ -153,7 +162,7 @@ function Columna({ titulo, enlaces }: { titulo: string; enlaces: [string, string
   return (
     <div>
       <div className="rotulo !text-marfil/50">{titulo}</div>
-      <ul className="mt-5 space-y-3 text-sm">
+      <ul className="mt-6 space-y-3 text-[13px]">
         {enlaces.map(([to, t]) => (
           <li key={t}>
             <Link to={to} className="text-marfil/80 hover:text-marfil">

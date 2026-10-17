@@ -44,28 +44,27 @@ export default function Inicio() {
           <Lienzo semilla="inicio" tono="oscuro" />
           <div className="grano" />
         </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-b from-tinta/50 via-tinta/20 to-tinta/80" />
-        <div className="contenedor relative flex h-full flex-col justify-end pb-14 md:pb-20">
+        <div className="absolute inset-0 bg-gradient-to-b from-tinta/40 via-transparent to-tinta/70" />
+        <div className="contenedor relative flex h-full flex-col items-center justify-end pb-16 text-center md:pb-24">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 1 }} className="rotulo !text-marfil/70">
-            Cirugía plástica · Eje Cafetero, Colombia
+            Cirugía plástica · Colombia
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="display mt-6 max-w-5xl text-[15vw] sm:text-[11vw] lg:text-[8.6rem]"
+            className="display mt-8 text-[11vw] font-light tracking-[0.08em] sm:text-[8vw] lg:text-[6.5rem]"
           >
-            Decide con <em>criterio.</em>
+            Decide con criterio
           </motion.h1>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-end"
+            className="mt-8 flex w-full flex-col items-center gap-10"
           >
-            <p className="max-w-md text-[17px] leading-relaxed text-marfil/80">
-              Reunimos a cirujanos e instituciones habilitadas del Eje Cafetero con información verificable, para que elijas con calma
-              quién te valora.
+            <p className="max-w-lg text-[15px] leading-relaxed text-marfil/75">
+              Cirujanos e instituciones habilitadas, con información verificable, para que elijas con calma quién te valora.
             </p>
             <BuscadorHero />
           </motion.div>
@@ -76,7 +75,7 @@ export default function Inicio() {
       <section className="contenedor grid gap-10 py-28 md:grid-cols-[220px_1fr] md:py-40">
         <Rotulo n="01">Nuestra postura</Rotulo>
         <Revelar>
-          <p className="display text-[34px] leading-[1.15] md:text-[52px]">
+          <p className="display normal-case text-[34px] leading-[1.15] md:text-[52px]">
             No vendemos cirugías. Te damos la información para elegir a quién confiarle la tuya: instituciones habilitadas,
             especialistas registrados y precios orientativos <em>sin letra pequeña.</em>
           </p>
@@ -105,7 +104,7 @@ export default function Inicio() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <Rotulo n="03">Opciones en la región</Rotulo>
-            <h2 className="display mt-6 text-5xl md:text-7xl">
+            <h2 className="display mt-6 text-4xl md:text-5xl">
               Elige con <em>calma.</em>
             </h2>
           </div>
@@ -124,13 +123,13 @@ export default function Inicio() {
       <section id="como" className="bg-papel py-28 md:py-36">
         <div className="contenedor">
           <Rotulo n="04">Cómo funciona</Rotulo>
-          <h2 className="display mt-6 max-w-3xl text-5xl md:text-7xl">
+          <h2 className="display mt-6 max-w-3xl text-4xl md:text-5xl">
             De la búsqueda a la <em>valoración.</em>
           </h2>
           <div className="mt-20 grid border-t border-linea md:grid-cols-4">
             {pasos.map(([t, d], i) => (
               <Revelar key={t} retraso={i * 0.08} className="border-b border-linea py-10 md:border-r md:border-b-0 md:px-8 md:first:pl-0 md:last:border-r-0">
-                <span className="font-serif text-5xl text-arcilla italic">{String(i + 1).padStart(2, '0')}</span>
+                <span className="font-serif text-5xl text-arcilla">{String(i + 1).padStart(2, '0')}</span>
                 <h3 className="mt-6 font-serif text-3xl">{t}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-piedra">{d}</p>
               </Revelar>
@@ -147,7 +146,7 @@ export default function Inicio() {
         </div>
         <div className="flex flex-col justify-center px-6 py-24 md:px-20">
           <Rotulo n="05">Si vienes de otra ciudad</Rotulo>
-          <h2 className="display mt-6 text-5xl md:text-6xl">
+          <h2 className="display mt-6 text-4xl md:text-5xl">
             Tu recuperación, <em>resuelta.</em>
           </h2>
           <p className="mt-6 max-w-md text-piedra">
@@ -178,7 +177,7 @@ export default function Inicio() {
             ['SCCP', 'Membresía en la Sociedad Colombiana de Cirugía Plástica, Estética y Reconstructiva cuando aplica.'],
           ].map(([t, d], i) => (
             <Revelar key={t} retraso={i * 0.08} className="border-t border-espresso pt-8">
-              <h3 className="display text-6xl">{t}</h3>
+              <h3 className="display text-4xl">{t}</h3>
               <p className="mt-5 max-w-xs text-sm leading-relaxed text-piedra">{d}</p>
             </Revelar>
           ))}
@@ -194,7 +193,7 @@ export default function Inicio() {
         <div className="contenedor grid gap-10 py-24 md:grid-cols-[1fr_auto] md:items-end md:py-32">
           <div>
             <div className="rotulo !text-marfil/50">Para clínicas y cirujanos</div>
-            <h2 className="display mt-6 max-w-3xl text-5xl md:text-7xl">
+            <h2 className="display mt-6 max-w-3xl text-4xl md:text-5xl">
               Cada paciente interesado, <em>bien atendido.</em>
             </h2>
           </div>
@@ -222,7 +221,7 @@ function BuscadorHero() {
     navigate(`/planear?${q}`)
   }
   return (
-    <form onSubmit={enviar} className="flex w-full flex-col gap-2 rounded-[28px] bg-marfil/95 p-2 text-espresso backdrop-blur sm:flex-row sm:items-center sm:rounded-full md:w-[680px]">
+    <form onSubmit={enviar} className="flex w-full flex-col gap-2 bg-marfil p-1.5 text-espresso sm:flex-row sm:items-center md:w-[720px]">
       <select value={p} onChange={(e) => setP(e.target.value)} aria-label="Procedimiento" className="flex-1 cursor-pointer bg-transparent px-5 py-3 text-sm outline-none">
         <option value="">Todos los procedimientos</option>
         {datos?.procedimientos.map((x) => (
@@ -265,7 +264,7 @@ function IndiceProcedimientos({ procedimientos, desde }: { procedimientos: Proce
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <Rotulo n="02">Procedimientos</Rotulo>
-          <h2 className="display mt-6 text-5xl md:text-7xl">
+          <h2 className="display mt-6 text-4xl md:text-5xl">
             ¿Qué quieres <em>consultar?</em>
           </h2>
         </div>
@@ -289,8 +288,8 @@ function IndiceProcedimientos({ procedimientos, desde }: { procedimientos: Proce
               onMouseEnter={() => setActivo(p)}
               className="group grid grid-cols-[28px_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 border-b border-linea py-6 transition-colors hover:border-espresso md:grid-cols-[80px_1fr_220px_160px] md:py-8"
             >
-              <span className="font-serif text-lg text-arcilla italic">{String(i + 1).padStart(2, '0')}</span>
-              <span className="font-serif text-[30px] leading-none break-words transition duration-500 ease-(--ease-suave) group-hover:translate-x-3 group-hover:italic md:text-[56px]">
+              <span className="font-serif text-lg text-arcilla">{String(i + 1).padStart(2, '0')}</span>
+              <span className="font-serif text-[30px] leading-none break-words transition duration-500 ease-(--ease-suave) group-hover:translate-x-3 md:text-[56px]">
                 {p.nombre}
               </span>
               <span className="hidden text-sm text-piedra md:block">{nombreCategoria[p.categoria]}</span>

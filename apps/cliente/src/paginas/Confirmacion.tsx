@@ -9,7 +9,7 @@ export default function Confirmacion() {
     <div className="contenedor flex min-h-[85vh] flex-col items-center justify-center pt-28 text-center">
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}>
         <div className="rotulo">Solicitud recibida</div>
-        <h1 className="display mt-6 text-6xl md:text-8xl">
+        <h1 className="display mt-6 text-4xl md:text-5xl">
           Gracias. <em>Te escribimos pronto.</em>
         </h1>
         <p className="mx-auto mt-6 max-w-lg text-piedra">

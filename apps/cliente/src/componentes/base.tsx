@@ -28,6 +28,7 @@ export function Foto({
   respaldo,
   prioridad = false,
   zoom = false,
+  tono = 'claro',
 }: {
   src: string | null | undefined
   alt: string
@@ -36,6 +37,7 @@ export function Foto({
   respaldo?: string
   prioridad?: boolean
   zoom?: boolean
+  tono?: 'claro' | 'oscuro'
 }) {
   const [fallo, setFallo] = useState(false)
   const url = urlImagen(src, ancho)
@@ -52,10 +54,10 @@ export function Foto({
         />
       ) : (
         <>
-          <Lienzo semilla={respaldo ?? alt} />
+          <Lienzo semilla={respaldo ?? alt} tono={tono} />
           {respaldo && (
             <div className="absolute inset-0 flex items-end p-5">
-              <span className="font-serif text-4xl text-espresso/35 italic">{respaldo}</span>
+              <span className="text-[11px] font-medium tracking-[0.24em] text-espresso/45 uppercase">{respaldo}</span>
             </div>
           )}
         </>
@@ -77,8 +79,8 @@ function aleatorio(semilla: string) {
 }
 
 const TONOS = {
-  claro: { fondo: ['#efe8dc', '#e2d8c8'], luz: ['#fbf7f0', '#d9c3a5'], linea: '#a8835c' },
-  oscuro: { fondo: ['#2b2420', '#161210'], luz: ['#8a6a4a', '#3d322b'], linea: '#d9c3a5' },
+  claro: { fondo: ['#f5f5f5', '#e9e9e9'], luz: ['#ffffff', '#d4d4d4'], linea: '#000000' },
+  oscuro: { fondo: ['#141414', '#000000'], luz: ['#4a4a4a', '#1f1f1f'], linea: '#ffffff' },
 } as const
 
 /**
@@ -117,7 +119,7 @@ export function Lienzo({ semilla = 'plastinex', tono = 'claro', className = '' }
       ))}
       <g fill="none" stroke={t.linea} strokeWidth="1" vectorEffect="non-scaling-stroke">
         {lineas.map((d, i) => (
-          <path key={i} d={d} vectorEffect="non-scaling-stroke" opacity={0.12 + 0.28 * Math.sin((i / lineas.length) * Math.PI)} />
+          <path key={i} d={d} vectorEffect="non-scaling-stroke" opacity={0.05 + 0.2 * Math.sin((i / lineas.length) * Math.PI)} />
         ))}
       </g>
     </svg>
@@ -127,7 +129,7 @@ export function Lienzo({ semilla = 'plastinex', tono = 'claro', className = '' }
 export function Rotulo({ n, children, className = '' }: { n?: string; children: ReactNode; className?: string }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      {n && <span className="font-serif text-lg text-arcilla italic">{n}</span>}
+      {n && <span className="font-serif text-lg text-arcilla">{n}</span>}
       <span className="rotulo">{children}</span>
     </div>
   )
@@ -153,7 +155,7 @@ export function EnlaceFlecha({ to, children, className = '' }: { to: string; chi
 export function Cargando() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <span className="font-serif text-2xl text-piedra italic">Cargando…</span>
+      <span className="font-serif text-2xl text-piedra">Cargando…</span>
     </div>
   )
 }
@@ -161,7 +163,7 @@ export function Cargando() {
 export function ErrorCarga({ mensaje, reintentar }: { mensaje: string; reintentar?: () => void }) {
   return (
     <div className="contenedor py-32 text-center">
-      <h2 className="display text-4xl">No pudimos cargar la información</h2>
+      <h2 className="display normal-case text-4xl">No pudimos cargar la información</h2>
       <p className="mt-3 text-sm text-piedra">{mensaje}</p>
       {reintentar && (
         <button onClick={reintentar} className="btn mt-8">

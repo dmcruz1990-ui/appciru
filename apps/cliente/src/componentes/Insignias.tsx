@@ -15,7 +15,7 @@ export function EstadoVerificacion({ v, claro = false }: { v: Verificacion; clar
 export function EtiquetaDemo({ claro = false }: { claro?: boolean }) {
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-[10px] font-medium tracking-[0.16em] uppercase backdrop-blur ${claro ? 'bg-black/25 text-white' : 'bg-espresso/5 text-piedra'}`}
+      className={`px-2.5 py-1 text-[10px] font-medium tracking-[0.16em] uppercase backdrop-blur ${claro ? 'bg-black/25 text-white' : 'bg-espresso/5 text-piedra'}`}
     >
       Perfil demo
     </span>

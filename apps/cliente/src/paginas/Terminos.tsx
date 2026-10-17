@@ -3,10 +3,10 @@ import type { ReactNode } from 'react'
 
 export default function Terminos() {
   return (
-    <article className="contenedor pt-36 pb-28">
+    <article className="contenedor pt-48 pb-28">
       <div className="mx-auto max-w-3xl">
         <div className="rotulo">Documentos · versión {TERMINOS_VERSION}</div>
-        <h1 className="display mt-6 text-6xl md:text-7xl">
+        <h1 className="display mt-6 text-4xl md:text-5xl">
           Términos, intermediación <em>y responsabilidad.</em>
         </h1>
         <p className="mt-8 border-l-2 border-arcilla pl-5 text-sm text-piedra">
@@ -72,7 +72,7 @@ export default function Terminos() {
             registradas. Si estos documentos cambian, se pedirá aceptar la nueva versión antes de enviar otra solicitud.
           </Seccion>
           <Seccion n="12" t="Contacto">
-            {EMPRESA.razonSocial} · {EMPRESA.contacto} · {EMPRESA.direccion.join(', ')}.
+            {EMPRESA.razonSocial} · {EMPRESA.direccion.join(', ')}.
           </Seccion>
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function Terminos() {
 function Seccion({ n, t, children }: { n: string; t: string; children: ReactNode }) {
   return (
     <section className="grid gap-4 border-t border-linea pt-8 md:grid-cols-[60px_1fr]">
-      <span className="font-serif text-2xl text-arcilla italic">{n}</span>
+      <span className="font-serif text-2xl text-arcilla">{n}</span>
       <div>
         <h2 className="font-serif text-3xl">{t}</h2>
         <p className="mt-4 text-piedra">{children}</p>

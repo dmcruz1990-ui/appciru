@@ -44,9 +44,9 @@ export default function Explorar() {
   const activos = [procedimiento, ciudad, categoria, precio, verificadas ? '1' : ''].filter(Boolean).length
 
   return (
-    <div className="contenedor pt-36 pb-28">
+    <div className="contenedor pt-48 pb-28">
       <div className="flex flex-wrap items-end justify-between gap-6">
-        <h1 className="display text-6xl md:text-8xl">
+        <h1 className="display text-4xl md:text-5xl">
           Procedimientos <em>y opciones</em>
         </h1>
         <p className="max-w-xs text-sm text-piedra">Perfiles de demostración. Los precios son rangos informados por cada prestador.</p>
@@ -94,7 +94,7 @@ export default function Explorar() {
         </div>
       ) : (
         <div className="mt-16 border-y border-linea py-20 text-center">
-          <p className="display text-4xl">No hay opciones con esos filtros.</p>
+          <p className="display normal-case text-4xl">No hay opciones con esos filtros.</p>
           <p className="mt-3 text-sm text-piedra">Prueba otra ciudad o pide orientación a un coordinador.</p>
           <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn mt-8">
             Solicitar orientación

@@ -21,7 +21,7 @@ export default function InstitucionPagina() {
   return (
     <>
       <section className="relative h-[78svh] min-h-[560px] overflow-hidden text-marfil">
-        <Foto src={imagen} alt={inst.nombre} ancho={2000} prioridad className="absolute inset-0" respaldo={inst.nombre} />
+        <Foto src={imagen} alt={inst.nombre} ancho={2000} prioridad className="!absolute inset-0" tono="oscuro" />
         <div className="absolute inset-0 bg-gradient-to-t from-tinta/85 via-tinta/30 to-tinta/40" />
         <div className="contenedor relative flex h-full flex-col justify-end pb-14">
           <div className="flex items-center gap-3">
@@ -30,7 +30,7 @@ export default function InstitucionPagina() {
             </span>
             {inst.es_demo && <EtiquetaDemo claro />}
           </div>
-          <h1 className="display mt-6 max-w-4xl text-6xl md:text-8xl">{inst.nombre}</h1>
+          <h1 className="display mt-6 max-w-4xl text-4xl md:text-5xl">{inst.nombre}</h1>
           <div className="mt-6">
             <EstadoVerificacion v={inst.verificacion} claro />
           </div>
@@ -39,7 +39,7 @@ export default function InstitucionPagina() {
 
       <section className="contenedor grid gap-16 py-24 md:grid-cols-[1.4fr_1fr]">
         <Revelar>
-          <p className="display text-3xl leading-snug md:text-4xl">{inst.descripcion}</p>
+          <p className="display normal-case text-3xl leading-snug md:text-4xl">{inst.descripcion}</p>
           {inst.servicios.length > 0 && (
             <ul className="mt-10 grid gap-x-8 border-t border-linea text-sm sm:grid-cols-2">
               {inst.servicios.map((s) => (
@@ -76,9 +76,9 @@ export default function InstitucionPagina() {
             <ul className="mt-3 divide-y divide-linea border-y border-linea">
               {profesionales.map((p) => (
                 <li key={p.id}>
-                  <Link to={`/profesional/${p.id}`} className="flex items-baseline justify-between gap-4 py-4 hover:italic">
+                  <Link to={`/profesional/${p.id}`} className="flex items-baseline justify-between gap-4 py-4 hover:underline underline-offset-4">
                     <span className="font-serif text-2xl">{p.nombre}</span>
-                    <span className="text-xs text-piedra not-italic">{p.sociedad ?? ''}</span>
+                    <span className="text-xs text-piedra no-underline">{p.sociedad ?? ''}</span>
                   </Link>
                 </li>
               ))}
@@ -90,7 +90,7 @@ export default function InstitucionPagina() {
 
       <section className="contenedor border-t border-linea py-24">
         <Rotulo>Procedimientos</Rotulo>
-        <h2 className="display mt-5 text-5xl">
+        <h2 className="display mt-5 text-4xl">
           Lo que puedes <em>valorar aquí</em>
         </h2>
         <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">

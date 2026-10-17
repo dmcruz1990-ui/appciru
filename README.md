@@ -38,8 +38,7 @@ npm run build             # compila las dos apps (dist/ en cada una)
 ```
 
 ### Titular y modelo
-La plataforma es de **PLASTINEX LLC** (1501 South Greeley Hwy, Ste C #1776, Cheyenne, WY 82007, EE. UU.; contacto: Jaime
-De la Vega). Esos datos están en `EMPRESA` (`packages/shared/src/formato.ts`). El paciente contrata y paga directamente a la
+La plataforma es de **PLASTINEX LLC** (1501 South Greeley Hwy, Ste C #1776, Cheyenne, WY 82007, EE. UU.). Esos datos están en `EMPRESA` (`packages/shared/src/formato.ts`). El paciente contrata y paga directamente a la
 clínica que elige; la clínica fija el precio y responde por la atención; PLASTINEX factura a la clínica una comisión o tarifa
 comercial según un contrato independiente. Si cambian los términos, sube `TERMINOS_VERSION` y `px_privado.px_version_terminos()`
 a la vez: los pacientes tendrán que aceptarlos de nuevo.
@@ -56,11 +55,13 @@ En Supabase → Authentication → URL Configuration → **Redirect URLs** deben
 confirmación de correo ni los de recuperación de contraseña.
 
 ### Diseño
-El sitio usa un estilo editorial clínico: paleta marfil y espresso, tipografías Instrument Serif y Geist, fotos a sangre,
-animaciones con `motion` y desplazamiento suave con `lenis`. El sitio no usa fotos de banco: mientras no haya fotos propias se
-muestra una composición abstracta generada en el navegador (`Lienzo`, en `componentes/base.tsx`), sin cuerpos ni pacientes.
-Las fotos reales se suben desde el panel (Catálogo → Editar → Subir foto) y quedan en el bucket `px-imagenes`. Usar solo
-fotos propias o con licencia y consentimiento, revisadas por el médico antes de publicarlas.
+Estilo de casa de lujo internacional: blanco y negro puros, una sola tipografía geométrica (Jost), títulos en mayúsculas
+espaciadas, logotipo centrado con la fila de categorías debajo, botones rectos, animaciones con `motion` y desplazamiento
+suave con `lenis`. Los colores se definen en `apps/cliente/src/index.css`. El sitio no usa fotos de banco: mientras no haya
+fotos propias se muestra una composición abstracta en blanco y negro generada en el navegador (`Lienzo`, en
+`componentes/base.tsx`), sin cuerpos ni pacientes. Las fotos reales se suben desde el panel (Catálogo → Editar → Subir foto)
+y quedan en el bucket `px-imagenes`. Usar solo fotos propias o con licencia y consentimiento, revisadas por el médico antes
+de publicarlas.
 
 ### Primer acceso al panel
 1. Abre el panel → **Crear cuenta** → confirma el correo si Supabase lo pide.

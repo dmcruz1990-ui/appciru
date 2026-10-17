@@ -67,14 +67,14 @@ export default function Ingresar() {
         <div className="grano" />
         <div className="absolute inset-0 bg-gradient-to-t from-tinta/70 via-tinta/10 to-transparent" />
         <div className="absolute right-12 bottom-12 left-12 text-marfil">
-          <p className="display max-w-md text-4xl">“La mejor decisión es la que tomas bien informada.”</p>
+          <p className="display normal-case max-w-md text-4xl">“La mejor decisión es la que tomas bien informada.”</p>
           <p className="mt-4 text-sm text-marfil/70">Tu información se trata con confidencialidad y solo se comparte con la institución que elijas.</p>
         </div>
       </div>
 
       <div className="flex flex-col justify-center px-6 pt-28 pb-16 md:px-16 lg:pt-16">
         <div className="mx-auto w-full max-w-md">
-          <h1 className="display text-6xl">
+          <h1 className="display text-4xl">
             {titulos[modo][0]} <em>{titulos[modo][1]}</em>
           </h1>
           <p className="mt-4 text-piedra">
