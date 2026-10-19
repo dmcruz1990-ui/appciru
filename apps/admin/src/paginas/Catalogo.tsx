@@ -9,6 +9,7 @@ import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import SubirImagen from '../componentes/SubirImagen'
+import SubirGaleria from '../componentes/SubirGaleria'
 import { Modal, Titulo, VerifBadge } from '../componentes/ui'
 import { useDatos, type DatosPanel } from '../datos'
 
@@ -17,7 +18,7 @@ type Fila = Record<string, unknown> & { id: string }
 interface CampoDef {
   k: string
   t: string
-  tipo: 'texto' | 'area' | 'numero' | 'select' | 'bool' | 'lista' | 'fecha' | 'imagen'
+  tipo: 'texto' | 'area' | 'numero' | 'select' | 'bool' | 'lista' | 'fecha' | 'imagen' | 'galeria' | 'coordenada'
   opciones?: (d: DatosPanel) => { v: string; t: string }[]
   requerido?: boolean
   ayuda?: string
@@ -88,12 +89,15 @@ const colecciones: Coleccion[] = [
       { k: 'telefono_publico', t: 'Teléfono público', tipo: 'texto' },
       { k: 'sitio_web', t: 'Sitio web', tipo: 'texto' },
       { k: 'imagen_url', t: 'Foto principal', tipo: 'imagen', ancho: true },
+      { k: 'galeria', t: 'Galería (se ven en el carrusel y en la ficha)', tipo: 'galeria', ancho: true },
+      { k: 'lat', t: 'Latitud', tipo: 'coordenada', ayuda: 'Para el mapa. Ej.: 4.8087 (Google Maps → clic derecho)' },
+      { k: 'lng', t: 'Longitud', tipo: 'coordenada', ayuda: 'Ej.: -75.6890' },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
       { k: 'servicios', t: 'Servicios (separados por comas)', tipo: 'lista', ancho: true },
       { k: 'es_demo', t: 'Perfil de demostración', tipo: 'bool' },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
-    nuevo: { tipo: 'clinica', servicios: [], publicado: false, es_demo: false },
+    nuevo: { tipo: 'clinica', servicios: [], galeria: [], publicado: false, es_demo: false },
   },
   {
     id: 'profesionales',
@@ -167,13 +171,17 @@ const colecciones: Coleccion[] = [
       { k: 'tipo', t: 'Tipo', tipo: 'select', requerido: true, opciones: deRecord(nombreTipoAlojamiento) },
       { k: 'ciudad_id', t: 'Ciudad', tipo: 'select', requerido: true, opciones: ciudades },
       { k: 'precio_noche_desde', t: 'Precio por noche desde (COP)', tipo: 'numero' },
+      { k: 'capacidad', t: 'Capacidad (personas)', tipo: 'numero' },
+      { k: 'galeria', t: 'Fotos del alojamiento', tipo: 'galeria', ancho: true },
+      { k: 'lat', t: 'Latitud', tipo: 'coordenada', ayuda: 'Para el mapa. Ej.: 4.8060' },
+      { k: 'lng', t: 'Longitud', tipo: 'coordenada', ayuda: 'Ej.: -75.6850' },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
       { k: 'incluye_enfermeria', t: 'Incluye enfermería', tipo: 'bool' },
       { k: 'incluye_alimentacion', t: 'Incluye alimentación', tipo: 'bool' },
       { k: 'es_demo', t: 'De demostración', tipo: 'bool' },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
-    nuevo: { tipo: 'casa_recobro', publicado: false, es_demo: false, incluye_enfermeria: false, incluye_alimentacion: false },
+    nuevo: { tipo: 'casa_recobro', galeria: [], publicado: false, es_demo: false, incluye_enfermeria: false, incluye_alimentacion: false },
   },
   {
     id: 'servicios',
@@ -402,6 +410,13 @@ function Editor({
                 <SubirImagen valor={(valor as string | null) ?? null} carpeta={col.id} onChange={(u) => set(c.k, u)} />
               </div>
             )
+          if (c.tipo === 'galeria')
+            return (
+              <div key={c.k} className={clase}>
+                <span className="etiqueta">{c.t}</span>
+                <SubirGaleria valor={(valor as string[] | undefined) ?? []} carpeta={col.id} onChange={(u) => set(c.k, u)} />
+              </div>
+            )
           if (c.tipo === 'bool')
             return (
               <label key={c.k} className={`flex items-center gap-2 text-sm ${clase}`}>
@@ -427,6 +442,16 @@ function Editor({
                 </select>
               ) : c.tipo === 'numero' ? (
                 <input type="number" min={0} value={(valor as number | null) ?? ''} onChange={(e) => set(c.k, e.target.value === '' ? null : Number(e.target.value))} className="campo" />
+              ) : c.tipo === 'coordenada' ? (
+                <input
+                  type="number"
+                  step="any"
+                  min={c.k === 'lat' ? -90 : -180}
+                  max={c.k === 'lat' ? 90 : 180}
+                  value={(valor as number | null) ?? ''}
+                  onChange={(e) => set(c.k, e.target.value === '' ? null : Number(e.target.value))}
+                  className="campo"
+                />
               ) : c.tipo === 'lista' ? (
                 <input
                   value={((valor as string[] | undefined) ?? []).join(', ')}

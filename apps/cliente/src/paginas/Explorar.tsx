@@ -1,20 +1,27 @@
-import { detallarOfertas, nombreCategoria, type Categoria } from '@plastinex/shared'
+import { detallarOfertas, formatoCOP, nombreCategoria, type Categoria } from '@plastinex/shared'
+import { LayoutGrid, List, Map as IconoMapa } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
-import { Revelar } from '../componentes/base'
+import Buscador, { iconoCategoria } from '../componentes/Buscador'
+import Mapa, { precioCorto, type Limites } from '../componentes/Mapa'
 import OfertaCard from '../componentes/OfertaCard'
 
 export default function Explorar() {
   const { datos } = useCatalogo()
   const [params, setParams] = useSearchParams()
-  if (!datos) return null
+  const [resaltada, setResaltada] = useState<string | null>(null)
+  const [seleccionada, setSeleccionada] = useState<string | null>(null)
+  const [alMover, setAlMover] = useState(false)
+  const [limites, setLimites] = useState<Limites | null>(null)
 
   const procedimiento = params.get('procedimiento') ?? ''
   const ciudad = params.get('ciudad') ?? ''
   const categoria = (params.get('categoria') ?? '') as Categoria | ''
-  const precio = params.get('precio') ?? ''
+  const presupuesto = Number(params.get('presupuesto')) || 0
   const verificadas = params.get('verificadas') === '1'
   const orden = params.get('orden') ?? 'relevancia'
+  const vista = params.get('vista') === 'mapa' ? 'mapa' : 'lista'
 
   const set = (k: string, v: string) => {
     const p = new URLSearchParams(params)
@@ -24,100 +31,192 @@ export default function Explorar() {
     setParams(p, { replace: true })
   }
 
-  let lista = detallarOfertas(datos).filter((d) => {
-    const conPrecio = d.oferta.precio_min != null || d.oferta.precio_max != null
-    if (procedimiento && d.procedimiento.id !== procedimiento) return false
-    if (categoria && d.procedimiento.categoria !== categoria) return false
-    if (ciudad && d.ciudad.id !== ciudad) return false
-    if (precio === 'con' && !conPrecio) return false
-    if (precio === 'sin' && conPrecio) return false
-    if (verificadas && d.institucion.verificacion !== 'verificado') return false
-    return true
-  })
-  lista = [...lista].sort((a, b) => {
-    if (orden === 'nombre') return a.procedimiento.nombre.localeCompare(b.procedimiento.nombre, 'es')
-    if (orden === 'precio') return (a.oferta.precio_min ?? Infinity) - (b.oferta.precio_min ?? Infinity)
-    return Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado')
-  })
+  // Lo que viaja de la búsqueda a las fichas (fechas y presupuesto).
+  const consulta = useMemo(() => {
+    const q = new URLSearchParams()
+    for (const k of ['llegada', 'salida', 'presupuesto']) if (params.get(k)) q.set(k, params.get(k)!)
+    return q.toString()
+  }, [params])
 
-  const procs = datos.procedimientos.filter((p) => !categoria || p.categoria === categoria)
-  const activos = [procedimiento, ciudad, categoria, precio, verificadas ? '1' : ''].filter(Boolean).length
+  const filtradas = useMemo(() => {
+    if (!datos) return []
+    const l = detallarOfertas(datos).filter((d) => {
+      if (procedimiento && d.procedimiento.id !== procedimiento) return false
+      if (categoria && d.procedimiento.categoria !== categoria) return false
+      if (ciudad && d.ciudad.id !== ciudad) return false
+      if (presupuesto && (d.oferta.precio_min == null || d.oferta.precio_min > presupuesto)) return false
+      if (verificadas && d.institucion.verificacion !== 'verificado') return false
+      return true
+    })
+    return l.sort((a, b) => {
+      if (orden === 'precio') return (a.oferta.precio_min ?? Infinity) - (b.oferta.precio_min ?? Infinity)
+      if (orden === 'nombre') return a.procedimiento.nombre.localeCompare(b.procedimiento.nombre, 'es')
+      return Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado')
+    })
+  }, [datos, procedimiento, categoria, ciudad, presupuesto, verificadas, orden])
+
+  // Un marcador por institución con el precio desde más bajo de sus opciones.
+  const puntos = useMemo(() => {
+    const porInst = new Map<string, { id: string; lat: number; lng: number; desde: number | null; n: number }>()
+    for (const d of filtradas) {
+      const i = d.institucion
+      if (i.lat == null || i.lng == null) continue
+      const x = porInst.get(i.id) ?? { id: i.id, lat: i.lat, lng: i.lng, desde: null, n: 0 }
+      x.n++
+      if (d.oferta.precio_min != null) x.desde = x.desde == null ? d.oferta.precio_min : Math.min(x.desde, d.oferta.precio_min)
+      porInst.set(i.id, x)
+    }
+    return [...porInst.values()].map((x) => ({ ...x, etiqueta: precioCorto(x.desde) }))
+  }, [filtradas])
+
+  if (!datos) return null
+
+  const dentroDelMapa = (instId: string) => {
+    if (!alMover || !limites) return true
+    const i = datos.instituciones.find((x) => x.id === instId)
+    if (i?.lat == null || i.lng == null) return false
+    return i.lat <= limites.norte && i.lat >= limites.sur && i.lng <= limites.este && i.lng >= limites.oeste
+  }
+  const lista = filtradas.filter((d) => dentroDelMapa(d.institucion.id))
+  const sel = seleccionada ? puntos.find((p) => p.id === seleccionada) : null
+  const selInst = sel ? datos.instituciones.find((i) => i.id === sel.id) : null
+  const activos = [procedimiento, ciudad, categoria, presupuesto ? '1' : '', verificadas ? '1' : ''].filter(Boolean).length
 
   return (
-    <div className="contenedor pt-48 pb-28">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <h1 className="display text-4xl md:text-5xl">
-          Procedimientos <em>y opciones</em>
-        </h1>
-        <p className="max-w-xs text-sm text-piedra">Perfiles de demostración. Los precios son rangos informados por cada prestador.</p>
+    <div className="pt-16 md:pt-[124px]">
+      <div className="border-b border-linea">
+        <div className="contenedor pt-8 pb-4">
+          <Buscador />
+          {/* Categorías con ícono, como la barra de un marketplace. */}
+          <div className="mt-6 flex gap-8 overflow-x-auto text-[11px] font-medium tracking-[0.18em] whitespace-nowrap uppercase">
+            <Categoria activa={!categoria} onClick={() => set('categoria', '')} icono={<LayoutGrid size={20} strokeWidth={1.4} />} texto="Todo" />
+            {(Object.keys(nombreCategoria) as Categoria[]).map((c) => {
+              const I = iconoCategoria[c]
+              return <Categoria key={c} activa={categoria === c} onClick={() => set('categoria', c)} icono={<I size={20} strokeWidth={1.4} />} texto={nombreCategoria[c]} />
+            })}
+            <span className="mx-2 w-px shrink-0 bg-linea" />
+            {datos.procedimientos
+              .filter((p) => !categoria || p.categoria === categoria)
+              .map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => set('procedimiento', procedimiento === p.id ? '' : p.id)}
+                  className={`-mb-px shrink-0 border-b-2 pt-6 pb-3 transition ${procedimiento === p.id ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:text-espresso'}`}
+                >
+                  {p.nombre}
+                </button>
+              ))}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-14 flex gap-8 overflow-x-auto border-b border-linea text-sm whitespace-nowrap">
-        {[['', 'Todas'], ...Object.entries(nombreCategoria)].map(([id, t]) => (
-          <button
-            key={id}
-            onClick={() => set('categoria', id)}
-            className={`-mb-px border-b pb-4 transition ${categoria === id ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:text-espresso'}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(400px,40%)]">
+        {/* Lista */}
+        <div className={`contenedor !max-w-none py-8 lg:!px-10 ${vista === 'mapa' ? 'hidden lg:block' : ''}`}>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+            <span className="font-medium">
+              {lista.length} {lista.length === 1 ? 'opción' : 'opciones'}
+              {presupuesto ? ` hasta ${formatoCOP(presupuesto)}` : ''}
+            </span>
+            <label className="flex cursor-pointer items-center gap-2 text-piedra">
+              <input type="checkbox" checked={verificadas} onChange={(e) => set('verificadas', e.target.checked ? '1' : '')} className="accent-espresso" />
+              Solo verificadas
+            </label>
+            {activos > 0 && (
+              <button onClick={() => setParams(new URLSearchParams(), { replace: true })} className="enlace text-piedra">
+                Limpiar filtros
+              </button>
+            )}
+            <select value={orden} onChange={(e) => set('orden', e.target.value)} className="ml-auto cursor-pointer border-b border-linea bg-transparent py-1 outline-none" aria-label="Ordenar">
+              <option value="relevancia">Relevancia</option>
+              <option value="precio">Precio menor</option>
+              <option value="nombre">Nombre</option>
+            </select>
+          </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
-        <Filtro valor={procedimiento} onChange={(v) => set('procedimiento', v)} opciones={[['', 'Todo procedimiento'], ...procs.map((p) => [p.id, p.nombre] as [string, string])]} />
-        <Filtro valor={ciudad} onChange={(v) => set('ciudad', v)} opciones={[['', 'Toda la región'], ...datos.ciudades.map((c) => [c.id, c.nombre] as [string, string])]} />
-        <Filtro valor={precio} onChange={(v) => set('precio', v)} opciones={[['', 'Cualquier precio'], ['con', 'Con rango orientativo'], ['sin', 'Sin precio informado']]} />
-        <label className="flex cursor-pointer items-center gap-2 text-piedra">
-          <input type="checkbox" checked={verificadas} onChange={(e) => set('verificadas', e.target.checked ? '1' : '')} className="accent-espresso" />
-          Solo verificadas
-        </label>
-        <div className="ml-auto flex items-center gap-6">
-          {activos > 0 && (
-            <button onClick={() => setParams({}, { replace: true })} className="enlace text-piedra">
-              Limpiar filtros
-            </button>
+          {lista.length ? (
+            <div className="mt-8 grid gap-x-6 gap-y-12 sm:grid-cols-2 2xl:grid-cols-3">
+              {lista.map((d) => (
+                <OfertaCard key={d.oferta.id} d={d} consulta={consulta} onResaltar={setResaltada} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-12 border-y border-linea py-20 text-center">
+              <p className="display normal-case text-3xl">No hay opciones con esos filtros.</p>
+              <p className="mt-3 text-sm text-piedra">
+                {alMover ? 'Mueve el mapa o desactiva «Buscar al mover el mapa».' : 'Prueba otra ciudad, sube el presupuesto o pide orientación a un coordinador.'}
+              </p>
+              <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn mt-8">
+                Solicitar orientación
+              </Link>
+            </div>
           )}
-          <Filtro valor={orden} onChange={(v) => set('orden', v)} opciones={[['relevancia', 'Relevancia'], ['precio', 'Precio menor'], ['nombre', 'Nombre']]} />
+        </div>
+
+        {/* Mapa */}
+        <div className={`${vista === 'mapa' ? 'block' : 'hidden'} lg:block`}>
+          <div className="relative h-[calc(100svh-64px)] lg:sticky lg:top-20 lg:h-[calc(100svh-80px)]">
+            <Mapa
+              puntos={puntos}
+              activo={resaltada}
+              seleccionado={seleccionada}
+              onSeleccion={setSeleccionada}
+              onMover={setLimites}
+              className="h-full"
+              tarjeta={
+                sel &&
+                selInst && (
+                  <Link
+                    to={`/institucion/${selInst.id}${consulta ? `?${consulta}` : ''}`}
+                    className="pointer-events-auto flex w-full max-w-sm items-center gap-4 border border-linea bg-marfil p-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="rotulo !text-[10px]">{datos.ciudades.find((c) => c.id === selInst.ciudad_id)?.nombre}</div>
+                      <div className="mt-1 truncate text-[14px] font-medium tracking-[0.1em] uppercase">{selInst.nombre}</div>
+                      <div className="mt-1 text-[13px] text-piedra">
+                        {sel.n} {sel.n === 1 ? 'opción' : 'opciones'} · {sel.desde ? `desde ${formatoCOP(sel.desde)}` : 'precio por valorar'}
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-medium tracking-[0.2em] uppercase underline underline-offset-[6px]">Ver</span>
+                  </Link>
+                )
+              }
+            />
+            <label className="absolute top-4 left-4 z-[500] flex cursor-pointer items-center gap-2 border border-linea bg-marfil px-4 py-2.5 text-[13px] shadow-[0_4px_14px_rgba(0,0,0,0.12)]">
+              <input type="checkbox" checked={alMover} onChange={(e) => setAlMover(e.target.checked)} className="accent-espresso" />
+              Buscar al mover el mapa
+            </label>
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 text-sm text-piedra">{lista.length} opciones</div>
-
-      {lista.length ? (
-        <div className="mt-12 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
-          {lista.map((d, i) => (
-            <Revelar key={d.oferta.id} retraso={(i % 3) * 0.06}>
-              <OfertaCard d={d} />
-            </Revelar>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-16 border-y border-linea py-20 text-center">
-          <p className="display normal-case text-4xl">No hay opciones con esos filtros.</p>
-          <p className="mt-3 text-sm text-piedra">Prueba otra ciudad o pide orientación a un coordinador.</p>
-          <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn mt-8">
-            Solicitar orientación
-          </Link>
-        </div>
-      )}
+      {/* Alternar lista / mapa en celular y tableta. */}
+      <button
+        onClick={() => set('vista', vista === 'mapa' ? '' : 'mapa')}
+        className="fixed bottom-6 left-1/2 z-[600] flex -translate-x-1/2 items-center gap-2 bg-espresso px-6 py-3.5 text-[11px] font-medium tracking-[0.2em] text-marfil uppercase shadow-[0_10px_30px_rgba(0,0,0,0.3)] lg:hidden"
+      >
+        {vista === 'mapa' ? (
+          <>
+            <List size={15} strokeWidth={1.6} /> Mostrar lista
+          </>
+        ) : (
+          <>
+            <IconoMapa size={15} strokeWidth={1.6} /> Mostrar mapa
+          </>
+        )}
+      </button>
     </div>
   )
 }
 
-function Filtro({ valor, onChange, opciones }: { valor: string; onChange: (v: string) => void; opciones: [string, string][] }) {
+function Categoria({ activa, onClick, icono, texto }: { activa: boolean; onClick: () => void; icono: React.ReactNode; texto: string }) {
   return (
-    <select
-      value={valor}
-      onChange={(e) => onChange(e.target.value)}
-      className={`cursor-pointer appearance-none border-b bg-transparent py-1 pr-5 outline-none ${valor ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:text-espresso'}`}
-      style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236e655c'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right center' }}
+    <button
+      onClick={onClick}
+      className={`-mb-px flex shrink-0 flex-col items-center gap-2 border-b-2 pt-1 pb-3 transition ${activa ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:border-linea hover:text-espresso'}`}
     >
-      {opciones.map(([v, t]) => (
-        <option key={v} value={v}>
-          {t}
-        </option>
-      ))}
-    </select>
+      {icono}
+      {texto}
+    </button>
   )
 }

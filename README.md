@@ -54,6 +54,18 @@ En Supabase → Authentication → URL Configuration → **Redirect URLs** deben
 `https://plastinex-cliente.vercel.app/**` y `https://plastinex-admin.vercel.app/**`. Sin eso no funcionan los enlaces de
 confirmación de correo ni los de recuperación de contraseña.
 
+### Experiencia tipo marketplace
+- **Buscador en píldora** (procedimiento · dónde · fechas del viaje · presupuesto) con paneles desplegables; en celular
+  empieza plegado. La búsqueda queda en la URL, así se puede compartir.
+- **Explorar** con lista y **mapa con precios** (Leaflet + teselas de CARTO/OpenStreetMap). Al pasar por una tarjeta se
+  resalta su marcador; «Buscar al mover el mapa» filtra por la zona visible. En celular, botón «Mostrar mapa».
+- **Tarjetas con carrusel de fotos** y **favoritos** (corazón). Los favoritos viven solo en el navegador del visitante.
+- **Ficha de clínica** con galería y visor de fotos, servicios, especialistas, ubicación, alojamiento cercano y una
+  **tarjeta de reserva** fija: procedimiento, fechas de llegada y salida, alojamiento y total estimado.
+- **Alojamiento** (`/alojamientos`, `/alojamiento/:id`) con mapa de precios por noche y cálculo por fechas.
+- **Directorio de especialistas** (`/especialistas`) con filtros por ciudad, procedimiento, idioma y valoración virtual.
+- En el panel, cada institución y alojamiento tiene **galería** (hasta 20 fotos) y **coordenadas** para el mapa.
+
 ### Diseño
 Estilo de casa de lujo internacional: blanco y negro puros, una sola tipografía geométrica (Jost), títulos en mayúsculas
 espaciadas, logotipo centrado con la fila de categorías debajo, botones rectos, animaciones con `motion` y desplazamiento

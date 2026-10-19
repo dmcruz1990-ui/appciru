@@ -18,7 +18,7 @@ export default function Solicitar() {
 
   const [procedimientoId, setProcedimientoId] = useState(params.get('procedimiento') ?? '')
   const [ciudadId, setCiudadId] = useState(params.get('ciudad') ?? '')
-  const [fecha, setFecha] = useState('')
+  const [fecha, setFecha] = useState(params.get('fecha') ?? '')
   const [quiereAlojamiento, setQuiereAlojamiento] = useState(Boolean(params.get('alojamiento')))
   const [alojamientoId, setAlojamientoId] = useState(params.get('alojamiento') ?? '')
   const [noches, setNoches] = useState<number | ''>(Number(params.get('noches')) || '')

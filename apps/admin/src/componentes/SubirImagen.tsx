@@ -3,6 +3,16 @@ import { useState } from 'react'
 
 const BUCKET = 'px-imagenes'
 
+/** Sube un archivo al bucket público y devuelve su URL. */
+export async function subirArchivo(archivo: File, carpeta: string): Promise<string> {
+  if (archivo.size > 5 * 1024 * 1024) throw new Error(`${archivo.name}: máximo 5 MB.`)
+  const ext = archivo.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const ruta = `${carpeta}/${crypto.randomUUID()}.${ext}`
+  const { error } = await supabase.storage.from(BUCKET).upload(ruta, archivo, { cacheControl: '31536000', contentType: archivo.type })
+  if (error) throw new Error(error.message)
+  return supabase.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl
+}
+
 /** Sube una foto al bucket público de Storage y devuelve su URL; también acepta pegar una URL. */
 export default function SubirImagen({ valor, carpeta, onChange }: { valor: string | null; carpeta: string; onChange: (url: string | null) => void }) {
   const [subiendo, setSubiendo] = useState(false)
@@ -11,14 +21,14 @@ export default function SubirImagen({ valor, carpeta, onChange }: { valor: strin
 
   const subir = async (archivo: File) => {
     setError(null)
-    if (archivo.size > 5 * 1024 * 1024) return setError('Máximo 5 MB.')
     setSubiendo(true)
-    const ext = archivo.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const ruta = `${carpeta}/${crypto.randomUUID()}.${ext}`
-    const { error } = await supabase.storage.from(BUCKET).upload(ruta, archivo, { cacheControl: '31536000', contentType: archivo.type })
-    setSubiendo(false)
-    if (error) return setError(error.message)
-    onChange(supabase.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl)
+    try {
+      onChange(await subirArchivo(archivo, carpeta))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setSubiendo(false)
+    }
   }
 
   return (

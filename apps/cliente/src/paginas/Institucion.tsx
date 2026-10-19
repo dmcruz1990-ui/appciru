@@ -1,126 +1,295 @@
-import { detallarOfertas, formatoCOP, nombreCiudad, nombreTipoAlojamiento, nombreTipoInstitucion, textoPrecio } from '@plastinex/shared'
-import { Link, useParams } from 'react-router-dom'
+import { detallarOfertas, formatoCOP, iniciales, nombreCiudad, nombreTipoAlojamiento, nombreTipoInstitucion, textoPrecio } from '@plastinex/shared'
+import { CalendarDays, Check, Share2, ShieldCheck } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
-import { Foto, Revelar, Rotulo } from '../componentes/base'
+import { Revelar, Rotulo } from '../componentes/base'
+import { nochesEntre } from '../componentes/Buscador'
+import Carrusel from '../componentes/Carrusel'
+import { BotonFavorito, useFavoritos } from '../componentes/favoritos'
+import Galeria from '../componentes/Galeria'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
+import Mapa from '../componentes/Mapa'
 import NoEncontrado from '../componentes/NoEncontrado'
-import OfertaCard from '../componentes/OfertaCard'
 
 export default function InstitucionPagina() {
   const { id } = useParams()
+  const [params] = useSearchParams()
   const { datos } = useCatalogo()
   const inst = datos?.instituciones.find((i) => i.id === id)
+  const opciones = useMemo(() => (datos && inst ? detallarOfertas(datos).filter((d) => d.institucion.id === inst.id) : []), [datos, inst])
+  const [ofertaId, setOfertaId] = useState(params.get('oferta') ?? '')
+  const [llegada, setLlegada] = useState(params.get('llegada') ?? '')
+  const [salida, setSalida] = useState(params.get('salida') ?? '')
+  const [alojamientoId, setAlojamientoId] = useState('')
+  const [copiado, setCopiado] = useState(false)
+  const { es, alternar } = useFavoritos()
+
   if (!datos || !inst) return <NoEncontrado texto="Esta institución no está disponible." />
 
-  const opciones = detallarOfertas(datos).filter((d) => d.institucion.id === inst.id)
   const profIds = datos.vinculos.filter((v) => v.institucion_id === inst.id).map((v) => v.profesional_id)
-  const profesionales = datos.profesionales.filter((p) => profIds.includes(p.id))
-  const alojamientos = datos.alojamientos.filter((a) => a.ciudad_id === inst.ciudad_id)
-  const imagen = inst.imagen_url ?? opciones[0]?.procedimiento.imagen_url
+  const profesionales = datos.profesionales.filter((p) => profIds.includes(p.id) && p.publicado)
+  const alojamientos = datos.alojamientos.filter((a) => a.ciudad_id === inst.ciudad_id && a.publicado)
+  const fotos = [inst.imagen_url, ...(inst.galeria ?? [])].filter((x): x is string => !!x)
+  const ciudad = nombreCiudad(datos, inst.ciudad_id)
+
+  const elegida = opciones.find((d) => d.oferta.id === ofertaId) ?? opciones[0]
+  const aloj = alojamientos.find((a) => a.id === alojamientoId)
+  const nochesFechas = nochesEntre(llegada, salida)
+  const noches = nochesFechas || elegida?.procedimiento.estadia_sugerida_dias || 0
+  const costoAloj = aloj?.precio_noche_desde && noches ? aloj.precio_noche_desde * noches : 0
+  const valoracion = inst.valoracion_precio ?? 0
+  const min = (elegida?.oferta.precio_min ?? 0) + costoAloj + valoracion
+  const max = (elegida?.oferta.precio_max ?? elegida?.oferta.precio_min ?? 0) + costoAloj + valoracion
+  const minLlegada = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)
+
+  const solicitar = new URLSearchParams()
+  if (elegida) solicitar.set('oferta', elegida.oferta.id)
+  if (aloj) {
+    solicitar.set('alojamiento', aloj.id)
+    solicitar.set('noches', String(noches))
+  }
+  if (llegada) solicitar.set('fecha', llegada)
+  if (params.get('presupuesto')) solicitar.set('presupuesto', params.get('presupuesto')!)
+
+  const compartir = async () => {
+    const url = window.location.href
+    try {
+      if (navigator.share) await navigator.share({ title: inst.nombre, url })
+      else {
+        await navigator.clipboard.writeText(url)
+        setCopiado(true)
+        setTimeout(() => setCopiado(false), 2000)
+      }
+    } catch {
+      // La persona canceló el diálogo de compartir.
+    }
+  }
 
   return (
-    <>
-      <section className="relative h-[78svh] min-h-[560px] overflow-hidden text-marfil">
-        <Foto src={imagen} alt={inst.nombre} ancho={2000} prioridad className="!absolute inset-0" tono="oscuro" />
-        <div className="absolute inset-0 bg-gradient-to-t from-tinta/85 via-tinta/30 to-tinta/40" />
-        <div className="contenedor relative flex h-full flex-col justify-end pb-14">
-          <div className="flex items-center gap-3">
-            <span className="rotulo !text-marfil/70">
-              {nombreTipoInstitucion[inst.tipo]} · {nombreCiudad(datos, inst.ciudad_id)}
-            </span>
-            {inst.es_demo && <EtiquetaDemo claro />}
-          </div>
-          <h1 className="display mt-6 max-w-4xl text-4xl md:text-5xl">{inst.nombre}</h1>
-          <div className="mt-6">
-            <EstadoVerificacion v={inst.verificacion} claro />
-          </div>
-        </div>
-      </section>
-
-      <section className="contenedor grid gap-16 py-24 md:grid-cols-[1.4fr_1fr]">
-        <Revelar>
-          <p className="display normal-case text-3xl leading-snug md:text-4xl">{inst.descripcion}</p>
-          {inst.servicios.length > 0 && (
-            <ul className="mt-10 grid gap-x-8 border-t border-linea text-sm sm:grid-cols-2">
-              {inst.servicios.map((s) => (
-                <li key={s} className="border-b border-linea py-4">
-                  {s}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Revelar>
-        <div className="space-y-10">
-          <dl className="space-y-5 text-sm">
-            <div>
-              <dt className="etiqueta">Código de habilitación (REPS)</dt>
-              <dd className="mt-1 font-serif text-2xl">{inst.codigo_reps ?? 'No informado'}</dd>
-            </div>
-            <div>
-              <dt className="etiqueta">Primera valoración</dt>
-              <dd className="mt-1">{inst.valoracion_precio == null ? 'Consultar' : inst.valoracion_precio === 0 ? 'Sin costo' : formatoCOP(inst.valoracion_precio)}</dd>
-            </div>
-            <div>
-              <dt className="etiqueta">Financiación</dt>
-              <dd className="mt-1">{inst.financiacion ? 'Disponible' : 'No informada'}</dd>
-            </div>
-            {inst.direccion && (
-              <div>
-                <dt className="etiqueta">Dirección</dt>
-                <dd className="mt-1">{inst.direccion}</dd>
-              </div>
-            )}
-          </dl>
+    <div className="pt-16 md:pt-[124px]">
+      <div className="contenedor pt-10">
+        {/* Encabezado */}
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <div className="etiqueta">Especialistas</div>
-            <ul className="mt-3 divide-y divide-linea border-y border-linea">
-              {profesionales.map((p) => (
-                <li key={p.id}>
-                  <Link to={`/profesional/${p.id}`} className="flex items-baseline justify-between gap-4 py-4 hover:underline underline-offset-4">
-                    <span className="font-serif text-2xl">{p.nombre}</span>
-                    <span className="text-xs text-piedra no-underline">{p.sociedad ?? ''}</span>
-                  </Link>
-                </li>
-              ))}
-              {profesionales.length === 0 && <li className="py-4 text-sm text-piedra">Sin especialistas publicados.</li>}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section className="contenedor border-t border-linea py-24">
-        <Rotulo>Procedimientos</Rotulo>
-        <h2 className="display mt-5 text-4xl">
-          Lo que puedes <em>valorar aquí</em>
-        </h2>
-        <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
-          {opciones.map((d, i) => (
-            <Revelar key={d.oferta.id} retraso={(i % 3) * 0.06}>
-              <OfertaCard d={d} />
-            </Revelar>
-          ))}
-        </div>
-      </section>
-
-      {alojamientos.length > 0 && (
-        <section className="bg-papel py-24">
-          <div className="contenedor">
-            <Rotulo>Alojamiento cercano</Rotulo>
-            <div className="mt-10 divide-y divide-linea border-y border-linea">
-              {alojamientos.map((a) => (
-                <div key={a.id} className="grid gap-2 py-6 md:grid-cols-[1fr_200px_200px] md:items-baseline">
-                  <div>
-                    <div className="font-serif text-3xl">{a.nombre}</div>
-                    <div className="text-sm text-piedra">{a.descripcion}</div>
-                  </div>
-                  <div className="text-sm text-piedra">{nombreTipoAlojamiento[a.tipo]}</div>
-                  <div className="text-sm md:text-right">{a.precio_noche_desde ? `${textoPrecio(a.precio_noche_desde, null)} / noche` : 'Precio no informado'}</div>
-                </div>
-              ))}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rotulo">
+                {nombreTipoInstitucion[inst.tipo]} · {ciudad}
+              </span>
+              {inst.es_demo && <EtiquetaDemo />}
+            </div>
+            <h1 className="display mt-4 text-3xl md:text-5xl">{inst.nombre}</h1>
+            <div className="mt-3">
+              <EstadoVerificacion v={inst.verificacion} />
             </div>
           </div>
-        </section>
-      )}
-    </>
+          <div className="flex gap-2 text-[11px] font-medium tracking-[0.2em] uppercase">
+            <button onClick={compartir} className="flex items-center gap-2 px-3 py-2 underline-offset-[6px] hover:underline">
+              <Share2 size={15} strokeWidth={1.6} /> {copiado ? 'Enlace copiado' : 'Compartir'}
+            </button>
+            <button onClick={() => alternar(`institucion:${inst.id}`)} className="flex items-center gap-2 px-3 py-2 underline-offset-[6px] hover:underline" aria-pressed={es(`institucion:${inst.id}`)}>
+              <span className={`inline-block h-2 w-2 ${es(`institucion:${inst.id}`) ? 'bg-espresso' : 'border border-espresso'}`} />
+              {es(`institucion:${inst.id}`) ? 'Guardada' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <Galeria fotos={fotos} titulo={inst.nombre} semilla={inst.nombre} />
+        </div>
+
+        <div className="grid gap-16 py-14 lg:grid-cols-[minmax(0,1fr)_400px]">
+          {/* Columna de contenido */}
+          <div className="min-w-0">
+            <p className="display normal-case text-2xl leading-snug md:text-3xl">{inst.descripcion}</p>
+
+            <div className="mt-10 grid gap-6 border-y border-linea py-8 sm:grid-cols-3">
+              <Dato icono={<ShieldCheck size={22} strokeWidth={1.3} />} t="Habilitación REPS" v={inst.codigo_reps ?? 'No informado'} />
+              <Dato
+                icono={<CalendarDays size={22} strokeWidth={1.3} />}
+                t="Primera valoración"
+                v={inst.valoracion_precio == null ? 'Consultar' : inst.valoracion_precio === 0 ? 'Sin costo' : formatoCOP(inst.valoracion_precio)}
+              />
+              <Dato icono={<Check size={22} strokeWidth={1.3} />} t="Financiación" v={inst.financiacion ? 'Disponible' : 'No informada'} />
+            </div>
+
+            {inst.servicios.length > 0 && (
+              <section className="mt-14">
+                <Rotulo>Lo que ofrece</Rotulo>
+                <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                  {inst.servicios.map((s) => (
+                    <li key={s} className="flex items-center gap-3 text-[15px]">
+                      <Check size={16} strokeWidth={1.6} className="shrink-0" /> {s}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <section className="mt-14">
+              <Rotulo>Procedimientos y precios</Rotulo>
+              <ul className="mt-6 divide-y divide-linea border-y border-linea">
+                {opciones.map((d) => (
+                  <li key={d.oferta.id}>
+                    <button
+                      onClick={() => setOfertaId(d.oferta.id)}
+                      className={`flex w-full items-center justify-between gap-4 px-3 py-5 text-left transition ${elegida?.oferta.id === d.oferta.id ? 'bg-arena' : 'hover:bg-papel'}`}
+                    >
+                      <span>
+                        <span className="block text-[14px] font-medium tracking-[0.1em] uppercase">{d.procedimiento.nombre}</span>
+                        <span className="mt-1 block text-[13px] text-piedra">{d.profesional?.nombre ?? 'Especialista por asignar'}</span>
+                      </span>
+                      <span className="shrink-0 text-right text-[14px]">{textoPrecio(d.oferta.precio_min, d.oferta.precio_max)}</span>
+                    </button>
+                  </li>
+                ))}
+                {opciones.length === 0 && <li className="py-5 text-sm text-piedra">Sin procedimientos publicados.</li>}
+              </ul>
+            </section>
+
+            <section className="mt-14">
+              <Rotulo>Especialistas</Rotulo>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {profesionales.map((p) => (
+                  <Link key={p.id} to={`/profesional/${p.id}`} className="flex items-center gap-4 border border-linea p-4 transition hover:border-espresso">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden bg-espresso text-[13px] font-medium tracking-[0.15em] text-marfil">
+                      {p.foto_url ? <img src={p.foto_url} alt="" className="h-full w-full object-cover" /> : iniciales(p.nombre)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-medium tracking-[0.08em] uppercase">{p.nombre}</span>
+                      <span className="mt-1 block text-[13px] text-piedra">
+                        {[p.sociedad, p.anios_experiencia && `${p.anios_experiencia} años`].filter(Boolean).join(' · ') || p.especialidad}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+                {profesionales.length === 0 && <p className="text-sm text-piedra">Sin especialistas publicados.</p>}
+              </div>
+            </section>
+
+            {inst.lat != null && inst.lng != null && (
+              <section className="mt-14">
+                <Rotulo>Ubicación</Rotulo>
+                <p className="mt-4 text-[15px]">
+                  {inst.direccion ?? ciudad} · {ciudad}
+                </p>
+                <Mapa puntos={[{ id: inst.id, lat: inst.lat, lng: inst.lng, etiqueta: inst.nombre }]} className="mt-6 h-[360px] border border-linea" zoomInicial={14} />
+                {inst.es_demo && <p className="mt-3 text-xs text-piedra">Ubicación aproximada de un perfil de demostración.</p>}
+              </section>
+            )}
+
+            {alojamientos.length > 0 && (
+              <section className="mt-14">
+                <Rotulo>Dónde recuperarte en {ciudad}</Rotulo>
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  {alojamientos.map((a) => (
+                    <Link key={a.id} to={`/alojamiento/${a.id}`} className="group block">
+                      <Carrusel fotos={a.galeria ?? []} alt={a.nombre} semilla={a.nombre} className="aspect-[4/3]">
+                        <BotonFavorito clave={`alojamiento:${a.id}`} className="absolute top-3 right-3" />
+                      </Carrusel>
+                      <div className="mt-3 text-[13px] font-medium tracking-[0.1em] uppercase">{a.nombre}</div>
+                      <div className="mt-1 text-[13px] text-piedra">
+                        {nombreTipoAlojamiento[a.tipo]} · {a.precio_noche_desde ? `${formatoCOP(a.precio_noche_desde)} noche` : 'Precio por cotizar'}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Tarjeta de reserva */}
+          <aside>
+            <Revelar className="lg:sticky lg:top-28">
+              <div className="border border-linea p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+                <div className="text-[22px] font-light">{elegida ? textoPrecio(elegida.oferta.precio_min, elegida.oferta.precio_max) : 'Por valorar'}</div>
+                <div className="mt-1 text-xs text-piedra">Rango orientativo del procedimiento</div>
+
+                <div className="mt-6 border border-linea">
+                  <label className="block border-b border-linea px-4 py-3">
+                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Procedimiento</span>
+                    <select value={elegida?.oferta.id ?? ''} onChange={(e) => setOfertaId(e.target.value)} className="mt-1 w-full cursor-pointer bg-transparent text-[14px] outline-none">
+                      {opciones.map((d) => (
+                        <option key={d.oferta.id} value={d.oferta.id}>
+                          {d.procedimiento.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="grid grid-cols-2">
+                    <label className="block border-r border-linea px-4 py-3">
+                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Llegada</span>
+                      <input type="date" min={minLlegada} value={llegada} onChange={(e) => setLlegada(e.target.value)} className="mt-1 w-full bg-transparent text-[13px] outline-none" />
+                    </label>
+                    <label className="block px-4 py-3">
+                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Salida</span>
+                      <input type="date" min={llegada || minLlegada} value={salida} onChange={(e) => setSalida(e.target.value)} className="mt-1 w-full bg-transparent text-[13px] outline-none" />
+                    </label>
+                  </div>
+                  {alojamientos.length > 0 && (
+                    <label className="block border-t border-linea px-4 py-3">
+                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Alojamiento de recuperación</span>
+                      <select value={alojamientoId} onChange={(e) => setAlojamientoId(e.target.value)} className="mt-1 w-full cursor-pointer bg-transparent text-[14px] outline-none">
+                        <option value="">Sin alojamiento</option>
+                        {alojamientos.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
+
+                <Link to={`/solicitar?${solicitar}`} className="btn mt-5 w-full">
+                  Solicitar valoración
+                </Link>
+                <p className="mt-3 text-center text-xs text-piedra">No pagas nada ahora. La clínica confirma el valor después de valorarte.</p>
+
+                {elegida && (
+                  <dl className="mt-6 space-y-3 text-[14px]">
+                    <Linea t={elegida.procedimiento.nombre} v={textoPrecio(elegida.oferta.precio_min, elegida.oferta.precio_max)} />
+                    {inst.valoracion_precio != null && <Linea t="Primera valoración" v={inst.valoracion_precio === 0 ? 'Sin costo' : formatoCOP(inst.valoracion_precio)} />}
+                    {aloj && (
+                      <Linea
+                        t={`${aloj.nombre} · ${noches} ${noches === 1 ? 'noche' : 'noches'}${nochesFechas ? '' : ' sugeridas'}`}
+                        v={costoAloj ? formatoCOP(costoAloj) : 'Por cotizar'}
+                      />
+                    )}
+                    {elegida.oferta.precio_min != null && (
+                      <div className="flex items-baseline justify-between gap-4 border-t border-linea pt-4 font-medium">
+                        <dt>Total estimado</dt>
+                        <dd className="text-right">{min === max ? formatoCOP(min) : `${formatoCOP(min)} – ${formatoCOP(max)}`}</dd>
+                      </div>
+                    )}
+                  </dl>
+                )}
+              </div>
+            </Revelar>
+          </aside>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Dato({ icono, t, v }: { icono: React.ReactNode; t: string; v: string }) {
+  return (
+    <div className="flex items-start gap-4">
+      <span className="mt-0.5 shrink-0">{icono}</span>
+      <div>
+        <div className="etiqueta">{t}</div>
+        <div className="mt-1 text-[15px]">{v}</div>
+      </div>
+    </div>
+  )
+}
+
+function Linea({ t, v }: { t: string; v: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-piedra">{t}</dt>
+      <dd className="shrink-0 text-right">{v}</dd>
+    </div>
   )
 }

@@ -106,3 +106,43 @@ html.lenis body {
 .font-serif {
   font-weight: 300;
 }
+
+/* Mapa: marcadores de precio y controles en el estilo de la marca. */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--color-arena);
+}
+.px-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s, background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+.px-pin:hover,
+.px-pin-activo {
+  background: #000;
+  color: #fff;
+  transform: translate(-50%, -50%) scale(1.08);
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  border-radius: 0 !important;
+  color: #000;
+}
+.leaflet-bar {
+  border-radius: 0 !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+.leaflet-control-attribution {
+  font-size: 10px;
+}

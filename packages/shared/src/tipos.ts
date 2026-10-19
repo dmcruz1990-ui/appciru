@@ -61,6 +61,10 @@ export interface Institucion {
   financiacion: boolean
   /** Valor de la primera valoración en COP; 0 = gratis; null = no informado. */
   valoracion_precio: number | null
+  lat: number | null
+  lng: number | null
+  /** Fotos adicionales (URLs del bucket px-imagenes), en orden. */
+  galeria: string[]
 }
 
 export interface Profesional {
@@ -114,6 +118,11 @@ export interface Alojamiento {
   incluye_alimentacion: boolean
   es_demo: boolean
   publicado: boolean
+  lat: number | null
+  lng: number | null
+  galeria: string[]
+  /** Personas que pueden alojarse (paciente + acompañantes). */
+  capacidad: number | null
 }
 
 export interface Servicio {

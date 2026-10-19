@@ -1,15 +1,18 @@
 import { EMPRESA } from '@plastinex/shared'
 import Lenis from 'lenis'
+import { Heart } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useCatalogo } from './catalogo'
 import { Cargando, ErrorCarga } from './componentes/base'
+import { useFavoritos } from './componentes/favoritos'
 import { useSesion } from './sesion'
 
 const enlaces = [
   { to: '/explorar', t: 'Procedimientos' },
+  { to: '/especialistas', t: 'Especialistas' },
+  { to: '/alojamientos', t: 'Alojamiento' },
   { to: '/planear', t: 'Planear por presupuesto' },
-  { to: '/#como', t: 'Cómo funciona' },
   { to: '/para-clinicas', t: 'Para clínicas' },
 ]
 
@@ -27,6 +30,7 @@ export function Marca({ claro = false }: { claro?: boolean }) {
 export default function Layout() {
   const { cargando, error, recargar } = useCatalogo()
   const { sesion, paciente } = useSesion()
+  const { lista: favoritos } = useFavoritos()
   const { pathname, hash } = useLocation()
   const [abierto, setAbierto] = useState(false)
   const [scroll, setScroll] = useState(false)
@@ -89,14 +93,20 @@ export default function Layout() {
           <div className="absolute left-1/2 -translate-x-1/2">
             <Marca claro={transparente} />
           </div>
-          <Link to="/solicitar" className="text-[11px] font-medium tracking-[0.22em] uppercase opacity-80 hover:opacity-100">
-            <span className="hidden md:inline">Solicitar valoración</span>
-            <span className="md:hidden">Solicitar</span>
-          </Link>
+          <div className="flex items-center gap-5 text-[11px] font-medium tracking-[0.22em] uppercase">
+            <Link to="/favoritos" className="hidden items-center gap-1.5 opacity-80 hover:opacity-100 md:flex" aria-label={`Favoritos (${favoritos.length})`}>
+              <Heart size={16} strokeWidth={1.6} className={favoritos.length ? 'fill-current' : ''} />
+              {favoritos.length > 0 && <span>{favoritos.length}</span>}
+            </Link>
+            <Link to="/solicitar" className="opacity-80 hover:opacity-100">
+              <span className="hidden md:inline">Solicitar valoración</span>
+              <span className="md:hidden">Solicitar</span>
+            </Link>
+          </div>
         </div>
         {/* Fila de categorías, como en las casas de moda; se oculta al desplazarse. */}
         <nav
-          className={`hidden justify-center gap-12 overflow-hidden text-[11px] font-medium tracking-[0.22em] uppercase transition-all duration-500 md:flex ${
+          className={`hidden justify-center gap-7 overflow-hidden text-[10px] lg:gap-12 lg:text-[11px] font-medium tracking-[0.22em] uppercase transition-all duration-500 md:flex ${
             scroll ? 'h-0 opacity-0' : 'h-11 opacity-100'
           }`}
         >
@@ -108,7 +118,7 @@ export default function Layout() {
         </nav>
         {abierto && (
           <nav className="contenedor flex flex-col border-t border-linea bg-marfil pt-4 pb-8 text-espresso md:hidden">
-            {[...enlaces, sesion ? { to: '/cuenta', t: 'Mi cuenta' } : { to: '/ingresar', t: 'Ingresar' }].map((e) => (
+            {[...enlaces, { to: '/favoritos', t: 'Favoritos' }, sesion ? { to: '/cuenta', t: 'Mi cuenta' } : { to: '/ingresar', t: 'Ingresar' }].map((e) => (
               <Link key={e.to} to={e.to} className="border-b border-linea py-5 text-[13px] font-medium tracking-[0.2em] uppercase">
                 {e.t}
               </Link>
@@ -131,8 +141,8 @@ export default function Layout() {
                 Solicitar valoración
               </Link>
             </div>
-            <Columna titulo="Explorar" enlaces={[['/explorar', 'Procedimientos'], ['/explorar?verificadas=1', 'Instituciones verificadas'], ['/cuenta', 'Mi cuenta']]} />
-            <Columna titulo="PLASTINEX" enlaces={[['/#como', 'Cómo funciona'], ['/para-clinicas', 'Para clínicas'], ['/terminos', 'Términos']]} />
+            <Columna titulo="Explorar" enlaces={[['/explorar', 'Procedimientos'], ['/especialistas', 'Especialistas'], ['/alojamientos', 'Alojamiento'], ['/favoritos', 'Favoritos']]} />
+            <Columna titulo="PLASTINEX" enlaces={[['/#como', 'Cómo funciona'], ['/planear', 'Planear por presupuesto'], ['/para-clinicas', 'Para clínicas'], ['/cuenta', 'Mi cuenta']]} />
             <Columna titulo="Legal" enlaces={[['/privacidad', 'Privacidad'], ['/terminos', 'Intermediación y responsabilidad']]} />
           </div>
           <div className="contenedor">

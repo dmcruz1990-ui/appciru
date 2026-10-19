@@ -1,9 +1,11 @@
 import { detallarOfertas, formatoCOP, nombreCategoria, type Procedimiento } from '@plastinex/shared'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react'
-import { useMemo, useRef, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { EnlaceFlecha, Flecha, Foto, Lienzo, Revelar, Rotulo } from '../componentes/base'
+import Buscador from '../componentes/Buscador'
 import OfertaCard from '../componentes/OfertaCard'
 
 const pasos = [
@@ -29,7 +31,11 @@ export default function Inicio() {
         Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado') ||
         Number(b.oferta.precio_min != null) - Number(a.oferta.precio_min != null),
     )
-    .slice(0, 6)
+
+
+  const porCiudad = datos.ciudades
+    .map((ciudad) => ({ ciudad, lista: destacadas.filter((d) => d.ciudad.id === ciudad.id) }))
+    .filter((x) => x.lista.length > 0)
 
   const desde = (p: Procedimiento) => {
     const precios = ofertas.filter((o) => o.procedimiento.id === p.id && o.oferta.precio_min != null).map((o) => o.oferta.precio_min!)
@@ -66,7 +72,7 @@ export default function Inicio() {
             <p className="max-w-lg text-[15px] leading-relaxed text-marfil/75">
               Cirujanos e instituciones habilitadas, con información verificable, para que elijas con calma quién te valora.
             </p>
-            <BuscadorHero />
+            <Buscador arriba className="max-w-[920px]" />
           </motion.div>
         </div>
       </section>
@@ -99,24 +105,26 @@ export default function Inicio() {
       {/* Índice editorial de procedimientos */}
       <IndiceProcedimientos procedimientos={datos.procedimientos} desde={desde} />
 
-      {/* Destacados */}
-      <section className="contenedor py-28 md:py-36">
-        <div className="flex flex-wrap items-end justify-between gap-6">
+      {/* Filas por ciudad, como las colecciones de un marketplace */}
+      <section className="py-28 md:py-36">
+        <div className="contenedor flex flex-wrap items-end justify-between gap-6">
           <div>
             <Rotulo n="03">Opciones en la región</Rotulo>
             <h2 className="display mt-6 text-4xl md:text-5xl">
               Elige con <em>calma.</em>
             </h2>
           </div>
-          <EnlaceFlecha to="/explorar">Ver las {ofertas.length} opciones</EnlaceFlecha>
+          <EnlaceFlecha to="/explorar">Ver las {ofertas.length} opciones en el mapa</EnlaceFlecha>
         </div>
-        <div className="mt-16 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
-          {destacadas.map((d, i) => (
-            <Revelar key={d.oferta.id} retraso={(i % 3) * 0.08}>
-              <OfertaCard d={d} indice={i} />
-            </Revelar>
-          ))}
-        </div>
+        {porCiudad.map(({ ciudad, lista }) => (
+          <FilaCiudad key={ciudad.id} titulo={`En ${ciudad.nombre}`} to={`/explorar?ciudad=${ciudad.id}`}>
+            {lista.map((d) => (
+              <div key={d.oferta.id} className="w-[78vw] max-w-[320px] shrink-0 snap-start sm:w-[300px]">
+                <OfertaCard d={d} />
+              </div>
+            ))}
+          </FilaCiudad>
+        ))}
       </section>
 
       {/* Proceso */}
@@ -206,53 +214,6 @@ export default function Inicio() {
   )
 }
 
-function BuscadorHero() {
-  const { datos } = useCatalogo()
-  const navigate = useNavigate()
-  const [p, setP] = useState('')
-  const [c, setC] = useState('')
-  const [b, setB] = useState('')
-  const enviar = (e: FormEvent) => {
-    e.preventDefault()
-    const q = new URLSearchParams()
-    if (p) q.set('procedimiento', p)
-    if (c) q.set('ciudad', c)
-    if (b) q.set('presupuesto', b)
-    navigate(`/planear?${q}`)
-  }
-  return (
-    <form onSubmit={enviar} className="flex w-full flex-col gap-2 bg-marfil p-1.5 text-espresso sm:flex-row sm:items-center md:w-[720px]">
-      <select value={p} onChange={(e) => setP(e.target.value)} aria-label="Procedimiento" className="flex-1 cursor-pointer bg-transparent px-5 py-3 text-sm outline-none">
-        <option value="">Todos los procedimientos</option>
-        {datos?.procedimientos.map((x) => (
-          <option key={x.id} value={x.id}>
-            {x.nombre}
-          </option>
-        ))}
-      </select>
-      <span className="hidden h-6 w-px bg-linea sm:block" />
-      <select value={c} onChange={(e) => setC(e.target.value)} aria-label="Ciudad" className="cursor-pointer bg-transparent px-5 py-3 text-sm outline-none">
-        <option value="">Toda la región</option>
-        {datos?.ciudades.map((x) => (
-          <option key={x.id} value={x.id}>
-            {x.nombre}
-          </option>
-        ))}
-      </select>
-      <span className="hidden h-6 w-px bg-linea sm:block" />
-      <input
-        inputMode="numeric"
-        aria-label="Presupuesto"
-        value={b ? Number(b).toLocaleString('es-CO') : ''}
-        onChange={(e) => setB(e.target.value.replace(/\D/g, '').slice(0, 10))}
-        placeholder="Tu presupuesto"
-        className="w-full bg-transparent px-5 py-3 text-sm outline-none placeholder:text-piedra sm:w-36"
-      />
-      <button className="btn !px-7">Buscar</button>
-    </form>
-  )
-}
-
 /** Lista tipográfica; al pasar el cursor aparece la fotografía del procedimiento. */
 function IndiceProcedimientos({ procedimientos, desde }: { procedimientos: Procedimiento[]; desde: (p: Procedimiento) => number | null }) {
   const [activo, setActivo] = useState<Procedimiento | null>(null)
@@ -313,5 +274,32 @@ function IndiceProcedimientos({ procedimientos, desde }: { procedimientos: Proce
         </AnimatePresence>
       </div>
     </section>
+  )
+}
+
+/** Fila deslizable horizontal con flechas, al estilo de las colecciones de un marketplace. */
+function FilaCiudad({ titulo, to, children }: { titulo: string; to: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const mover = (d: number) => ref.current?.scrollBy({ left: d * ref.current.clientWidth * 0.8, behavior: 'smooth' })
+  return (
+    <div className="mt-16">
+      <div className="contenedor flex items-center justify-between gap-4">
+        <h3 className="text-[13px] font-medium tracking-[0.2em] uppercase">{titulo}</h3>
+        <div className="flex items-center gap-2">
+          <Link to={to} className="mr-3 text-[11px] font-medium tracking-[0.2em] uppercase underline underline-offset-[6px]">
+            Ver todo
+          </Link>
+          <button onClick={() => mover(-1)} aria-label="Anterior" className="flex h-9 w-9 items-center justify-center border border-linea transition hover:border-espresso">
+            <ChevronLeft size={16} strokeWidth={1.5} />
+          </button>
+          <button onClick={() => mover(1)} aria-label="Siguiente" className="flex h-9 w-9 items-center justify-center border border-linea transition hover:border-espresso">
+            <ChevronRight size={16} strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+      <div ref={ref} className="mt-6 flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth px-5 pb-4 [scrollbar-width:none] md:px-[max(2.5rem,calc((100vw-1320px)/2+2.5rem))]">
+        {children}
+      </div>
+    </div>
   )
 }
