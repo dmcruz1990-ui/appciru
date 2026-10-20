@@ -2,6 +2,7 @@ import { urlImagen } from '@plastinex/shared'
 import { motion, useReducedMotion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { useIdioma } from '../idioma'
 
 /** Aparición suave al entrar en pantalla. */
 export function Revelar({ children, retraso = 0, className = '' }: { children: ReactNode; retraso?: number; className?: string }) {
@@ -153,21 +154,23 @@ export function EnlaceFlecha({ to, children, className = '' }: { to: string; chi
 }
 
 export function Cargando() {
+  const { tx } = useIdioma()
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <span className="font-serif text-2xl text-piedra">Cargando…</span>
+      <span className="font-serif text-2xl text-piedra">{tx('Cargando…', 'Loading…')}</span>
     </div>
   )
 }
 
 export function ErrorCarga({ mensaje, reintentar }: { mensaje: string; reintentar?: () => void }) {
+  const { tx } = useIdioma()
   return (
     <div className="contenedor py-32 text-center">
-      <h2 className="display normal-case text-4xl">No pudimos cargar la información</h2>
+      <h2 className="display normal-case text-4xl">{tx('No pudimos cargar la información', 'We couldn’t load this information')}</h2>
       <p className="mt-3 text-sm text-piedra">{mensaje}</p>
       {reintentar && (
         <button onClick={reintentar} className="btn mt-8">
-          Reintentar
+          {tx('Reintentar', 'Try again')}
         </button>
       )}
     </div>

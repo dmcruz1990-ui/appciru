@@ -1,6 +1,7 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useIdioma } from '../idioma'
 
 export interface PuntoMapa {
   id: string
@@ -41,6 +42,7 @@ export default function Mapa({
   className?: string
   zoomInicial?: number
 }) {
+  const { tx } = useIdioma()
   const caja = useRef<HTMLDivElement>(null)
   const mapa = useRef<L.Map | null>(null)
   const capa = useRef<L.LayerGroup | null>(null)
@@ -116,6 +118,20 @@ export default function Mapa({
       }
     }
   }, [puntos, zoomInicial])
+
+  // Botones de zoom en el idioma de la persona (Leaflet los crea en inglés).
+  useEffect(() => {
+    const c = caja.current
+    if (!c) return
+    for (const [clase, texto] of [
+      ['.leaflet-control-zoom-in', tx('Acercar', 'Zoom in')],
+      ['.leaflet-control-zoom-out', tx('Alejar', 'Zoom out')],
+    ]) {
+      const b = c.querySelector(clase)
+      b?.setAttribute('title', texto)
+      b?.setAttribute('aria-label', texto)
+    }
+  }, [tx])
 
   // Resaltar el marcador activo (al pasar por una tarjeta) o seleccionado.
   useEffect(() => {

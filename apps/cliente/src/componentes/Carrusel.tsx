@@ -1,6 +1,7 @@
 import { urlImagen } from '@plastinex/shared'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, type MouseEvent, type ReactNode } from 'react'
+import { useIdioma } from '../idioma'
 import { Lienzo } from './base'
 
 /**
@@ -87,11 +88,12 @@ export default function Carrusel({
 }
 
 function Flecha({ lado, onClick }: { lado: 'izq' | 'der'; onClick: (e: MouseEvent) => void }) {
+  const { tx } = useIdioma()
   const I = lado === 'izq' ? ChevronLeft : ChevronRight
   return (
     <button
       onClick={onClick}
-      aria-label={lado === 'izq' ? 'Foto anterior' : 'Foto siguiente'}
+      aria-label={lado === 'izq' ? tx('Foto anterior', 'Previous photo') : tx('Foto siguiente', 'Next photo')}
       className={`absolute top-1/2 ${lado === 'izq' ? 'left-3' : 'right-3'} flex h-8 w-8 -translate-y-1/2 items-center justify-center bg-marfil/90 text-espresso opacity-0 shadow transition group-hover/c:opacity-100 hover:bg-marfil`}
     >
       <I size={16} strokeWidth={1.6} />

@@ -1,5 +1,6 @@
 import { Heart } from 'lucide-react'
 import { useSyncExternalStore, type MouseEvent } from 'react'
+import { useIdioma } from '../idioma'
 
 /** Favoritos del visitante, guardados solo en su navegador (no se envían a ningún servidor). */
 const CLAVE = 'px-favoritos'
@@ -42,6 +43,7 @@ export function useFavoritos() {
 /** Corazón para guardar una oferta (`oferta:<id>`) o un alojamiento (`alojamiento:<id>`). */
 export function BotonFavorito({ clave, className = '' }: { clave: string; className?: string }) {
   const { es, alternar } = useFavoritos()
+  const { tx } = useIdioma()
   const activo = es(clave)
   const clic = (e: MouseEvent) => {
     e.preventDefault()
@@ -52,7 +54,7 @@ export function BotonFavorito({ clave, className = '' }: { clave: string; classN
     <button
       onClick={clic}
       aria-pressed={activo}
-      aria-label={activo ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+      aria-label={activo ? tx('Quitar de favoritos', 'Remove from Saved') : tx('Guardar en favoritos', 'Save')}
       className={`flex h-9 w-9 items-center justify-center transition hover:scale-110 ${className}`}
     >
       <Heart size={20} strokeWidth={1.6} className={`drop-shadow ${activo ? 'fill-espresso text-marfil' : 'fill-black/25 text-marfil'}`} />

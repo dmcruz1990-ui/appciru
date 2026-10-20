@@ -2,6 +2,7 @@ import { urlImagen } from '@plastinex/shared'
 import { Grid2x2, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { useIdioma } from '../idioma'
 import { Lienzo } from './base'
 
 /**
@@ -9,6 +10,7 @@ import { Lienzo } from './base'
  * Sin fotos propias, el mosaico se compone con lienzos abstractos y no ofrece el visor.
  */
 export default function Galeria({ fotos, titulo, semilla }: { fotos: string[]; titulo: string; semilla: string }) {
+  const { tx } = useIdioma()
   const [abierta, setAbierta] = useState(false)
   const celdas = Array.from({ length: 5 }, (_, k) => fotos[k] ?? null)
 
@@ -32,7 +34,7 @@ export default function Galeria({ fotos, titulo, semilla }: { fotos: string[]; t
             type="button"
             disabled={!fotos.length}
             onClick={() => setAbierta(true)}
-            aria-label={fotos.length ? `Ver fotos de ${titulo}` : undefined}
+            aria-label={fotos.length ? tx(`Ver fotos de ${titulo}`, `View photos of ${titulo}`) : undefined}
             className={`group relative overflow-hidden bg-arena ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}
           >
             {f ? (
@@ -44,7 +46,7 @@ export default function Galeria({ fotos, titulo, semilla }: { fotos: string[]; t
         ))}
         {fotos.length > 0 && (
           <button onClick={() => setAbierta(true)} className="btn-linea absolute right-4 bottom-4 !bg-marfil hover:!bg-espresso">
-            <Grid2x2 size={14} strokeWidth={1.6} /> Mostrar todas las fotos
+            <Grid2x2 size={14} strokeWidth={1.6} /> {tx('Mostrar todas las fotos', 'Show all photos')}
           </button>
         )}
       </div>
@@ -58,12 +60,12 @@ export default function Galeria({ fotos, titulo, semilla }: { fotos: string[]; t
             className="fixed inset-0 z-[100] overflow-y-auto bg-marfil"
             role="dialog"
             aria-modal="true"
-            aria-label={`Fotos de ${titulo}`}
+            aria-label={tx(`Fotos de ${titulo}`, `Photos of ${titulo}`)}
             data-lenis-prevent
           >
             <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-linea bg-marfil px-5 md:px-10">
               <span className="text-[11px] font-medium tracking-[0.22em] uppercase">{titulo}</span>
-              <button onClick={() => setAbierta(false)} aria-label="Cerrar" className="flex h-10 w-10 items-center justify-center hover:bg-arena">
+              <button onClick={() => setAbierta(false)} aria-label={tx('Cerrar', 'Close')} className="flex h-10 w-10 items-center justify-center hover:bg-arena">
                 <X size={20} strokeWidth={1.5} />
               </button>
             </div>

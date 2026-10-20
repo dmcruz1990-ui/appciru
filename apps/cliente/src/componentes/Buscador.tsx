@@ -1,8 +1,9 @@
-import { destinos, formatoCOP, nombreCategoria, nombrePais, type Categoria } from '@plastinex/shared'
+import { destinos, type Categoria } from '@plastinex/shared'
 import { Gem, Globe, ScanFace, Search, Waves, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import { useIdioma } from '../idioma'
 
 export const iconoCategoria: Record<Categoria, LucideIcon> = { mamaria: Gem, corporal: Waves, facial: ScanFace }
 
@@ -11,7 +12,6 @@ type Panel = 'proc' | 'ciudad' | 'fechas' | 'presu' | null
 const DIA = 86_400_000
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 export const nochesEntre = (a: string, b: string) => (a && b ? Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / DIA)) : 0)
-const corta = (s: string) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : '')
 
 /**
  * Buscador en píldora con paneles desplegables: procedimiento, ciudad, fechas del viaje y presupuesto.
@@ -19,6 +19,7 @@ const corta = (s: string) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('
  */
 export default function Buscador({ className = '', destino = '/explorar', arriba = false }: { className?: string; destino?: string; /** Abre los paneles hacia arriba (portada). */ arriba?: boolean }) {
   const { datos } = useCatalogo()
+  const { tx, dinero, loc, categoria, fecha, numero, pais: nombrePais, desdeCop, aCop, chipsPresupuesto, moneda } = useIdioma()
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const raiz = useRef<HTMLFormElement>(null)
@@ -49,7 +50,11 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   if (!datos) return null
   const p = datos.procedimientos.find((x) => x.id === proc)
   const c = datos.ciudades.find((x) => x.id === ciudad)
-  const textoLugar = c ? `${c.nombre}, ${nombrePais(c.pais)}` : pais ? nombrePais(pais) : 'Todo el mundo'
+  const noches = nochesEntre(llegada, salida)
+  const corta = (s: string) => (s ? fecha(s, { day: 'numeric', month: 'short' }) : '')
+  const textoProc = p ? loc(p, 'nombre') : null
+  const textoLugar = c ? `${c.nombre}, ${nombrePais(c.pais)}` : pais ? nombrePais(pais) : tx('Todo el mundo', 'Anywhere')
+  const textoFechas = llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : null
   const elegirLugar = (nuevoPais: string, nuevaCiudad: string) => {
     setPais(nuevoPais)
     setCiudad(nuevaCiudad)
@@ -59,9 +64,8 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   const sinTildes = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   const q = sinTildes(filtroLugar.trim())
   const visibles = lugares
-    .map((d) => ({ ...d, ciudades: q && !sinTildes(d.nombre).includes(q) ? d.ciudades.filter((x) => sinTildes(x.ciudad.nombre).includes(q)) : d.ciudades }))
+    .map((d) => ({ ...d, ciudades: q && !sinTildes(`${d.nombre} ${nombrePais(d.pais)}`).includes(q) ? d.ciudades.filter((x) => sinTildes(x.ciudad.nombre).includes(q)) : d.ciudades }))
     .filter((d) => d.ciudades.length > 0)
-  const noches = nochesEntre(llegada, salida)
   const minLlegada = iso(new Date(Date.now() + 7 * DIA))
 
   const enviar = (e?: FormEvent) => {
@@ -89,26 +93,26 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
         >
           <Search size={18} strokeWidth={1.6} className="shrink-0" />
           <span className="min-w-0">
-            <span className="block truncate text-[14px] font-medium">{p?.nombre ?? '¿Qué procedimiento buscas?'}</span>
+            <span className="block truncate text-[14px] font-medium">{textoProc ?? tx('¿Qué procedimiento buscas?', 'Which procedure are you looking for?')}</span>
             <span className="block truncate text-xs text-piedra">
-              {[textoLugar, llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : 'Fechas flexibles', presu ? formatoCOP(Number(presu)) : 'Sin presupuesto'].join(' · ')}
+              {[textoLugar, textoFechas ?? tx('Fechas flexibles', 'Flexible dates'), presu ? dinero(Number(presu)) : tx('Sin presupuesto', 'Any budget')].join(' · ')}
             </span>
           </span>
         </button>
       )}
       <div className={`${desplegado ? 'flex' : 'hidden md:flex'} flex-col border border-linea bg-marfil shadow-[0_10px_40px_rgba(0,0,0,0.12)] md:flex-row md:items-stretch`}>
-        <Segmento t="Procedimiento" v={p?.nombre ?? 'Todos'} activo={panel === 'proc'} onClick={() => alternar('proc')} ancho />
-        <Segmento t="Dónde" v={textoLugar} activo={panel === 'ciudad'} onClick={() => alternar('ciudad')} />
+        <Segmento t={tx('Procedimiento', 'Procedure')} v={textoProc ?? tx('Todos', 'All')} activo={panel === 'proc'} onClick={() => alternar('proc')} ancho />
+        <Segmento t={tx('Dónde', 'Where')} v={textoLugar} activo={panel === 'ciudad'} onClick={() => alternar('ciudad')} />
         <Segmento
-          t="Fechas del viaje"
-          v={llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : 'Agregar fechas'}
+          t={tx('Fechas del viaje', 'Travel dates')}
+          v={textoFechas ?? tx('Agregar fechas', 'Add dates')}
           activo={panel === 'fechas'}
           onClick={() => alternar('fechas')}
           tenue={!llegada}
         />
-        <Segmento t="Presupuesto" v={presu ? formatoCOP(Number(presu)) : 'Opcional'} activo={panel === 'presu'} onClick={() => alternar('presu')} tenue={!presu} />
+        <Segmento t={tx('Presupuesto', 'Budget')} v={presu ? dinero(Number(presu)) : tx('Opcional', 'Optional')} activo={panel === 'presu'} onClick={() => alternar('presu')} tenue={!presu} />
         <button className="m-1.5 flex items-center justify-center gap-2 bg-espresso px-6 py-4 text-[11px] font-medium tracking-[0.22em] text-marfil uppercase transition hover:bg-tinta/85">
-          <Search size={15} strokeWidth={1.8} /> Buscar
+          <Search size={15} strokeWidth={1.8} /> {tx('Buscar', 'Search')}
         </button>
       </div>
 
@@ -116,12 +120,12 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
         <div data-lenis-prevent className={`z-40 mt-2 max-h-[70vh] overflow-y-auto border border-linea bg-marfil p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] md:absolute md:inset-x-0 md:p-8 ${arriba ? 'md:bottom-full md:mb-3 md:max-h-[min(60vh,520px)]' : 'md:top-full md:mt-3'}`}>
           {panel === 'proc' && (
             <div className="grid gap-8 md:grid-cols-3">
-              {(Object.keys(nombreCategoria) as Categoria[]).map((cat) => {
+              {(Object.keys(iconoCategoria) as Categoria[]).map((cat) => {
                 const I = iconoCategoria[cat]
                 return (
                   <div key={cat}>
                     <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] text-piedra uppercase">
-                      <I size={15} strokeWidth={1.5} /> {nombreCategoria[cat]}
+                      <I size={15} strokeWidth={1.5} /> {categoria(cat)}
                     </div>
                     <ul className="mt-3">
                       {datos.procedimientos
@@ -129,7 +133,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                         .map((x) => (
                           <li key={x.id}>
                             <Opcion activo={proc === x.id} onClick={() => (setProc(x.id), elegir('ciudad'))}>
-                              {x.nombre}
+                              {loc(x, 'nombre')}
                             </Opcion>
                           </li>
                         ))}
@@ -139,7 +143,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
               })}
               <div className="md:col-span-3">
                 <Opcion activo={!proc} onClick={() => (setProc(''), elegir('ciudad'))}>
-                  Todos los procedimientos
+                  {tx('Todos los procedimientos', 'All procedures')}
                 </Opcion>
               </div>
             </div>
@@ -153,15 +157,15 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                   autoFocus
                   value={filtroLugar}
                   onChange={(e) => setFiltroLugar(e.target.value)}
-                  placeholder="Buscar país o ciudad"
-                  aria-label="Buscar país o ciudad"
+                  placeholder={tx('Buscar país o ciudad', 'Search country or city')}
+                  aria-label={tx('Buscar país o ciudad', 'Search country or city')}
                   className="w-full bg-transparent py-1 text-[16px] outline-none placeholder:text-niebla"
                 />
               </label>
               {!q && (
                 <Opcion activo={!pais && !ciudad} onClick={() => elegirLugar('', '')}>
                   <span className="flex items-center gap-2 !text-current">
-                    <Globe size={16} strokeWidth={1.5} /> Todo el mundo
+                    <Globe size={16} strokeWidth={1.5} /> {tx('Todo el mundo', 'Anywhere')}
                   </span>
                 </Opcion>
               )}
@@ -173,8 +177,10 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                       onClick={() => elegirLugar(d.pais, '')}
                       className={`flex w-full items-baseline justify-between gap-3 border-b px-3 pb-2 text-left transition ${pais === d.pais && !ciudad ? 'border-espresso' : 'border-linea hover:border-espresso'}`}
                     >
-                      <span className="text-[11px] font-medium tracking-[0.2em] uppercase">{d.nombre}</span>
-                      <span className="text-[11px] text-piedra">{d.opciones ? `${d.opciones} ${d.opciones === 1 ? 'opción' : 'opciones'}` : 'Próximamente'}</span>
+                      <span className="text-[11px] font-medium tracking-[0.2em] uppercase">{nombrePais(d.pais)}</span>
+                      <span className="text-[11px] text-piedra">{d.opciones
+                          ? tx(`${d.opciones} ${d.opciones === 1 ? 'opción' : 'opciones'}`, `${d.opciones} ${d.opciones === 1 ? 'option' : 'options'}`)
+                          : tx('Próximamente', 'Coming soon')}</span>
                     </button>
                     <ul className="mt-1">
                       {d.ciudades.map(({ ciudad: x, opciones }) => (
@@ -183,7 +189,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                             <span className="flex items-baseline justify-between gap-3 !text-current">
                               <span>{x.nombre}</span>
                               <span className={`text-xs ${ciudad === x.id ? 'text-marfil/70' : opciones ? 'text-piedra' : 'text-niebla'}`}>
-                                {opciones ? opciones : 'Próximamente'}
+                                {opciones ? opciones : tx('Próximamente', 'Coming soon')}
                               </span>
                             </span>
                           </Opcion>
@@ -193,18 +199,21 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                   </div>
                 ))}
               </div>
-              {visibles.length === 0 && <p className="mt-6 text-sm text-piedra">Aún no tenemos ese destino. Escríbenos y te orientamos.</p>}
+              {visibles.length === 0 && <p className="mt-6 text-sm text-piedra">{tx('Aún no tenemos ese destino. Escríbenos y te orientamos.', 'We don’t cover that destination yet. Write to us and we’ll point you in the right direction.')}</p>}
             </div>
           )}
 
           {panel === 'fechas' && (
             <div>
               <p className="text-sm text-piedra">
-                Si viajas para tu procedimiento, indica cuándo llegas y cuándo te vas. Con eso calculamos las noches de recuperación.
+                {tx(
+                  'Si viajas para tu procedimiento, indica cuándo llegas y cuándo te vas. Con eso calculamos las noches de recuperación.',
+                  'If you’re traveling for your procedure, tell us when you arrive and when you leave. We’ll use that to calculate your recovery nights.',
+                )}
               </p>
               <div className="mt-6 grid gap-6 sm:grid-cols-2">
                 <label>
-                  <span className="etiqueta">Llegada</span>
+                  <span className="etiqueta">{tx('Llegada', 'Check-in')}</span>
                   <input
                     type="date"
                     min={minLlegada}
@@ -217,18 +226,20 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                   />
                 </label>
                 <label>
-                  <span className="etiqueta">Salida</span>
+                  <span className="etiqueta">{tx('Salida', 'Check-out')}</span>
                   <input type="date" min={llegada || minLlegada} value={salida} onChange={(e) => setSalida(e.target.value)} className="campo" />
                 </label>
               </div>
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                <span className="text-sm">{noches ? `${noches} ${noches === 1 ? 'noche' : 'noches'}` : 'Sin fechas: mis fechas son flexibles'}</span>
+                <span className="text-sm">{noches
+                    ? tx(`${noches} ${noches === 1 ? 'noche' : 'noches'}`, `${noches} ${noches === 1 ? 'night' : 'nights'}`)
+                    : tx('Sin fechas: mis fechas son flexibles', 'No dates: my dates are flexible')}</span>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => (setLlegada(''), setSalida(''))} className="enlace text-sm text-piedra">
-                    Borrar
+                    {tx('Borrar', 'Clear')}
                   </button>
                   <button type="button" onClick={() => elegir('presu')} className="btn-linea">
-                    Siguiente
+                    {tx('Siguiente', 'Next')}
                   </button>
                 </div>
               </div>
@@ -237,33 +248,41 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
 
           {panel === 'presu' && (
             <div>
-              <p className="text-sm text-piedra">Tu presupuesto total en pesos colombianos. Te mostramos primero lo que encaja.</p>
+              <p className="text-sm text-piedra">
+                {moneda === 'USD'
+                  ? tx('Tu presupuesto total en dólares, aproximado. Te mostramos primero lo que encaja.', 'Your approximate total budget in US dollars. We’ll show you what fits first.')
+                  : tx('Tu presupuesto total en pesos colombianos. Te mostramos primero lo que encaja.', 'Your total budget in Colombian pesos. We’ll show you what fits first.')}
+              </p>
               <div className="mt-5 flex items-center gap-2 border-b border-espresso pb-2 text-2xl">
+                {/* El campo muestra la moneda de la persona; la URL y los filtros siguen en pesos. */}
                 <span className="text-piedra">$</span>
                 <input
                   inputMode="numeric"
                   autoFocus
-                  value={presu ? Number(presu).toLocaleString('es-CO') : ''}
-                  onChange={(e) => setPresu(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="15.000.000"
-                  aria-label="Presupuesto en pesos"
+                  value={presu ? numero(desdeCop(Number(presu))) : ''}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0, 10)
+                    setPresu(v ? String(aCop(Number(v))) : '')
+                  }}
+                  placeholder={numero(moneda === 'USD' ? 4000 : 15_000_000)}
+                  aria-label={moneda === 'USD' ? tx('Presupuesto en dólares', 'Budget in US dollars') : tx('Presupuesto en pesos', 'Budget in Colombian pesos')}
                   className="w-full bg-transparent font-light outline-none placeholder:text-niebla"
                 />
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                {[8, 10, 12, 15, 20, 30].map((m) => (
+                {chipsPresupuesto.map(({ cop, texto }) => (
                   <button
-                    key={m}
+                    key={cop}
                     type="button"
-                    onClick={() => setPresu(String(m * 1_000_000))}
-                    className={`border px-3.5 py-1.5 text-xs transition ${presu === String(m * 1_000_000) ? 'border-espresso bg-espresso text-marfil' : 'border-linea text-piedra hover:border-espresso'}`}
+                    onClick={() => setPresu(String(cop))}
+                    className={`border px-3.5 py-1.5 text-xs transition ${presu === String(cop) ? 'border-espresso bg-espresso text-marfil' : 'border-linea text-piedra hover:border-espresso'}`}
                   >
-                    {m} M
+                    {texto}
                   </button>
                 ))}
                 {presu && (
                   <button type="button" onClick={() => setPresu('')} className="enlace ml-2 text-xs text-piedra">
-                    Sin presupuesto
+                    {tx('Sin presupuesto', 'No budget')}
                   </button>
                 )}
               </div>

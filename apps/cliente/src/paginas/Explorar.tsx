@@ -1,14 +1,16 @@
-import { detallarOfertas, formatoCOP, nombreCategoria, type Categoria } from '@plastinex/shared'
+import { detallarOfertas, type Categoria } from '@plastinex/shared'
 import { LayoutGrid, List, Map as IconoMapa } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import Buscador, { iconoCategoria } from '../componentes/Buscador'
-import Mapa, { precioCorto, type Limites } from '../componentes/Mapa'
+import Mapa, { type Limites } from '../componentes/Mapa'
 import OfertaCard from '../componentes/OfertaCard'
+import { useIdioma } from '../idioma'
 
 export default function Explorar() {
   const { datos } = useCatalogo()
+  const { tx, dinero, corto, loc, locale, categoria: nombreCategoria } = useIdioma()
   const [params, setParams] = useSearchParams()
   const [resaltada, setResaltada] = useState<string | null>(null)
   const [seleccionada, setSeleccionada] = useState<string | null>(null)
@@ -52,10 +54,10 @@ export default function Explorar() {
     })
     return l.sort((a, b) => {
       if (orden === 'precio') return (a.oferta.precio_min ?? Infinity) - (b.oferta.precio_min ?? Infinity)
-      if (orden === 'nombre') return a.procedimiento.nombre.localeCompare(b.procedimiento.nombre, 'es')
+      if (orden === 'nombre') return loc(a.procedimiento, 'nombre').localeCompare(loc(b.procedimiento, 'nombre'), locale)
       return Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado')
     })
-  }, [datos, procedimiento, categoria, ciudad, pais, presupuesto, verificadas, orden])
+  }, [datos, procedimiento, categoria, ciudad, pais, presupuesto, verificadas, orden, loc, locale])
 
   // Un marcador por institución con el precio desde más bajo de sus opciones.
   const puntos = useMemo(() => {
@@ -68,8 +70,8 @@ export default function Explorar() {
       if (d.oferta.precio_min != null) x.desde = x.desde == null ? d.oferta.precio_min : Math.min(x.desde, d.oferta.precio_min)
       porInst.set(i.id, x)
     }
-    return [...porInst.values()].map((x) => ({ ...x, etiqueta: precioCorto(x.desde) }))
-  }, [filtradas])
+    return [...porInst.values()].map((x) => ({ ...x, etiqueta: corto(x.desde) }))
+  }, [filtradas, corto])
 
   if (!datos) return null
 
@@ -91,10 +93,10 @@ export default function Explorar() {
           <Buscador />
           {/* Categorías con ícono, como la barra de un marketplace. */}
           <div className="mt-6 flex gap-8 overflow-x-auto text-[11px] font-medium tracking-[0.18em] whitespace-nowrap uppercase">
-            <Categoria activa={!categoria} onClick={() => set('categoria', '')} icono={<LayoutGrid size={20} strokeWidth={1.4} />} texto="Todo" />
-            {(Object.keys(nombreCategoria) as Categoria[]).map((c) => {
+            <Categoria activa={!categoria} onClick={() => set('categoria', '')} icono={<LayoutGrid size={20} strokeWidth={1.4} />} texto={tx('Todo', 'All')} />
+            {(Object.keys(iconoCategoria) as Categoria[]).map((c) => {
               const I = iconoCategoria[c]
-              return <Categoria key={c} activa={categoria === c} onClick={() => set('categoria', c)} icono={<I size={20} strokeWidth={1.4} />} texto={nombreCategoria[c]} />
+              return <Categoria key={c} activa={categoria === c} onClick={() => set('categoria', c)} icono={<I size={20} strokeWidth={1.4} />} texto={nombreCategoria(c)} />
             })}
             <span className="mx-2 w-px shrink-0 bg-linea" />
             {datos.procedimientos
@@ -105,7 +107,7 @@ export default function Explorar() {
                   onClick={() => set('procedimiento', procedimiento === p.id ? '' : p.id)}
                   className={`-mb-px shrink-0 border-b-2 pt-6 pb-3 transition ${procedimiento === p.id ? 'border-espresso text-espresso' : 'border-transparent text-piedra hover:text-espresso'}`}
                 >
-                  {p.nombre}
+                  {loc(p, 'nombre')}
                 </button>
               ))}
           </div>
@@ -117,22 +119,24 @@ export default function Explorar() {
         <div className={`contenedor !max-w-none py-8 lg:!px-10 ${vista === 'mapa' ? 'hidden lg:block' : ''}`}>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
             <span className="font-medium">
-              {lista.length} {lista.length === 1 ? 'opción' : 'opciones'}
-              {presupuesto ? ` hasta ${formatoCOP(presupuesto)}` : ''}
+              {tx(
+                `${lista.length} ${lista.length === 1 ? 'opción' : 'opciones'}${presupuesto ? ` hasta ${dinero(presupuesto)}` : ''}`,
+                `${lista.length} ${lista.length === 1 ? 'option' : 'options'}${presupuesto ? ` up to ${dinero(presupuesto)}` : ''}`,
+              )}
             </span>
             <label className="flex cursor-pointer items-center gap-2 text-piedra">
               <input type="checkbox" checked={verificadas} onChange={(e) => set('verificadas', e.target.checked ? '1' : '')} className="accent-espresso" />
-              Solo verificadas
+              {tx('Solo verificadas', 'Verified only')}
             </label>
             {activos > 0 && (
               <button onClick={() => setParams(new URLSearchParams(), { replace: true })} className="enlace text-piedra">
-                Limpiar filtros
+                {tx('Limpiar filtros', 'Clear filters')}
               </button>
             )}
-            <select value={orden} onChange={(e) => set('orden', e.target.value)} className="ml-auto cursor-pointer border-b border-linea bg-transparent py-1 outline-none" aria-label="Ordenar">
-              <option value="relevancia">Relevancia</option>
-              <option value="precio">Precio menor</option>
-              <option value="nombre">Nombre</option>
+            <select value={orden} onChange={(e) => set('orden', e.target.value)} className="ml-auto cursor-pointer border-b border-linea bg-transparent py-1 outline-none" aria-label={tx('Ordenar', 'Sort')}>
+              <option value="relevancia">{tx('Relevancia', 'Relevance')}</option>
+              <option value="precio">{tx('Precio menor', 'Lowest price')}</option>
+              <option value="nombre">{tx('Nombre', 'Name')}</option>
             </select>
           </div>
 
@@ -144,12 +148,17 @@ export default function Explorar() {
             </div>
           ) : (
             <div className="mt-12 border-y border-linea py-20 text-center">
-              <p className="display normal-case text-3xl">No hay opciones con esos filtros.</p>
+              <p className="display normal-case text-3xl">{tx('No hay opciones con esos filtros.', 'No options match these filters.')}</p>
               <p className="mt-3 text-sm text-piedra">
-                {alMover ? 'Mueve el mapa o desactiva «Buscar al mover el mapa».' : 'Aún no hay clínicas publicadas aquí. Prueba otro destino o pide orientación: un coordinador te ayuda a encontrar opciones.'}
+                {alMover
+                  ? tx('Mueve el mapa o desactiva «Buscar al mover el mapa».', 'Move the map or turn off “Search as I move the map.”')
+                  : tx(
+                      'Aún no hay clínicas publicadas aquí. Prueba otro destino o pide orientación: un coordinador te ayuda a encontrar opciones.',
+                      'No clinics are listed here yet. Try another destination or ask for guidance: a coordinator will help you find options.',
+                    )}
               </p>
               <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn mt-8">
-                Solicitar orientación
+                {tx('Solicitar orientación', 'Request guidance')}
               </Link>
             </div>
           )}
@@ -176,17 +185,20 @@ export default function Explorar() {
                       <div className="rotulo !text-[10px]">{datos.ciudades.find((c) => c.id === selInst.ciudad_id)?.nombre}</div>
                       <div className="mt-1 truncate text-[14px] font-medium tracking-[0.1em] uppercase">{selInst.nombre}</div>
                       <div className="mt-1 text-[13px] text-piedra">
-                        {sel.n} {sel.n === 1 ? 'opción' : 'opciones'} · {sel.desde ? `desde ${formatoCOP(sel.desde)}` : 'precio por valorar'}
+                        {tx(
+                          `${sel.n} ${sel.n === 1 ? 'opción' : 'opciones'} · ${sel.desde ? `desde ${dinero(sel.desde)}` : 'precio por valorar'}`,
+                          `${sel.n} ${sel.n === 1 ? 'option' : 'options'} · ${sel.desde ? `from ${dinero(sel.desde)}` : 'price after consultation'}`,
+                        )}
                       </div>
                     </div>
-                    <span className="text-[11px] font-medium tracking-[0.2em] uppercase underline underline-offset-[6px]">Ver</span>
+                    <span className="text-[11px] font-medium tracking-[0.2em] uppercase underline underline-offset-[6px]">{tx('Ver', 'View')}</span>
                   </Link>
                 )
               }
             />
             <label className="absolute top-4 left-4 z-[500] flex cursor-pointer items-center gap-2 border border-linea bg-marfil px-4 py-2.5 text-[13px] shadow-[0_4px_14px_rgba(0,0,0,0.12)]">
               <input type="checkbox" checked={alMover} onChange={(e) => setAlMover(e.target.checked)} className="accent-espresso" />
-              Buscar al mover el mapa
+              {tx('Buscar al mover el mapa', 'Search as I move the map')}
             </label>
           </div>
         </div>
@@ -199,11 +211,11 @@ export default function Explorar() {
       >
         {vista === 'mapa' ? (
           <>
-            <List size={15} strokeWidth={1.6} /> Mostrar lista
+            <List size={15} strokeWidth={1.6} /> {tx('Mostrar lista', 'Show list')}
           </>
         ) : (
           <>
-            <IconoMapa size={15} strokeWidth={1.6} /> Mostrar mapa
+            <IconoMapa size={15} strokeWidth={1.6} /> {tx('Mostrar mapa', 'Show map')}
           </>
         )}
       </button>
