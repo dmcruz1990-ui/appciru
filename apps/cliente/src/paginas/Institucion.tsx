@@ -1,4 +1,4 @@
-import { detallarOfertas, formatoCOP, iniciales, nombreCiudad, nombreTipoAlojamiento, nombreTipoInstitucion, textoPrecio } from '@plastinex/shared'
+import { detallarOfertas, iniciales, nombreCiudad } from '@plastinex/shared'
 import { CalendarDays, Check, Share2, ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -11,6 +11,7 @@ import Galeria from '../componentes/Galeria'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import Mapa from '../componentes/Mapa'
 import NoEncontrado from '../componentes/NoEncontrado'
+import { NotaMoneda, useIdioma } from '../idioma'
 
 export default function InstitucionPagina() {
   const { id } = useParams()
@@ -24,14 +25,16 @@ export default function InstitucionPagina() {
   const [alojamientoId, setAlojamientoId] = useState('')
   const [copiado, setCopiado] = useState(false)
   const { es, alternar } = useFavoritos()
+  const { tx, dinero, precio, loc, locLista, tipoInstitucion, tipoAlojamiento } = useIdioma()
 
-  if (!datos || !inst) return <NoEncontrado texto="Esta institución no está disponible." />
+  if (!datos || !inst) return <NoEncontrado texto={tx('Esta institución no está disponible.', 'This clinic is not available.')} />
 
   const profIds = datos.vinculos.filter((v) => v.institucion_id === inst.id).map((v) => v.profesional_id)
   const profesionales = datos.profesionales.filter((p) => profIds.includes(p.id) && p.publicado)
   const alojamientos = datos.alojamientos.filter((a) => a.ciudad_id === inst.ciudad_id && a.publicado)
   const fotos = [inst.imagen_url, ...(inst.galeria ?? [])].filter((x): x is string => !!x)
   const ciudad = nombreCiudad(datos, inst.ciudad_id)
+  const servicios = locLista(inst, 'servicios')
 
   const elegida = opciones.find((d) => d.oferta.id === ofertaId) ?? opciones[0]
   const aloj = alojamientos.find((a) => a.id === alojamientoId)
@@ -74,7 +77,7 @@ export default function InstitucionPagina() {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <span className="rotulo">
-                {nombreTipoInstitucion[inst.tipo]} · {ciudad}
+                {tipoInstitucion(inst.tipo)} · {ciudad}
               </span>
               {inst.es_demo && <EtiquetaDemo />}
             </div>
@@ -85,11 +88,11 @@ export default function InstitucionPagina() {
           </div>
           <div className="flex gap-2 text-[11px] font-medium tracking-[0.2em] uppercase">
             <button onClick={compartir} className="flex items-center gap-2 px-3 py-2 underline-offset-[6px] hover:underline">
-              <Share2 size={15} strokeWidth={1.6} /> {copiado ? 'Enlace copiado' : 'Compartir'}
+              <Share2 size={15} strokeWidth={1.6} /> {copiado ? tx('Enlace copiado', 'Link copied') : tx('Compartir', 'Share')}
             </button>
             <button onClick={() => alternar(`institucion:${inst.id}`)} className="flex items-center gap-2 px-3 py-2 underline-offset-[6px] hover:underline" aria-pressed={es(`institucion:${inst.id}`)}>
               <span className={`inline-block h-2 w-2 ${es(`institucion:${inst.id}`) ? 'bg-espresso' : 'border border-espresso'}`} />
-              {es(`institucion:${inst.id}`) ? 'Guardada' : 'Guardar'}
+              {es(`institucion:${inst.id}`) ? tx('Guardada', 'Saved') : tx('Guardar', 'Save')}
             </button>
           </div>
         </div>
@@ -101,23 +104,23 @@ export default function InstitucionPagina() {
         <div className="grid gap-16 py-14 lg:grid-cols-[minmax(0,1fr)_400px]">
           {/* Columna de contenido */}
           <div className="min-w-0">
-            <p className="display normal-case text-2xl leading-snug md:text-3xl">{inst.descripcion}</p>
+            <p className="display normal-case text-2xl leading-snug md:text-3xl">{loc(inst, 'descripcion')}</p>
 
             <div className="mt-10 grid gap-6 border-y border-linea py-8 sm:grid-cols-3">
-              <Dato icono={<ShieldCheck size={22} strokeWidth={1.3} />} t="Habilitación sanitaria" v={inst.codigo_reps ?? 'No informado'} />
+              <Dato icono={<ShieldCheck size={22} strokeWidth={1.3} />} t={tx('Habilitación sanitaria', 'Health license')} v={inst.codigo_reps ?? tx('No informado', 'Not provided')} />
               <Dato
                 icono={<CalendarDays size={22} strokeWidth={1.3} />}
-                t="Primera valoración"
-                v={inst.valoracion_precio == null ? 'Consultar' : inst.valoracion_precio === 0 ? 'Sin costo' : formatoCOP(inst.valoracion_precio)}
+                t={tx('Primera valoración', 'First consultation')}
+                v={inst.valoracion_precio == null ? tx('Consultar', 'Ask the clinic') : inst.valoracion_precio === 0 ? tx('Sin costo', 'Free') : dinero(inst.valoracion_precio)}
               />
-              <Dato icono={<Check size={22} strokeWidth={1.3} />} t="Financiación" v={inst.financiacion ? 'Disponible' : 'No informada'} />
+              <Dato icono={<Check size={22} strokeWidth={1.3} />} t={tx('Financiación', 'Financing')} v={inst.financiacion ? tx('Disponible', 'Available') : tx('No informada', 'Not provided')} />
             </div>
 
-            {inst.servicios.length > 0 && (
+            {servicios.length > 0 && (
               <section className="mt-14">
-                <Rotulo>Lo que ofrece</Rotulo>
+                <Rotulo>{tx('Lo que ofrece', 'What this place offers')}</Rotulo>
                 <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                  {inst.servicios.map((s) => (
+                  {servicios.map((s) => (
                     <li key={s} className="flex items-center gap-3 text-[15px]">
                       <Check size={16} strokeWidth={1.6} className="shrink-0" /> {s}
                     </li>
@@ -127,7 +130,7 @@ export default function InstitucionPagina() {
             )}
 
             <section className="mt-14">
-              <Rotulo>Procedimientos y precios</Rotulo>
+              <Rotulo>{tx('Procedimientos y precios', 'Procedures and prices')}</Rotulo>
               <ul className="mt-6 divide-y divide-linea border-y border-linea">
                 {opciones.map((d) => (
                   <li key={d.oferta.id}>
@@ -136,19 +139,19 @@ export default function InstitucionPagina() {
                       className={`flex w-full items-center justify-between gap-4 px-3 py-5 text-left transition ${elegida?.oferta.id === d.oferta.id ? 'bg-arena' : 'hover:bg-papel'}`}
                     >
                       <span>
-                        <span className="block text-[14px] font-medium tracking-[0.1em] uppercase">{d.procedimiento.nombre}</span>
-                        <span className="mt-1 block text-[13px] text-piedra">{d.profesional?.nombre ?? 'Especialista por asignar'}</span>
+                        <span className="block text-[14px] font-medium tracking-[0.1em] uppercase">{loc(d.procedimiento, 'nombre')}</span>
+                        <span className="mt-1 block text-[13px] text-piedra">{d.profesional?.nombre ?? tx('Especialista por asignar', 'Surgeon to be assigned')}</span>
                       </span>
-                      <span className="shrink-0 text-right text-[14px]">{textoPrecio(d.oferta.precio_min, d.oferta.precio_max)}</span>
+                      <span className="shrink-0 text-right text-[14px]">{precio(d.oferta.precio_min, d.oferta.precio_max)}</span>
                     </button>
                   </li>
                 ))}
-                {opciones.length === 0 && <li className="py-5 text-sm text-piedra">Sin procedimientos publicados.</li>}
+                {opciones.length === 0 && <li className="py-5 text-sm text-piedra">{tx('Sin procedimientos publicados.', 'No published procedures.')}</li>}
               </ul>
             </section>
 
             <section className="mt-14">
-              <Rotulo>Especialistas</Rotulo>
+              <Rotulo>{tx('Especialistas', 'Surgeons')}</Rotulo>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {profesionales.map((p) => (
                   <Link key={p.id} to={`/profesional/${p.id}`} className="flex items-center gap-4 border border-linea p-4 transition hover:border-espresso">
@@ -158,29 +161,29 @@ export default function InstitucionPagina() {
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-medium tracking-[0.08em] uppercase">{p.nombre}</span>
                       <span className="mt-1 block text-[13px] text-piedra">
-                        {[p.sociedad, p.anios_experiencia && `${p.anios_experiencia} años`].filter(Boolean).join(' · ') || p.especialidad}
+                        {[p.sociedad, p.anios_experiencia && tx(`${p.anios_experiencia} años`, `${p.anios_experiencia} years`)].filter(Boolean).join(' · ') || loc(p, 'especialidad')}
                       </span>
                     </span>
                   </Link>
                 ))}
-                {profesionales.length === 0 && <p className="text-sm text-piedra">Sin especialistas publicados.</p>}
+                {profesionales.length === 0 && <p className="text-sm text-piedra">{tx('Sin especialistas publicados.', 'No published surgeons.')}</p>}
               </div>
             </section>
 
             {inst.lat != null && inst.lng != null && (
               <section className="mt-14">
-                <Rotulo>Ubicación</Rotulo>
+                <Rotulo>{tx('Ubicación', 'Location')}</Rotulo>
                 <p className="mt-4 text-[15px]">
                   {inst.direccion ?? ciudad} · {ciudad}
                 </p>
                 <Mapa puntos={[{ id: inst.id, lat: inst.lat, lng: inst.lng, etiqueta: inst.nombre }]} className="mt-6 h-[360px] border border-linea" zoomInicial={14} />
-                {inst.es_demo && <p className="mt-3 text-xs text-piedra">Ubicación aproximada de un perfil de demostración.</p>}
+                {inst.es_demo && <p className="mt-3 text-xs text-piedra">{tx('Ubicación aproximada de un perfil de demostración.', 'Approximate location of a demo profile.')}</p>}
               </section>
             )}
 
             {alojamientos.length > 0 && (
               <section className="mt-14">
-                <Rotulo>Dónde recuperarte en {ciudad}</Rotulo>
+                <Rotulo>{tx(`Dónde recuperarte en ${ciudad}`, `Where to recover in ${ciudad}`)}</Rotulo>
                 <div className="mt-6 grid gap-6 sm:grid-cols-2">
                   {alojamientos.map((a) => (
                     <Link key={a.id} to={`/alojamiento/${a.id}`} className="group block">
@@ -189,7 +192,7 @@ export default function InstitucionPagina() {
                       </Carrusel>
                       <div className="mt-3 text-[13px] font-medium tracking-[0.1em] uppercase">{a.nombre}</div>
                       <div className="mt-1 text-[13px] text-piedra">
-                        {nombreTipoAlojamiento[a.tipo]} · {a.precio_noche_desde ? `${formatoCOP(a.precio_noche_desde)} noche` : 'Precio por cotizar'}
+                        {tipoAlojamiento(a.tipo)} · {a.precio_noche_desde ? tx(`${dinero(a.precio_noche_desde)} noche`, `${dinero(a.precio_noche_desde)} night`) : tx('Precio por cotizar', 'Price on request')}
                       </div>
                     </Link>
                   ))}
@@ -202,35 +205,35 @@ export default function InstitucionPagina() {
           <aside>
             <Revelar className="lg:sticky lg:top-28">
               <div className="border border-linea p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
-                <div className="text-[22px] font-light">{elegida ? textoPrecio(elegida.oferta.precio_min, elegida.oferta.precio_max) : 'Por valorar'}</div>
-                <div className="mt-1 text-xs text-piedra">Rango orientativo del procedimiento</div>
+                <div className="text-[22px] font-light">{elegida ? precio(elegida.oferta.precio_min, elegida.oferta.precio_max) : tx('Por valorar', 'Quoted after consultation')}</div>
+                <div className="mt-1 text-xs text-piedra">{tx('Rango orientativo del procedimiento', 'Indicative range for the procedure')}</div>
 
                 <div className="mt-6 border border-linea">
                   <label className="block border-b border-linea px-4 py-3">
-                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Procedimiento</span>
+                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{tx('Procedimiento', 'Procedure')}</span>
                     <select value={elegida?.oferta.id ?? ''} onChange={(e) => setOfertaId(e.target.value)} className="mt-1 w-full cursor-pointer bg-transparent text-[14px] outline-none">
                       {opciones.map((d) => (
                         <option key={d.oferta.id} value={d.oferta.id}>
-                          {d.procedimiento.nombre}
+                          {loc(d.procedimiento, 'nombre')}
                         </option>
                       ))}
                     </select>
                   </label>
                   <div className="grid grid-cols-2">
                     <label className="block border-r border-linea px-4 py-3">
-                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Llegada</span>
+                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{tx('Llegada', 'Check-in')}</span>
                       <input type="date" min={minLlegada} value={llegada} onChange={(e) => setLlegada(e.target.value)} className="mt-1 w-full bg-transparent text-[13px] outline-none" />
                     </label>
                     <label className="block px-4 py-3">
-                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Salida</span>
+                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{tx('Salida', 'Check-out')}</span>
                       <input type="date" min={llegada || minLlegada} value={salida} onChange={(e) => setSalida(e.target.value)} className="mt-1 w-full bg-transparent text-[13px] outline-none" />
                     </label>
                   </div>
                   {alojamientos.length > 0 && (
                     <label className="block border-t border-linea px-4 py-3">
-                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Alojamiento de recuperación</span>
+                      <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{tx('Alojamiento de recuperación', 'Recovery stay')}</span>
                       <select value={alojamientoId} onChange={(e) => setAlojamientoId(e.target.value)} className="mt-1 w-full cursor-pointer bg-transparent text-[14px] outline-none">
-                        <option value="">Sin alojamiento</option>
+                        <option value="">{tx('Sin alojamiento', 'No stay')}</option>
                         {alojamientos.map((a) => (
                           <option key={a.id} value={a.id}>
                             {a.nombre}
@@ -242,28 +245,34 @@ export default function InstitucionPagina() {
                 </div>
 
                 <Link to={`/solicitar?${solicitar}`} className="btn mt-5 w-full">
-                  Solicitar valoración
+                  {tx('Solicitar valoración', 'Request consultation')}
                 </Link>
-                <p className="mt-3 text-center text-xs text-piedra">No pagas nada ahora. La clínica confirma el valor después de valorarte.</p>
+                <p className="mt-3 text-center text-xs text-piedra">
+                  {tx('No pagas nada ahora. La clínica confirma el valor después de valorarte.', "You won't be charged now. The clinic confirms the price after your consultation.")}
+                </p>
 
                 {elegida && (
                   <dl className="mt-6 space-y-3 text-[14px]">
-                    <Linea t={elegida.procedimiento.nombre} v={textoPrecio(elegida.oferta.precio_min, elegida.oferta.precio_max)} />
-                    {inst.valoracion_precio != null && <Linea t="Primera valoración" v={inst.valoracion_precio === 0 ? 'Sin costo' : formatoCOP(inst.valoracion_precio)} />}
+                    <Linea t={loc(elegida.procedimiento, 'nombre')} v={precio(elegida.oferta.precio_min, elegida.oferta.precio_max)} />
+                    {inst.valoracion_precio != null && <Linea t={tx('Primera valoración', 'First consultation')} v={inst.valoracion_precio === 0 ? tx('Sin costo', 'Free') : dinero(inst.valoracion_precio)} />}
                     {aloj && (
                       <Linea
-                        t={`${aloj.nombre} · ${noches} ${noches === 1 ? 'noche' : 'noches'}${nochesFechas ? '' : ' sugeridas'}`}
-                        v={costoAloj ? formatoCOP(costoAloj) : 'Por cotizar'}
+                        t={tx(
+                          `${aloj.nombre} · ${noches} ${noches === 1 ? 'noche' : 'noches'}${nochesFechas ? '' : ' sugeridas'}`,
+                          `${aloj.nombre} · ${noches} ${noches === 1 ? 'night' : 'nights'}${nochesFechas ? '' : ' suggested'}`,
+                        )}
+                        v={costoAloj ? dinero(costoAloj) : tx('Por cotizar', 'On request')}
                       />
                     )}
                     {elegida.oferta.precio_min != null && (
                       <div className="flex items-baseline justify-between gap-4 border-t border-linea pt-4 font-medium">
-                        <dt>Total estimado</dt>
-                        <dd className="text-right">{min === max ? formatoCOP(min) : `${formatoCOP(min)} – ${formatoCOP(max)}`}</dd>
+                        <dt>{tx('Total estimado', 'Estimated total')}</dt>
+                        <dd className="text-right">{min === max ? dinero(min) : `${dinero(min)} – ${dinero(max)}`}</dd>
                       </div>
                     )}
                   </dl>
                 )}
+                <NotaMoneda className="mt-4" />
               </div>
             </Revelar>
           </aside>

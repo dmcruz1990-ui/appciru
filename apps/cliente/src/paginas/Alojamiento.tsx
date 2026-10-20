@@ -1,4 +1,4 @@
-import { formatoCOP, nombreCiudad, nombreTipoAlojamiento } from '@plastinex/shared'
+import { nombreCiudad } from '@plastinex/shared'
 import { Check, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -10,6 +10,7 @@ import Galeria from '../componentes/Galeria'
 import { EtiquetaDemo } from '../componentes/Insignias'
 import Mapa from '../componentes/Mapa'
 import NoEncontrado from '../componentes/NoEncontrado'
+import { NotaMoneda, useIdioma } from '../idioma'
 
 /** Ficha de un alojamiento de recuperación con reserva por fechas (se cotiza junto con la valoración). */
 export default function AlojamientoPagina() {
@@ -19,8 +20,9 @@ export default function AlojamientoPagina() {
   const [llegada, setLlegada] = useState(params.get('llegada') ?? '')
   const [salida, setSalida] = useState(params.get('salida') ?? '')
   const { es, alternar } = useFavoritos()
+  const { tx, dinero, loc, tipoAlojamiento } = useIdioma()
   const a = datos?.alojamientos.find((x) => x.id === id)
-  if (!datos || !a) return <NoEncontrado texto="Este alojamiento no está disponible." />
+  if (!datos || !a) return <NoEncontrado texto={tx('Este alojamiento no está disponible.', 'This stay is not available.')} />
 
   const ciudad = nombreCiudad(datos, a.ciudad_id)
   const noches = nochesEntre(llegada, salida)
@@ -32,10 +34,10 @@ export default function AlojamientoPagina() {
   if (llegada) q.set('fecha', llegada)
   const clave = `alojamiento:${a.id}`
   const incluye = [
-    a.incluye_enfermeria && 'Enfermería',
-    a.incluye_alimentacion && 'Alimentación',
-    'Acompañamiento en la recuperación',
-    'Cerca de las clínicas de la ciudad',
+    a.incluye_enfermeria && tx('Enfermería', 'Nursing care'),
+    a.incluye_alimentacion && tx('Alimentación', 'Meals'),
+    tx('Acompañamiento en la recuperación', 'Support during your recovery'),
+    tx('Cerca de las clínicas de la ciudad', "Close to the city's clinics"),
   ].filter((x): x is string => !!x)
 
   return (
@@ -45,7 +47,7 @@ export default function AlojamientoPagina() {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <span className="rotulo">
-                {nombreTipoAlojamiento[a.tipo]} · {ciudad}
+                {tipoAlojamiento(a.tipo)} · {ciudad}
               </span>
               {a.es_demo && <EtiquetaDemo />}
             </div>
@@ -53,7 +55,7 @@ export default function AlojamientoPagina() {
           </div>
           <button onClick={() => alternar(clave)} aria-pressed={es(clave)} className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium tracking-[0.2em] uppercase underline-offset-[6px] hover:underline">
             <span className={`inline-block h-2 w-2 ${es(clave) ? 'bg-espresso' : 'border border-espresso'}`} />
-            {es(clave) ? 'Guardado' : 'Guardar'}
+            {es(clave) ? tx('Guardado', 'Saved') : tx('Guardar', 'Save')}
           </button>
         </div>
 
@@ -63,14 +65,15 @@ export default function AlojamientoPagina() {
 
         <div className="grid gap-16 py-14 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0">
-            <p className="display normal-case text-2xl leading-snug md:text-3xl">{a.descripcion}</p>
+            <p className="display normal-case text-2xl leading-snug md:text-3xl">{loc(a, 'descripcion')}</p>
             {a.capacidad && (
               <p className="mt-6 flex items-center gap-3 text-[15px]">
-                <Users size={18} strokeWidth={1.4} /> Hasta {a.capacidad} {a.capacidad === 1 ? 'persona' : 'personas'}
+                <Users size={18} strokeWidth={1.4} />{' '}
+                {tx(`Hasta ${a.capacidad} ${a.capacidad === 1 ? 'persona' : 'personas'}`, `Up to ${a.capacidad} ${a.capacidad === 1 ? 'guest' : 'guests'}`)}
               </p>
             )}
             <section className="mt-14">
-              <Rotulo>Lo que incluye</Rotulo>
+              <Rotulo>{tx('Lo que incluye', "What's included")}</Rotulo>
               <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 {incluye.map((s) => (
                   <li key={s} className="flex items-center gap-3 text-[15px]">
@@ -81,19 +84,19 @@ export default function AlojamientoPagina() {
             </section>
             {a.lat != null && a.lng != null && (
               <section className="mt-14">
-                <Rotulo>Ubicación</Rotulo>
+                <Rotulo>{tx('Ubicación', 'Location')}</Rotulo>
                 <Mapa puntos={[{ id: a.id, lat: a.lat, lng: a.lng, etiqueta: a.nombre }]} className="mt-6 h-[340px] border border-linea" zoomInicial={13} />
-                {a.es_demo && <p className="mt-3 text-xs text-piedra">Ubicación aproximada de un perfil de demostración.</p>}
+                {a.es_demo && <p className="mt-3 text-xs text-piedra">{tx('Ubicación aproximada de un perfil de demostración.', 'Approximate location of a demo profile.')}</p>}
               </section>
             )}
             {clinicas.length > 0 && (
               <section className="mt-14">
-                <Rotulo>Clínicas en {ciudad}</Rotulo>
+                <Rotulo>{tx(`Clínicas en ${ciudad}`, `Clinics in ${ciudad}`)}</Rotulo>
                 <ul className="mt-6 divide-y divide-linea border-y border-linea">
                   {clinicas.map((i) => (
                     <li key={i.id}>
                       <Link to={`/institucion/${i.id}`} className="flex items-center justify-between gap-4 py-4 text-[14px] font-medium tracking-[0.08em] uppercase hover:underline">
-                        {i.nombre} <span className="text-[11px] tracking-[0.2em] text-piedra">Ver</span>
+                        {i.nombre} <span className="text-[11px] tracking-[0.2em] text-piedra">{tx('Ver', 'View')}</span>
                       </Link>
                     </li>
                   ))}
@@ -108,40 +111,43 @@ export default function AlojamientoPagina() {
                 <div className="text-[22px] font-light">
                   {a.precio_noche_desde ? (
                     <>
-                      {formatoCOP(a.precio_noche_desde)} <span className="text-sm text-piedra">noche</span>
+                      {dinero(a.precio_noche_desde)} <span className="text-sm text-piedra">{tx('noche', 'night')}</span>
                     </>
                   ) : (
-                    'Precio por cotizar'
+                    tx('Precio por cotizar', 'Price on request')
                   )}
                 </div>
                 <div className="mt-6 grid grid-cols-2 border border-linea">
                   <label className="block border-r border-linea px-4 py-3">
-                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Llegada</span>
+                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{tx('Llegada', 'Check-in')}</span>
                     <input type="date" min={minLlegada} value={llegada} onChange={(e) => setLlegada(e.target.value)} className="mt-1 w-full bg-transparent text-[13px] outline-none" />
                   </label>
                   <label className="block px-4 py-3">
-                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">Salida</span>
+                    <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{tx('Salida', 'Check-out')}</span>
                     <input type="date" min={llegada || minLlegada} value={salida} onChange={(e) => setSalida(e.target.value)} className="mt-1 w-full bg-transparent text-[13px] outline-none" />
                   </label>
                 </div>
                 <Link to={`/solicitar?${q}`} className="btn mt-5 w-full">
-                  Cotizar con mi valoración
+                  {tx('Cotizar con mi valoración', 'Add to my consultation quote')}
                 </Link>
-                <p className="mt-3 text-center text-xs text-piedra">No pagas nada ahora. Lo cotizamos junto con tu valoración.</p>
+                <p className="mt-3 text-center text-xs text-piedra">
+                  {tx('No pagas nada ahora. Lo cotizamos junto con tu valoración.', "You won't be charged now. We'll quote it together with your consultation.")}
+                </p>
                 {total > 0 && (
                   <dl className="mt-6 space-y-3 text-[14px]">
                     <div className="flex justify-between gap-4">
                       <dt className="text-piedra">
-                        {formatoCOP(a.precio_noche_desde!)} × {noches} {noches === 1 ? 'noche' : 'noches'}
+                        {dinero(a.precio_noche_desde!)} × {tx(`${noches} ${noches === 1 ? 'noche' : 'noches'}`, `${noches} ${noches === 1 ? 'night' : 'nights'}`)}
                       </dt>
-                      <dd>{formatoCOP(total)}</dd>
+                      <dd>{dinero(total)}</dd>
                     </div>
                     <div className="flex justify-between gap-4 border-t border-linea pt-4 font-medium">
-                      <dt>Total desde</dt>
-                      <dd>{formatoCOP(total)}</dd>
+                      <dt>{tx('Total desde', 'Total from')}</dt>
+                      <dd>{dinero(total)}</dd>
                     </div>
                   </dl>
                 )}
+                <NotaMoneda className="mt-4" />
               </div>
             </Revelar>
           </aside>

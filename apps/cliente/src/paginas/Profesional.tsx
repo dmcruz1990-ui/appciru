@@ -5,16 +5,19 @@ import { Foto, Revelar, Rotulo } from '../componentes/base'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import NoEncontrado from '../componentes/NoEncontrado'
 import OfertaCard from '../componentes/OfertaCard'
+import { useIdioma } from '../idioma'
 
 export default function ProfesionalPagina() {
   const { id } = useParams()
   const { datos } = useCatalogo()
+  const { tx, loc } = useIdioma()
   const prof = datos?.profesionales.find((p) => p.id === id)
-  if (!datos || !prof) return <NoEncontrado texto="Este perfil no está disponible." />
+  if (!datos || !prof) return <NoEncontrado texto={tx('Este perfil no está disponible.', 'This profile is not available.')} />
 
   const opciones = detallarOfertas(datos).filter((d) => d.profesional?.id === prof.id)
   const instIds = datos.vinculos.filter((v) => v.profesional_id === prof.id).map((v) => v.institucion_id)
   const instituciones = datos.instituciones.filter((i) => instIds.includes(i.id))
+  const idiomas = prof.idiomas.map((i) => (i === 'Español' ? tx(i, 'Spanish') : i === 'Inglés' ? tx(i, 'English') : i))
 
   return (
     <>
@@ -30,21 +33,23 @@ export default function ProfesionalPagina() {
         </Revelar>
         <div className="flex flex-col">
           <div className="flex items-center gap-3">
-            <span className="rotulo">Perfil profesional · {nombreCiudad(datos, prof.ciudad_id)}</span>
+            <span className="rotulo">
+              {tx('Perfil profesional', 'Professional profile')} · {nombreCiudad(datos, prof.ciudad_id)}
+            </span>
             {prof.es_demo && <EtiquetaDemo />}
           </div>
           <h1 className="display mt-8 text-4xl md:text-5xl">{prof.nombre}</h1>
-          <p className="mt-4 text-lg text-piedra">{prof.especialidad}</p>
+          <p className="mt-4 text-lg text-piedra">{loc(prof, 'especialidad')}</p>
           <div className="mt-6">
             <EstadoVerificacion v={prof.verificacion} />
           </div>
-          <p className="mt-10 max-w-xl text-[17px] leading-relaxed">{prof.bio}</p>
+          <p className="mt-10 max-w-xl text-[17px] leading-relaxed">{loc(prof, 'bio')}</p>
           <dl className="mt-auto grid grid-cols-2 border-t border-linea pt-2 md:grid-cols-4">
             {[
-              ['Registro profesional', prof.rethus ?? '—'],
-              ['Sociedad', prof.sociedad ?? '—'],
-              ['Experiencia', prof.anios_experiencia ? `${prof.anios_experiencia} años` : '—'],
-              ['Idiomas', prof.idiomas.join(', ')],
+              [tx('Registro profesional', 'Professional registration'), prof.rethus ?? '—'],
+              [tx('Sociedad', 'Society'), prof.sociedad ?? '—'],
+              [tx('Experiencia', 'Experience'), prof.anios_experiencia ? tx(`${prof.anios_experiencia} años`, `${prof.anios_experiencia} years`) : '—'],
+              [tx('Idiomas', 'Languages'), idiomas.join(', ')],
             ].map(([t, v]) => (
               <div key={t} className="border-b border-linea py-5 pr-4">
                 <dt className="etiqueta">{t}</dt>
@@ -52,10 +57,10 @@ export default function ProfesionalPagina() {
               </div>
             ))}
           </dl>
-          {prof.valoracion_virtual && <p className="mt-6 text-sm text-piedra">Ofrece valoración virtual previa al viaje.</p>}
+          {prof.valoracion_virtual && <p className="mt-6 text-sm text-piedra">{tx('Ofrece valoración virtual previa al viaje.', 'Offers a virtual consultation before you travel.')}</p>}
           {instituciones.length > 0 && (
             <p className="mt-4 text-sm text-piedra">
-              Atiende en{' '}
+              {tx('Atiende en', 'Practices at')}{' '}
               {instituciones.map((i, k) => (
                 <span key={i.id}>
                   {k > 0 && ', '}
@@ -71,9 +76,16 @@ export default function ProfesionalPagina() {
       </section>
 
       <section className="contenedor border-t border-linea py-24">
-        <Rotulo>Procedimientos</Rotulo>
+        <Rotulo>{tx('Procedimientos', 'Procedures')}</Rotulo>
         <h2 className="display mt-5 text-4xl">
-          Lo que <em>ofrece</em>
+          {tx(
+            <>
+              Lo que <em>ofrece</em>
+            </>,
+            <>
+              What they <em>offer</em>
+            </>,
+          )}
         </h2>
         <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
           {opciones.map((d, i) => (
