@@ -1,4 +1,5 @@
 import {
+  destinos,
   formatoCOP,
   nombreTipoAlojamiento,
   planesPorPresupuesto,
@@ -83,12 +84,20 @@ export default function Planear() {
             </Celda>
             <Celda etiqueta="Ciudad">
               <select value={ciudad} onChange={(e) => set('ciudad', e.target.value)} className="w-full bg-transparent text-[15px] outline-none">
-                <option value="">Toda la región</option>
-                {datos.ciudades.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
+                <option value="">Todos los destinos</option>
+                {destinos(datos)
+                  .filter((d) => d.opciones > 0)
+                  .map((d) => (
+                    <optgroup key={d.pais} label={d.nombre}>
+                      {d.ciudades
+                        .filter((x) => x.opciones > 0)
+                        .map(({ ciudad: c }) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nombre}
+                          </option>
+                        ))}
+                    </optgroup>
+                  ))}
               </select>
             </Celda>
             <Celda etiqueta="Tu presupuesto total (COP)">

@@ -94,7 +94,7 @@ export default function ProcedimientoPagina() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <Rotulo>
-              {opciones.length} {opciones.length === 1 ? 'opción' : 'opciones'} en la región
+              {opciones.length} {opciones.length === 1 ? 'opción' : 'opciones'} en la red
             </Rotulo>
             <h2 className="display mt-5 text-4xl">
               ¿Con quién <em>valorarte?</em>

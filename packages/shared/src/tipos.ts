@@ -20,7 +20,10 @@ export type EstadoSuscripcion = 'prueba' | 'activa' | 'pausada' | 'cancelada'
 export interface Ciudad {
   id: string
   nombre: string
+  /** Estado, provincia o departamento, según el país. */
   departamento: string
+  /** Código ISO 3166-1 alfa-2 (CO, US, MX…). */
+  pais: string
   orden: number
   activa: boolean
 }

@@ -3,8 +3,7 @@ import {
   nombreTipoAlojamiento,
   nombreTipoInstitucion,
   supabase,
-  textoPrecio,
-} from '@plastinex/shared'
+  textoPrecio, nombrePais, PAISES } from '@plastinex/shared'
 import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
@@ -36,7 +35,7 @@ interface Coleccion {
   nuevo: Record<string, unknown>
 }
 
-const ciudades = (d: DatosPanel) => d.ciudades.map((c) => ({ v: c.id, t: c.nombre }))
+const ciudades = (d: DatosPanel) => d.ciudades.map((c) => ({ v: c.id, t: `${c.nombre} · ${nombrePais(c.pais)}` }))
 const deRecord = (r: Record<string, string>) => () => Object.entries(r).map(([v, t]) => ({ v, t }))
 const nombre = <T extends { id: string; nombre: string }>(xs: T[], id: unknown) => xs.find((x) => x.id === id)?.nombre ?? '—'
 
@@ -212,12 +211,14 @@ const colecciones: Coleccion[] = [
     filas: (d) => d.ciudades as unknown as Fila[],
     columnas: [
       { t: 'Nombre', v: (f) => <span className="font-medium">{f.nombre as string}</span> },
-      { t: 'Departamento', v: (f) => f.departamento as string },
+      { t: 'País', v: (f) => nombrePais(f.pais as string) },
+      { t: 'Estado / departamento', v: (f) => f.departamento as string },
     ],
     campos: [
       { k: 'id', t: 'Identificador', tipo: 'texto', requerido: true },
       { k: 'nombre', t: 'Nombre', tipo: 'texto', requerido: true },
-      { k: 'departamento', t: 'Departamento', tipo: 'texto', requerido: true },
+      { k: 'pais', t: 'País', tipo: 'select', requerido: true, opciones: () => Object.entries(PAISES).map(([v, t]) => ({ v, t })) },
+      { k: 'departamento', t: 'Estado / departamento', tipo: 'texto', requerido: true },
       { k: 'orden', t: 'Orden', tipo: 'numero' },
       { k: 'activa', t: 'Activa', tipo: 'bool' },
     ],

@@ -62,7 +62,7 @@ export default function Especialistas() {
           </h1>
         </div>
         <p className="max-w-sm text-sm text-piedra">
-          Especialistas con perfil en la red. La marca «verificado» solo aparece cuando revisamos su registro ReTHUS y su sociedad científica.
+          Especialistas con perfil en la red. La marca «verificado» solo aparece cuando revisamos su registro profesional y su sociedad científica.
         </p>
       </div>
 

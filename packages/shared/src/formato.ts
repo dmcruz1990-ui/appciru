@@ -103,3 +103,23 @@ export const EMPRESA = {
   razonSocial: 'PLASTINEX LLC',
   direccion: ['1501 South Greeley Hwy', 'Ste C #1776', 'Cheyenne, WY 82007', 'Estados Unidos'],
 } as const
+
+/** Países con destinos en la plataforma (código ISO 3166-1 alfa-2 → nombre en español). */
+export const PAISES: Record<string, string> = {
+  CO: 'Colombia',
+  US: 'Estados Unidos',
+  MX: 'México',
+  DO: 'República Dominicana',
+  CR: 'Costa Rica',
+  PA: 'Panamá',
+  PE: 'Perú',
+  BR: 'Brasil',
+  AR: 'Argentina',
+  ES: 'España',
+  TR: 'Turquía',
+  AE: 'Emiratos Árabes Unidos',
+  KR: 'Corea del Sur',
+  TH: 'Tailandia',
+}
+
+export const nombrePais = (codigo: string | null | undefined) => (codigo ? (PAISES[codigo] ?? codigo) : '')

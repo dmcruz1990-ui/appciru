@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { nombrePais } from './formato'
 import { sinError, supabase } from './supabase'
 import type {
   Alojamiento,
@@ -110,6 +111,35 @@ export function detallarOfertas(c: Catalogo, soloPublicas = true): OfertaDetalla
 }
 
 export const nombreCiudad = (c: Catalogo, id: string | null) => c.ciudades.find((x) => x.id === id)?.nombre ?? '—'
+
+// ---------- Destinos (países y ciudades) ----------
+
+export interface Destino {
+  pais: string
+  nombre: string
+  opciones: number
+  ciudades: { ciudad: Ciudad; opciones: number }[]
+}
+
+/** Países con sus ciudades y el número de opciones publicadas; primero los que tienen oferta. */
+export function destinos(c: Catalogo): Destino[] {
+  const porCiudad = new Map<string, number>()
+  for (const d of detallarOfertas(c)) porCiudad.set(d.ciudad.id, (porCiudad.get(d.ciudad.id) ?? 0) + 1)
+  const paises = new Map<string, Destino>()
+  for (const ciudad of c.ciudades.filter((x) => x.activa)) {
+    const pais = ciudad.pais ?? 'CO'
+    const d = paises.get(pais) ?? { pais, nombre: nombrePais(pais), opciones: 0, ciudades: [] }
+    const n = porCiudad.get(ciudad.id) ?? 0
+    d.opciones += n
+    d.ciudades.push({ ciudad, opciones: n })
+    paises.set(pais, d)
+  }
+  const lista = [...paises.values()]
+  for (const d of lista) d.ciudades.sort((a, b) => b.opciones - a.opciones || a.ciudad.orden - b.ciudad.orden)
+  // Primero los países con oferta; después, el orden editorial de sus ciudades (Estados Unidos, México, Caribe…).
+  const ordenPais = (d: Destino) => Math.min(...d.ciudades.map((x) => x.ciudad.orden))
+  return lista.sort((a, b) => Number(b.opciones > 0) - Number(a.opciones > 0) || ordenPais(a) - ordenPais(b))
+}
 
 // ---------- Paciente (requiere sesión) ----------
 

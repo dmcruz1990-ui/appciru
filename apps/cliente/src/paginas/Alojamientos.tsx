@@ -1,4 +1,4 @@
-import { formatoCOP, nombreTipoAlojamiento, type TipoAlojamiento } from '@plastinex/shared'
+import { destinos, formatoCOP, nombreTipoAlojamiento, type TipoAlojamiento } from '@plastinex/shared'
 import { BedDouble, Hotel, House, LayoutGrid, List, Map as IconoMapa } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -77,12 +77,19 @@ export default function Alojamientos() {
               {lista.length} {lista.length === 1 ? 'alojamiento' : 'alojamientos'}
             </span>
             <select value={ciudad} onChange={(e) => set('ciudad', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-1 outline-none" aria-label="Ciudad">
-              <option value="">Toda la región</option>
-              {datos.ciudades.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
+              <option value="">Todos los destinos</option>
+              {destinos(datos).map((d) => {
+                const conAloj = d.ciudades.filter(({ ciudad: c }) => datos.alojamientos.some((a) => a.publicado && a.ciudad_id === c.id))
+                return conAloj.length ? (
+                  <optgroup key={d.pais} label={d.nombre}>
+                    {conAloj.map(({ ciudad: c }) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null
+              })}
             </select>
             <label className="flex cursor-pointer items-center gap-2 text-piedra">
               <input type="checkbox" checked={enfermeria} onChange={(e) => set('enfermeria', e.target.checked ? '1' : '')} className="accent-espresso" />

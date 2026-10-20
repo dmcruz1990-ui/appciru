@@ -41,7 +41,7 @@ export default function ProfesionalPagina() {
           <p className="mt-10 max-w-xl text-[17px] leading-relaxed">{prof.bio}</p>
           <dl className="mt-auto grid grid-cols-2 border-t border-linea pt-2 md:grid-cols-4">
             {[
-              ['ReTHUS', prof.rethus ?? '—'],
+              ['Registro profesional', prof.rethus ?? '—'],
               ['Sociedad', prof.sociedad ?? '—'],
               ['Experiencia', prof.anios_experiencia ? `${prof.anios_experiencia} años` : '—'],
               ['Idiomas', prof.idiomas.join(', ')],

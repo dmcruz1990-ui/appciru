@@ -104,7 +104,7 @@ export default function InstitucionPagina() {
             <p className="display normal-case text-2xl leading-snug md:text-3xl">{inst.descripcion}</p>
 
             <div className="mt-10 grid gap-6 border-y border-linea py-8 sm:grid-cols-3">
-              <Dato icono={<ShieldCheck size={22} strokeWidth={1.3} />} t="Habilitación REPS" v={inst.codigo_reps ?? 'No informado'} />
+              <Dato icono={<ShieldCheck size={22} strokeWidth={1.3} />} t="Habilitación sanitaria" v={inst.codigo_reps ?? 'No informado'} />
               <Dato
                 icono={<CalendarDays size={22} strokeWidth={1.3} />}
                 t="Primera valoración"

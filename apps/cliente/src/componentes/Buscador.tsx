@@ -1,6 +1,6 @@
-import { formatoCOP, nombreCategoria, type Categoria } from '@plastinex/shared'
-import { Gem, ScanFace, Search, Waves, type LucideIcon } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { destinos, formatoCOP, nombreCategoria, nombrePais, type Categoria } from '@plastinex/shared'
+import { Gem, Globe, ScanFace, Search, Waves, type LucideIcon } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 
@@ -27,6 +27,8 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   const [desplegado, setDesplegado] = useState(false)
   const [proc, setProc] = useState(params.get('procedimiento') ?? '')
   const [ciudad, setCiudad] = useState(params.get('ciudad') ?? '')
+  const [pais, setPais] = useState(params.get('pais') ?? '')
+  const [filtroLugar, setFiltroLugar] = useState('')
   const [llegada, setLlegada] = useState(params.get('llegada') ?? '')
   const [salida, setSalida] = useState(params.get('salida') ?? '')
   const [presu, setPresu] = useState(params.get('presupuesto') ?? '')
@@ -43,9 +45,22 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
     }
   }, [panel])
 
+  const lugares = useMemo(() => (datos ? destinos(datos) : []), [datos])
   if (!datos) return null
   const p = datos.procedimientos.find((x) => x.id === proc)
   const c = datos.ciudades.find((x) => x.id === ciudad)
+  const textoLugar = c ? `${c.nombre}, ${nombrePais(c.pais)}` : pais ? nombrePais(pais) : 'Todo el mundo'
+  const elegirLugar = (nuevoPais: string, nuevaCiudad: string) => {
+    setPais(nuevoPais)
+    setCiudad(nuevaCiudad)
+    setFiltroLugar('')
+    setPanel('fechas')
+  }
+  const sinTildes = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const q = sinTildes(filtroLugar.trim())
+  const visibles = lugares
+    .map((d) => ({ ...d, ciudades: q && !sinTildes(d.nombre).includes(q) ? d.ciudades.filter((x) => sinTildes(x.ciudad.nombre).includes(q)) : d.ciudades }))
+    .filter((d) => d.ciudades.length > 0)
   const noches = nochesEntre(llegada, salida)
   const minLlegada = iso(new Date(Date.now() + 7 * DIA))
 
@@ -54,6 +69,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
     const q = new URLSearchParams()
     if (proc) q.set('procedimiento', proc)
     if (ciudad) q.set('ciudad', ciudad)
+    else if (pais) q.set('pais', pais)
     if (llegada) q.set('llegada', llegada)
     if (salida && noches > 0) q.set('salida', salida)
     if (presu) q.set('presupuesto', presu)
@@ -75,14 +91,14 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
           <span className="min-w-0">
             <span className="block truncate text-[14px] font-medium">{p?.nombre ?? '¿Qué procedimiento buscas?'}</span>
             <span className="block truncate text-xs text-piedra">
-              {[c?.nombre ?? 'Toda la región', llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : 'Fechas flexibles', presu ? formatoCOP(Number(presu)) : 'Sin presupuesto'].join(' · ')}
+              {[textoLugar, llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : 'Fechas flexibles', presu ? formatoCOP(Number(presu)) : 'Sin presupuesto'].join(' · ')}
             </span>
           </span>
         </button>
       )}
       <div className={`${desplegado ? 'flex' : 'hidden md:flex'} flex-col border border-linea bg-marfil shadow-[0_10px_40px_rgba(0,0,0,0.12)] md:flex-row md:items-stretch`}>
         <Segmento t="Procedimiento" v={p?.nombre ?? 'Todos'} activo={panel === 'proc'} onClick={() => alternar('proc')} ancho />
-        <Segmento t="Dónde" v={c?.nombre ?? 'Toda la región'} activo={panel === 'ciudad'} onClick={() => alternar('ciudad')} />
+        <Segmento t="Dónde" v={textoLugar} activo={panel === 'ciudad'} onClick={() => alternar('ciudad')} />
         <Segmento
           t="Fechas del viaje"
           v={llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : 'Agregar fechas'}
@@ -97,7 +113,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
       </div>
 
       {panel && (
-        <div data-lenis-prevent className={`z-40 mt-2 max-h-[70vh] overflow-y-auto border border-linea bg-marfil p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] md:absolute md:inset-x-0 md:p-8 ${arriba ? 'md:bottom-full md:mb-3' : 'md:top-full md:mt-3'}`}>
+        <div data-lenis-prevent className={`z-40 mt-2 max-h-[70vh] overflow-y-auto border border-linea bg-marfil p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] md:absolute md:inset-x-0 md:p-8 ${arriba ? 'md:bottom-full md:mb-3 md:max-h-[min(60vh,520px)]' : 'md:top-full md:mt-3'}`}>
           {panel === 'proc' && (
             <div className="grid gap-8 md:grid-cols-3">
               {(Object.keys(nombreCategoria) as Categoria[]).map((cat) => {
@@ -130,15 +146,54 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
           )}
 
           {panel === 'ciudad' && (
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-              <Opcion activo={!ciudad} onClick={() => (setCiudad(''), elegir('fechas'))}>
-                Toda la región <span className="block text-xs text-piedra">Eje Cafetero</span>
-              </Opcion>
-              {datos.ciudades.map((x) => (
-                <Opcion key={x.id} activo={ciudad === x.id} onClick={() => (setCiudad(x.id), elegir('fechas'))}>
-                  {x.nombre} <span className="block text-xs text-piedra">{x.departamento}</span>
+            <div>
+              <label className="flex items-center gap-3 border-b border-espresso pb-2">
+                <Search size={16} strokeWidth={1.6} className="text-piedra" />
+                <input
+                  autoFocus
+                  value={filtroLugar}
+                  onChange={(e) => setFiltroLugar(e.target.value)}
+                  placeholder="Buscar país o ciudad"
+                  aria-label="Buscar país o ciudad"
+                  className="w-full bg-transparent py-1 text-[16px] outline-none placeholder:text-niebla"
+                />
+              </label>
+              {!q && (
+                <Opcion activo={!pais && !ciudad} onClick={() => elegirLugar('', '')}>
+                  <span className="flex items-center gap-2 !text-current">
+                    <Globe size={16} strokeWidth={1.5} /> Todo el mundo
+                  </span>
                 </Opcion>
-              ))}
+              )}
+              <div className="mt-4 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                {visibles.map((d) => (
+                  <div key={d.pais}>
+                    <button
+                      type="button"
+                      onClick={() => elegirLugar(d.pais, '')}
+                      className={`flex w-full items-baseline justify-between gap-3 border-b px-3 pb-2 text-left transition ${pais === d.pais && !ciudad ? 'border-espresso' : 'border-linea hover:border-espresso'}`}
+                    >
+                      <span className="text-[11px] font-medium tracking-[0.2em] uppercase">{d.nombre}</span>
+                      <span className="text-[11px] text-piedra">{d.opciones ? `${d.opciones} ${d.opciones === 1 ? 'opción' : 'opciones'}` : 'Próximamente'}</span>
+                    </button>
+                    <ul className="mt-1">
+                      {d.ciudades.map(({ ciudad: x, opciones }) => (
+                        <li key={x.id}>
+                          <Opcion activo={ciudad === x.id} onClick={() => elegirLugar(d.pais, x.id)}>
+                            <span className="flex items-baseline justify-between gap-3 !text-current">
+                              <span>{x.nombre}</span>
+                              <span className={`text-xs ${ciudad === x.id ? 'text-marfil/70' : opciones ? 'text-piedra' : 'text-niebla'}`}>
+                                {opciones ? opciones : 'Próximamente'}
+                              </span>
+                            </span>
+                          </Opcion>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              {visibles.length === 0 && <p className="mt-6 text-sm text-piedra">Aún no tenemos ese destino. Escríbenos y te orientamos.</p>}
             </div>
           )}
 

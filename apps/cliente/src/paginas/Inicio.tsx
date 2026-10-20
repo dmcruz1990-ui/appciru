@@ -53,7 +53,7 @@ export default function Inicio() {
         <div className="absolute inset-0 bg-gradient-to-b from-tinta/40 via-transparent to-tinta/70" />
         <div className="contenedor relative flex h-full flex-col items-center justify-end pb-16 text-center md:pb-24">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 1 }} className="rotulo !text-marfil/70">
-            Cirugía plástica · Colombia
+            Cirugía plástica · Destinos en todo el mundo
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
@@ -95,8 +95,8 @@ export default function Inicio() {
               especialistas con perfil
             </p>
             <p>
-              <span className="block font-serif text-4xl text-espresso">{datos.ciudades.length}</span>
-              ciudades del Eje Cafetero
+              <span className="block font-serif text-4xl text-espresso">{new Set(datos.ciudades.map((c) => c.pais)).size}</span>
+              países en el buscador
             </p>
           </div>
         </Revelar>
@@ -109,7 +109,7 @@ export default function Inicio() {
       <section className="py-28 md:py-36">
         <div className="contenedor flex flex-wrap items-end justify-between gap-6">
           <div>
-            <Rotulo n="03">Opciones en la región</Rotulo>
+            <Rotulo n="03">Opciones destacadas</Rotulo>
             <h2 className="display mt-6 text-4xl md:text-5xl">
               Elige con <em>calma.</em>
             </h2>
@@ -180,9 +180,9 @@ export default function Inicio() {
         <Rotulo n="06">Lo que verificamos</Rotulo>
         <div className="mt-14 grid gap-12 md:grid-cols-3">
           {[
-            ['REPS', 'Habilitación de la institución ante el Ministerio de Salud para cirugía plástica y anestesia.'],
-            ['ReTHUS', 'Registro del especialista y su título en el Registro Único Nacional del Talento Humano en Salud.'],
-            ['SCCP', 'Membresía en la Sociedad Colombiana de Cirugía Plástica, Estética y Reconstructiva cuando aplica.'],
+            ['Habilitación', 'La institución está habilitada por la autoridad sanitaria de su país para cirugía plástica y anestesia. En Colombia, el REPS.'],
+            ['Registro', 'El especialista tiene su título y su registro profesional vigentes. En Colombia, el ReTHUS; en Estados Unidos, la licencia estatal.'],
+            ['Sociedad', 'Membresía en la sociedad científica de cirugía plástica de su país cuando aplica, como la SCCP en Colombia o la ASPS en Estados Unidos.'],
           ].map(([t, d], i) => (
             <Revelar key={t} retraso={i * 0.08} className="border-t border-espresso pt-8">
               <h3 className="display text-4xl">{t}</h3>

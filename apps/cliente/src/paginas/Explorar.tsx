@@ -17,6 +17,7 @@ export default function Explorar() {
 
   const procedimiento = params.get('procedimiento') ?? ''
   const ciudad = params.get('ciudad') ?? ''
+  const pais = params.get('pais') ?? ''
   const categoria = (params.get('categoria') ?? '') as Categoria | ''
   const presupuesto = Number(params.get('presupuesto')) || 0
   const verificadas = params.get('verificadas') === '1'
@@ -44,6 +45,7 @@ export default function Explorar() {
       if (procedimiento && d.procedimiento.id !== procedimiento) return false
       if (categoria && d.procedimiento.categoria !== categoria) return false
       if (ciudad && d.ciudad.id !== ciudad) return false
+      if (pais && d.ciudad.pais !== pais) return false
       if (presupuesto && (d.oferta.precio_min == null || d.oferta.precio_min > presupuesto)) return false
       if (verificadas && d.institucion.verificacion !== 'verificado') return false
       return true
@@ -53,7 +55,7 @@ export default function Explorar() {
       if (orden === 'nombre') return a.procedimiento.nombre.localeCompare(b.procedimiento.nombre, 'es')
       return Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado')
     })
-  }, [datos, procedimiento, categoria, ciudad, presupuesto, verificadas, orden])
+  }, [datos, procedimiento, categoria, ciudad, pais, presupuesto, verificadas, orden])
 
   // Un marcador por institución con el precio desde más bajo de sus opciones.
   const puntos = useMemo(() => {
@@ -80,7 +82,7 @@ export default function Explorar() {
   const lista = filtradas.filter((d) => dentroDelMapa(d.institucion.id))
   const sel = seleccionada ? puntos.find((p) => p.id === seleccionada) : null
   const selInst = sel ? datos.instituciones.find((i) => i.id === sel.id) : null
-  const activos = [procedimiento, ciudad, categoria, presupuesto ? '1' : '', verificadas ? '1' : ''].filter(Boolean).length
+  const activos = [procedimiento, ciudad, pais, categoria, presupuesto ? '1' : '', verificadas ? '1' : ''].filter(Boolean).length
 
   return (
     <div className="pt-16 md:pt-[124px]">
@@ -144,7 +146,7 @@ export default function Explorar() {
             <div className="mt-12 border-y border-linea py-20 text-center">
               <p className="display normal-case text-3xl">No hay opciones con esos filtros.</p>
               <p className="mt-3 text-sm text-piedra">
-                {alMover ? 'Mueve el mapa o desactiva «Buscar al mover el mapa».' : 'Prueba otra ciudad, sube el presupuesto o pide orientación a un coordinador.'}
+                {alMover ? 'Mueve el mapa o desactiva «Buscar al mover el mapa».' : 'Aún no hay clínicas publicadas aquí. Prueba otro destino o pide orientación: un coordinador te ayuda a encontrar opciones.'}
               </p>
               <Link to={`/solicitar${procedimiento ? `?procedimiento=${procedimiento}` : ''}`} className="btn mt-8">
                 Solicitar orientación
