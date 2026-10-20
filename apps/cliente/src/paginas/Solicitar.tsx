@@ -1,15 +1,17 @@
-import { crearSolicitud, detallarOfertas, formatoCOP, nombreTipoAlojamiento, textoPrecio } from '@plastinex/shared'
+import { crearSolicitud, detallarOfertas } from '@plastinex/shared'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { Foto } from '../componentes/base'
 import { EstadoVerificacion } from '../componentes/Insignias'
+import { NotaMoneda, useIdioma } from '../idioma'
 import { useSesion } from '../sesion'
 import { leerUTM } from '../utm'
 
 export default function Solicitar() {
   const { datos } = useCatalogo()
   const { sesion, paciente, listo, cargando } = useSesion()
+  const { tx, dinero, precio, loc, tipoAlojamiento, aCop, desdeCop, locale, moneda } = useIdioma()
   const [params] = useSearchParams()
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
@@ -22,6 +24,7 @@ export default function Solicitar() {
   const [quiereAlojamiento, setQuiereAlojamiento] = useState(Boolean(params.get('alojamiento')))
   const [alojamientoId, setAlojamientoId] = useState(params.get('alojamiento') ?? '')
   const [noches, setNoches] = useState<number | ''>(Number(params.get('noches')) || '')
+  // Siempre en pesos (lo que recibe el servidor); el campo se muestra en la moneda de la persona.
   const [presupuesto, setPresupuesto] = useState(params.get('presupuesto')?.replace(/\D/g, '') ?? '')
   const [servicioIds, setServicioIds] = useState<string[]>([])
   const [mensaje, setMensaje] = useState('')
@@ -67,7 +70,7 @@ export default function Solicitar() {
       })
       navigate('/solicitud-enviada', { state: { codigo } })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No pudimos enviar la solicitud.')
+      setError(err instanceof Error ? err.message : tx('No pudimos enviar la solicitud.', 'We could not send your request.'))
     } finally {
       setEnviando(false)
     }
@@ -75,23 +78,32 @@ export default function Solicitar() {
 
   return (
     <div className="contenedor pt-48 pb-28">
-      <div className="rotulo">Solicitud de valoración</div>
+      <div className="rotulo">{tx('Solicitud de valoración', 'Consultation request')}</div>
       <h1 className="display mt-4 text-4xl md:text-5xl">
-        Cuéntanos qué <em>buscas.</em>
+        {tx(
+          <>
+            Cuéntanos qué <em>buscas.</em>
+          </>,
+          <>
+            Tell us what <em>you are looking for.</em>
+          </>,
+        )}
       </h1>
       <p className="mt-5 max-w-2xl text-piedra">
-        Un coordinador te contactará para agendar la valoración con el especialista. No incluyas información clínica: eso se habla
-        en consulta. Una solicitud no es una reserva confirmada.
+        {tx(
+          'Un coordinador te contactará para agendar la valoración con el especialista. No incluyas información clínica: eso se habla en consulta. Una solicitud no es una reserva confirmada.',
+          'A coordinator will contact you to schedule your consultation with the specialist. Please do not include medical information here; that is discussed during the consultation. A request is not a confirmed booking.',
+        )}
       </p>
 
       <form onSubmit={enviar} className="mt-16 grid gap-16 lg:grid-cols-[1fr_380px]">
         <div className="space-y-20">
-          <Paso n="01" titulo="Tu interés">
+          <Paso n="01" titulo={tx('Tu interés', 'Your interest')}>
             {oferta ? (
               <div className="grid gap-6 sm:grid-cols-[160px_1fr]">
                 <Foto src={oferta.institucion.imagen_url ?? oferta.procedimiento.imagen_url} alt="" ancho={400} className="aspect-[4/5]" />
                 <div>
-                  <div className="font-serif text-4xl">{oferta.procedimiento.nombre}</div>
+                  <div className="font-serif text-4xl">{loc(oferta.procedimiento, 'nombre')}</div>
                   <div className="mt-1 text-piedra">
                     {oferta.institucion.nombre} · {oferta.ciudad.nombre}
                     {oferta.profesional && ` · ${oferta.profesional.nombre}`}
@@ -103,40 +115,40 @@ export default function Solicitar() {
                     <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
                       {oferta.oferta.incluye && (
                         <div>
-                          <dt className="etiqueta">Incluye</dt>
-                          <dd className="mt-1 text-piedra">{oferta.oferta.incluye}</dd>
+                          <dt className="etiqueta">{tx('Incluye', 'Includes')}</dt>
+                          <dd className="mt-1 text-piedra">{loc(oferta.oferta, 'incluye')}</dd>
                         </div>
                       )}
                       {oferta.oferta.no_incluye && (
                         <div>
-                          <dt className="etiqueta">No incluye</dt>
-                          <dd className="mt-1 text-piedra">{oferta.oferta.no_incluye}</dd>
+                          <dt className="etiqueta">{tx('No incluye', 'Not included')}</dt>
+                          <dd className="mt-1 text-piedra">{loc(oferta.oferta, 'no_incluye')}</dd>
                         </div>
                       )}
                     </dl>
                   )}
                   <Link to="/explorar" className="enlace mt-6 inline-block text-sm text-piedra">
-                    Cambiar opción
+                    {tx('Cambiar opción', 'Change option')}
                   </Link>
                 </div>
               </div>
             ) : (
               <div className="grid gap-8 sm:grid-cols-2">
                 <label>
-                  <span className="etiqueta">Procedimiento</span>
+                  <span className="etiqueta">{tx('Procedimiento', 'Procedure')}</span>
                   <select value={procedimientoId} onChange={(e) => setProcedimientoId(e.target.value)} className="campo">
-                    <option value="">Orientación general</option>
+                    <option value="">{tx('Orientación general', 'General guidance')}</option>
                     {datos.procedimientos.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.nombre}
+                        {loc(p, 'nombre')}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label>
-                  <span className="etiqueta">Ciudad preferida</span>
+                  <span className="etiqueta">{tx('Ciudad preferida', 'Preferred city')}</span>
                   <select value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} className="campo">
-                    <option value="">Sin preferencia</option>
+                    <option value="">{tx('Sin preferencia', 'No preference')}</option>
                     {datos.ciudades.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nombre}
@@ -148,31 +160,38 @@ export default function Solicitar() {
             )}
             <div className="mt-8 grid gap-8 sm:grid-cols-2">
               <label className="block">
-                <span className="etiqueta">Fecha tentativa (opcional)</span>
+                <span className="etiqueta">{tx('Fecha tentativa (opcional)', 'Tentative date (optional)')}</span>
                 <input type="date" min={minFecha} value={fecha} onChange={(e) => setFecha(e.target.value)} className="campo" />
               </label>
               <label className="block">
-                <span className="etiqueta">Tu presupuesto total (opcional)</span>
+                <span className="etiqueta">{tx('Tu presupuesto total (opcional)', 'Your total budget (optional)')}</span>
                 <input
                   inputMode="numeric"
-                  value={presupuesto ? Number(presupuesto).toLocaleString('es-CO') : ''}
-                  onChange={(e) => setPresupuesto(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="$ 0"
+                  value={presupuesto ? desdeCop(Number(presupuesto)).toLocaleString(locale) : ''}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/\D/g, '').slice(0, 10)
+                    setPresupuesto(valor ? String(aCop(Number(valor))) : '')
+                  }}
+                  placeholder={moneda === 'USD' ? 'US$ 0' : '$ 0'}
                   className="campo"
                 />
-                <span className="mt-1 block text-xs text-niebla">Lo compartimos con la institución para que te proponga opciones a tu medida.</span>
+                <span className="mt-1 block text-xs text-niebla">
+                  {tx('Lo compartimos con la institución para que te proponga opciones a tu medida.', 'We share it with the clinic so it can suggest options that fit you.')}
+                </span>
               </label>
             </div>
           </Paso>
 
-          <Paso n="02" titulo="Tu estadía (opcional)">
+          <Paso n="02" titulo={tx('Tu estadía (opcional)', 'Your stay (optional)')}>
             <Interruptor activo={quiereAlojamiento} onChange={setQuiereAlojamiento}>
-              Necesito alojamiento durante la recuperación
+              {tx('Necesito alojamiento durante la recuperación', 'I need a place to stay during recovery')}
             </Interruptor>
             {quiereAlojamiento && (
               <div className="mt-8 space-y-8">
                 {alojamientos.length === 0 ? (
-                  <p className="text-sm text-piedra">Aún no tenemos alojamientos aliados en esta ciudad; tu coordinador te orientará.</p>
+                  <p className="text-sm text-piedra">
+                    {tx('Aún no tenemos alojamientos aliados en esta ciudad; tu coordinador te orientará.', 'We do not have partner stays in this city yet; your coordinator will guide you.')}
+                  </p>
                 ) : (
                   <div className="divide-y divide-linea border-y border-linea">
                     {alojamientos.map((a) => (
@@ -186,34 +205,40 @@ export default function Solicitar() {
                         <span>
                           <span className="block font-serif text-2xl">{a.nombre}</span>
                           <span className="text-sm text-piedra">
-                            {nombreTipoAlojamiento[a.tipo]}
-                            {a.incluye_enfermeria && ' · enfermería'}
-                            {a.incluye_alimentacion && ' · alimentación'}
+                            {tipoAlojamiento(a.tipo)}
+                            {a.incluye_enfermeria && tx(' · enfermería', ' · nursing care')}
+                            {a.incluye_alimentacion && tx(' · alimentación', ' · meals')}
                           </span>
                         </span>
-                        <span className="text-sm text-piedra">{a.precio_noche_desde ? `desde ${formatoCOP(a.precio_noche_desde)} / noche` : 'por cotizar'}</span>
+                        <span className="text-sm text-piedra">
+                          {a.precio_noche_desde
+                            ? tx(`desde ${dinero(a.precio_noche_desde)} / noche`, `from ${dinero(a.precio_noche_desde)} / night`)
+                            : tx('por cotizar', 'quote on request')}
+                        </span>
                       </button>
                     ))}
                   </div>
                 )}
                 <label className="block max-w-[10rem]">
-                  <span className="etiqueta">Noches</span>
+                  <span className="etiqueta">{tx('Noches', 'Nights')}</span>
                   <input type="number" min={1} max={60} value={n} onChange={(e) => setNoches(e.target.value === '' ? '' : Math.min(60, Math.max(1, Number(e.target.value))))} className="campo" />
                 </label>
               </div>
             )}
             <div className="mt-12">
-              <div className="etiqueta">Servicios complementarios</div>
+              <div className="etiqueta">{tx('Servicios complementarios', 'Additional services')}</div>
               <div className="mt-3 divide-y divide-linea border-y border-linea">
                 {datos.servicios.map((s) => (
                   <label key={s.id} className="flex cursor-pointer items-baseline gap-4 py-5">
                     <input type="checkbox" checked={servicioIds.includes(s.id)} onChange={() => toggle(s.id)} className="accent-espresso" />
                     <span className="flex-1">
-                      <span className="block">{s.nombre}</span>
-                      <span className="text-sm text-piedra">{s.descripcion}</span>
+                      <span className="block">{loc(s, 'nombre')}</span>
+                      <span className="text-sm text-piedra">{loc(s, 'descripcion')}</span>
                     </span>
                     <span className="text-sm whitespace-nowrap text-piedra">
-                      {s.precio_desde ? `desde ${formatoCOP(s.precio_desde)}${s.unidad === 'dia' ? ' / día' : ''}` : 'por cotizar'}
+                      {s.precio_desde
+                        ? tx(`desde ${dinero(s.precio_desde)}${s.unidad === 'dia' ? ' / día' : ''}`, `from ${dinero(s.precio_desde)}${s.unidad === 'dia' ? ' / day' : ''}`)
+                        : tx('por cotizar', 'quote on request')}
                     </span>
                   </label>
                 ))}
@@ -221,45 +246,56 @@ export default function Solicitar() {
             </div>
           </Paso>
 
-          <Paso n="03" titulo="Un mensaje para tu coordinador (opcional)">
-            <textarea rows={3} maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} className="campo resize-none" placeholder="Ej.: prefiero que me contacten en la tarde." />
+          <Paso n="03" titulo={tx('Un mensaje para tu coordinador (opcional)', 'A message for your coordinator (optional)')}>
+            <textarea rows={3} maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} className="campo resize-none" placeholder={tx('Ej.: prefiero que me contacten en la tarde.', 'E.g., I prefer to be contacted in the afternoon.')} />
           </Paso>
         </div>
 
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <div className="bg-papel p-8">
-            <div className="rotulo">Resumen</div>
-            <div className="mt-4 font-serif text-3xl">{proc?.nombre ?? 'Orientación general'}</div>
+            <div className="rotulo">{tx('Resumen', 'Summary')}</div>
+            <div className="mt-4 font-serif text-3xl">{proc ? loc(proc, 'nombre') : tx('Orientación general', 'General guidance')}</div>
             {oferta && <div className="text-sm text-piedra">{oferta.institucion.nombre}</div>}
             <dl className="mt-8 space-y-3 border-t border-linea pt-6 text-sm">
-              <Linea t="Procedimiento" v={oferta ? textoPrecio(oferta.oferta.precio_min, oferta.oferta.precio_max) : 'Según valoración'} />
-              {aloj && <Linea t={`Alojamiento · ${n} noches`} v={costoAloj ? formatoCOP(costoAloj) : 'Por cotizar'} />}
-              {servicioIds.length > 0 && <Linea t={`Servicios (${servicioIds.length})`} v={formatoCOP(costoServ)} />}
-              {presupuesto && <Linea t="Tu presupuesto" v={formatoCOP(Number(presupuesto))} />}
+              <Linea
+                t={tx('Procedimiento', 'Procedure')}
+                v={oferta ? precio(oferta.oferta.precio_min, oferta.oferta.precio_max) : tx('Según valoración', 'Subject to consultation')}
+              />
+              {aloj && (
+                <Linea
+                  t={tx(`Alojamiento · ${n} ${n === 1 ? 'noche' : 'noches'}`, `Stay · ${n} ${n === 1 ? 'night' : 'nights'}`)}
+                  v={costoAloj ? dinero(costoAloj) : tx('Por cotizar', 'Quote on request')}
+                />
+              )}
+              {servicioIds.length > 0 && <Linea t={`${tx('Servicios', 'Services')} (${servicioIds.length})`} v={dinero(costoServ)} />}
+              {presupuesto && <Linea t={tx('Tu presupuesto', 'Your budget')} v={dinero(Number(presupuesto))} />}
             </dl>
             {costoAloj + costoServ > 0 && (
               <div className="mt-6 flex items-baseline justify-between border-t border-linea pt-6">
-                <span className="text-sm text-piedra">Complementos desde</span>
-                <span className="font-serif text-3xl">{formatoCOP(costoAloj + costoServ)}</span>
+                <span className="text-sm text-piedra">{tx('Complementos desde', 'Add-ons from')}</span>
+                <span className="font-serif text-3xl">{dinero(costoAloj + costoServ)}</span>
               </div>
             )}
+            <NotaMoneda className="mt-4" />
             <p className="mt-6 text-xs leading-relaxed text-niebla">
-              Valores orientativos. El presupuesto final te lo entrega la clínica después de la valoración, y contratas y pagas
-              directamente con ella. PLASTINEX actúa como intermediario y no te cobra.
+              {tx(
+                'Valores orientativos. El presupuesto final te lo entrega la clínica después de la valoración, y contratas y pagas directamente con ella. PLASTINEX actúa como intermediario y no te cobra.',
+                'Prices are indicative. The clinic gives you the final quote after your consultation, and you contract and pay the clinic directly. PLASTINEX acts as an intermediary and does not charge you.',
+              )}
             </p>
             <div className="mt-6 border-t border-linea pt-6 text-sm">
-              <div className="etiqueta">Te contactaremos como</div>
+              <div className="etiqueta">{tx('Te contactaremos como', 'We will contact you as')}</div>
               <div className="mt-2">{paciente?.nombre}</div>
               <div className="text-piedra">
                 {sesion.user.email} · {paciente?.telefono}
               </div>
               <Link to={`/cuenta/completar?editar=1&volver=${volver}`} className="enlace mt-2 inline-block text-xs text-piedra">
-                Cambiar mis datos
+                {tx('Cambiar mis datos', 'Edit my details')}
               </Link>
             </div>
             {error && <p className="mt-4 text-sm text-red-800">{error}</p>}
             <button disabled={enviando} className="btn mt-8 w-full !py-3.5">
-              {enviando ? 'Enviando…' : 'Enviar solicitud'}
+              {enviando ? tx('Enviando…', 'Sending…') : tx('Enviar solicitud', 'Send request')}
             </button>
           </div>
         </aside>

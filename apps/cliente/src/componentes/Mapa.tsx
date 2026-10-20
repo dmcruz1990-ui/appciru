@@ -162,10 +162,3 @@ function icono(texto: string, activo: boolean) {
 }
 
 const escapar = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
-
-/** «$ 9.500.000» → «$ 9,5 M»; «$ 230.000» → «$ 230 mil». */
-export function precioCorto(v: number | null | undefined): string {
-  if (v == null) return 'Valorar'
-  if (v >= 1_000_000) return `$ ${(v / 1_000_000).toLocaleString('es-CO', { maximumFractionDigits: 1 })} M`
-  return `$ ${Math.round(v / 1000)} mil`
-}
