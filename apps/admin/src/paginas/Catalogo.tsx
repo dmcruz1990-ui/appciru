@@ -1,9 +1,4 @@
-import {
-  nombreCategoria,
-  nombreTipoAlojamiento,
-  nombreTipoInstitucion,
-  supabase,
-  textoPrecio, nombrePais, PAISES } from '@plastinex/shared'
+import { formatoCOP, nombreCategoria, nombrePais, nombreTipoAlojamiento, nombreTipoInstitucion, PAISES, supabase, textoPrecio } from '@plastinex/shared'
 import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
@@ -60,7 +55,9 @@ const colecciones: Coleccion[] = [
       { k: 'precio_max', t: 'Precio máximo COP', tipo: 'numero' },
       { k: 'precio_actualizado_en', t: 'Fecha de actualización del precio', tipo: 'fecha' },
       { k: 'incluye', t: 'Qué incluye', tipo: 'area', ancho: true },
+      { k: 'incluye_en', t: 'Qué incluye (inglés)', tipo: 'area', ancho: true },
       { k: 'no_incluye', t: 'Qué no incluye', tipo: 'area', ancho: true },
+      { k: 'no_incluye_en', t: 'Qué no incluye (inglés)', tipo: 'area', ancho: true },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
     nuevo: { publicado: false },
@@ -92,7 +89,9 @@ const colecciones: Coleccion[] = [
       { k: 'lat', t: 'Latitud', tipo: 'coordenada', ayuda: 'Para el mapa. Ej.: 4.8087 (Google Maps → clic derecho)' },
       { k: 'lng', t: 'Longitud', tipo: 'coordenada', ayuda: 'Ej.: -75.6890' },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
+      { k: 'descripcion_en', t: 'Descripción (inglés)', tipo: 'area', ancho: true },
       { k: 'servicios', t: 'Servicios (separados por comas)', tipo: 'lista', ancho: true },
+      { k: 'servicios_en', t: 'Servicios en inglés (mismo orden)', tipo: 'lista', ancho: true },
       { k: 'es_demo', t: 'Perfil de demostración', tipo: 'bool' },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
@@ -113,6 +112,7 @@ const colecciones: Coleccion[] = [
     campos: [
       { k: 'nombre', t: 'Nombre', tipo: 'texto', requerido: true },
       { k: 'especialidad', t: 'Especialidad', tipo: 'texto', requerido: true },
+      { k: 'especialidad_en', t: 'Especialidad (inglés)', tipo: 'texto' },
       { k: 'ciudad_id', t: 'Ciudad', tipo: 'select', requerido: true, opciones: ciudades },
       { k: 'rethus', t: 'Registro ReTHUS', tipo: 'texto' },
       { k: 'sociedad', t: 'Sociedad científica', tipo: 'texto', ayuda: 'Ej.: SCCP' },
@@ -120,6 +120,7 @@ const colecciones: Coleccion[] = [
       { k: 'idiomas', t: 'Idiomas (separados por comas)', tipo: 'lista' },
       { k: 'foto_url', t: 'Retrato', tipo: 'imagen', ancho: true },
       { k: 'bio', t: 'Presentación', tipo: 'area', ancho: true },
+      { k: 'bio_en', t: 'Presentación (inglés)', tipo: 'area', ancho: true },
       { k: '_instituciones', t: 'Instituciones donde atiende', tipo: 'lista', ancho: true, ayuda: 'Selecciona abajo' },
       { k: 'valoracion_virtual', t: 'Ofrece valoración virtual', tipo: 'bool' },
       { k: 'es_demo', t: 'Perfil de demostración', tipo: 'bool' },
@@ -142,14 +143,19 @@ const colecciones: Coleccion[] = [
     campos: [
       { k: 'id', t: 'Identificador (url)', tipo: 'texto', requerido: true, ayuda: 'minúsculas-con-guiones; no se puede cambiar' },
       { k: 'nombre', t: 'Nombre', tipo: 'texto', requerido: true },
+      { k: 'nombre_en', t: 'Nombre (inglés)', tipo: 'texto' },
       { k: 'categoria', t: 'Categoría', tipo: 'select', requerido: true, opciones: deRecord(nombreCategoria) },
       { k: 'orden', t: 'Orden', tipo: 'numero' },
       { k: 'duracion_aprox', t: 'Duración aproximada', tipo: 'texto' },
+      { k: 'duracion_aprox_en', t: 'Duración (inglés)', tipo: 'texto' },
       { k: 'anestesia', t: 'Anestesia habitual', tipo: 'texto' },
+      { k: 'anestesia_en', t: 'Anestesia (inglés)', tipo: 'texto' },
       { k: 'recuperacion', t: 'Recuperación orientativa', tipo: 'texto' },
+      { k: 'recuperacion_en', t: 'Recuperación (inglés)', tipo: 'texto' },
       { k: 'estadia_sugerida_dias', t: 'Estadía sugerida (días)', tipo: 'numero' },
       { k: 'imagen_url', t: 'Foto del procedimiento (ambiente, nunca resultados)', tipo: 'imagen', ancho: true },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
+      { k: 'descripcion_en', t: 'Descripción (inglés)', tipo: 'area', ancho: true },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
     nuevo: { categoria: 'corporal', publicado: true, orden: 99 },
@@ -175,6 +181,7 @@ const colecciones: Coleccion[] = [
       { k: 'lat', t: 'Latitud', tipo: 'coordenada', ayuda: 'Para el mapa. Ej.: 4.8060' },
       { k: 'lng', t: 'Longitud', tipo: 'coordenada', ayuda: 'Ej.: -75.6850' },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
+      { k: 'descripcion_en', t: 'Descripción (inglés)', tipo: 'area', ancho: true },
       { k: 'incluye_enfermeria', t: 'Incluye enfermería', tipo: 'bool' },
       { k: 'incluye_alimentacion', t: 'Incluye alimentación', tipo: 'bool' },
       { k: 'es_demo', t: 'De demostración', tipo: 'bool' },
@@ -195,10 +202,12 @@ const colecciones: Coleccion[] = [
     campos: [
       { k: 'id', t: 'Identificador', tipo: 'texto', requerido: true },
       { k: 'nombre', t: 'Nombre', tipo: 'texto', requerido: true },
+      { k: 'nombre_en', t: 'Nombre (inglés)', tipo: 'texto' },
       { k: 'precio_desde', t: 'Precio desde (COP)', tipo: 'numero' },
       { k: 'unidad', t: 'Unidad', tipo: 'select', requerido: true, opciones: () => [{ v: 'servicio', t: 'Por servicio' }, { v: 'dia', t: 'Por día' }] },
       { k: 'orden', t: 'Orden', tipo: 'numero' },
       { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
+      { k: 'descripcion_en', t: 'Descripción (inglés)', tipo: 'area', ancho: true },
       { k: 'publicado', t: 'Publicado en el sitio', tipo: 'bool' },
     ],
     nuevo: { unidad: 'servicio', publicado: true, orden: 99 },
@@ -230,6 +239,7 @@ export default function Catalogo() {
   const { tab = 'ofertas' } = useParams()
   const { datos, recargar } = useDatos()
   const col = colecciones.find((c) => c.id === tab) ?? colecciones[0]
+  const enMoneda = tab === 'moneda'
   const [editando, setEditando] = useState<{ fila: Record<string, unknown>; nueva: boolean } | null>(null)
   const filas = col.filas(datos)
   const campoPublicado = col.id === 'ciudades' ? 'activa' : 'publicado'
@@ -243,9 +253,11 @@ export default function Catalogo() {
     <div>
       <Titulo
         accion={
-          <button onClick={() => setEditando({ fila: { ...col.nuevo }, nueva: true })} className="btn">
-            <Plus size={14} /> Nuevo
-          </button>
+          enMoneda ? undefined : (
+            <button onClick={() => setEditando({ fila: { ...col.nuevo }, nueva: true })} className="btn">
+              <Plus size={14} /> Nuevo
+            </button>
+          )
         }
       >
         Catálogo
@@ -260,7 +272,16 @@ export default function Catalogo() {
             {c.t} <span className="text-stone-400">{c.filas(datos).length}</span>
           </NavLink>
         ))}
+        <NavLink
+          to="/catalogo/moneda"
+          className={`-mb-px border-b-2 px-3 py-2 text-sm ${enMoneda ? 'border-oro font-medium' : 'border-transparent text-stone-500 hover:text-stone-900'}`}
+        >
+          Moneda
+        </NavLink>
       </div>
+      {enMoneda ? (
+        <TasaCambio tasa={datos.ajustes?.tasa_usd_cop ?? null} onGuardado={recargar} />
+      ) : (
       <div className="tarjeta overflow-x-auto">
         <table className="tabla">
           <thead>
@@ -305,6 +326,7 @@ export default function Catalogo() {
           </tbody>
         </table>
       </div>
+      )}
       {editando && (
         <Editor
           col={col}
@@ -491,5 +513,42 @@ function Editor({
         </div>
       </form>
     </Modal>
+  )
+}
+
+/** Tasa de referencia para mostrar en dólares los precios que las clínicas publican en pesos. */
+function TasaCambio({ tasa, onGuardado }: { tasa: number | null; onGuardado: () => void }) {
+  const [valor, setValor] = useState(tasa ? String(tasa) : '')
+  const [estado, setEstado] = useState<{ ok: boolean; t: string } | null>(null)
+  const guardar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const n = Number(valor)
+    if (!(n > 0)) return setEstado({ ok: false, t: 'Escribe un valor mayor que cero.' })
+    const { error } = await supabase.from('px_ajustes').upsert({ clave: 'tasa_usd_cop', valor: n, actualizado_en: new Date().toISOString() })
+    if (error) return setEstado({ ok: false, t: error.message.includes('row-level') ? 'Solo un administrador puede cambiar la tasa.' : error.message })
+    setEstado({ ok: true, t: 'Tasa guardada. El sitio la usa desde la próxima carga.' })
+    onGuardado()
+  }
+  return (
+    <form onSubmit={guardar} className="tarjeta max-w-xl space-y-4 p-6">
+      <div>
+        <h2 className="font-medium">Tasa de referencia COP / USD</h2>
+        <p className="mt-1 text-sm text-stone-500">
+          El sitio muestra los precios en dólares a quien elige USD, dividiendo el valor en pesos por esta tasa y redondeando a
+          decenas. Es solo orientativo: cada clínica cotiza y cobra en su moneda. Actualízala cuando cambie el mercado.
+        </p>
+      </div>
+      <label className="block">
+        <span className="etiqueta">Pesos colombianos por 1 dólar</span>
+        <input type="number" min={1} step="any" value={valor} onChange={(e) => setValor(e.target.value)} className="campo" />
+      </label>
+      {Number(valor) > 0 && (
+        <p className="text-sm text-stone-600">
+          Ejemplo: {formatoCOP(10_000_000)} ≈ US$ {Math.round(10_000_000 / Number(valor) / 10) * 10}
+        </p>
+      )}
+      {estado && <p className={`text-sm ${estado.ok ? 'text-emerald-700' : 'text-rose-700'}`}>{estado.t}</p>}
+      <button className="btn">Guardar tasa</button>
+    </form>
   )
 }

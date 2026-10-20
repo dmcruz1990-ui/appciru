@@ -40,6 +40,11 @@ export interface Procedimiento {
   orden: number
   publicado: boolean
   imagen_url: string | null
+  nombre_en?: string | null
+  descripcion_en?: string | null
+  duracion_aprox_en?: string | null
+  anestesia_en?: string | null
+  recuperacion_en?: string | null
 }
 
 export interface Institucion {
@@ -68,6 +73,8 @@ export interface Institucion {
   lng: number | null
   /** Fotos adicionales (URLs del bucket px-imagenes), en orden. */
   galeria: string[]
+  descripcion_en?: string | null
+  servicios_en?: string[]
 }
 
 export interface Profesional {
@@ -89,6 +96,8 @@ export interface Profesional {
   es_demo: boolean
   publicado: boolean
   creado_en: string
+  especialidad_en?: string | null
+  bio_en?: string | null
 }
 
 export interface Vinculo {
@@ -105,6 +114,8 @@ export interface Oferta {
   precio_max: number | null
   incluye: string | null
   no_incluye: string | null
+  incluye_en?: string | null
+  no_incluye_en?: string | null
   precio_actualizado_en: string | null
   publicado: boolean
   creado_en: string
@@ -126,6 +137,7 @@ export interface Alojamiento {
   galeria: string[]
   /** Personas que pueden alojarse (paciente + acompañantes). */
   capacidad: number | null
+  descripcion_en?: string | null
 }
 
 export interface Servicio {
@@ -136,6 +148,8 @@ export interface Servicio {
   unidad: 'servicio' | 'dia'
   orden: number
   publicado: boolean
+  nombre_en?: string | null
+  descripcion_en?: string | null
 }
 
 export interface Perfil {

@@ -25,6 +25,8 @@ export interface Catalogo {
   ofertas: Oferta[]
   alojamientos: Alojamiento[]
   servicios: Servicio[]
+  /** Ajustes numéricos del sitio, por ejemplo `tasa_usd_cop`. */
+  ajustes: Record<string, number>
 }
 
 /**
@@ -32,7 +34,7 @@ export interface Catalogo {
  * el staff recibe todo (incluido lo oculto).
  */
 export async function cargarCatalogo(): Promise<Catalogo> {
-  const [ciudades, procedimientos, instituciones, profesionales, vinculos, ofertas, alojamientos, servicios] =
+  const [ciudades, procedimientos, instituciones, profesionales, vinculos, ofertas, alojamientos, servicios, ajustes] =
     await Promise.all([
       supabase.from('px_ciudades').select('*').order('orden'),
       supabase.from('px_procedimientos').select('*').order('orden'),
@@ -42,6 +44,7 @@ export async function cargarCatalogo(): Promise<Catalogo> {
       supabase.from('px_ofertas').select('*').order('creado_en'),
       supabase.from('px_alojamientos').select('*').order('nombre'),
       supabase.from('px_servicios').select('*').order('orden'),
+      supabase.from('px_ajustes').select('clave, valor'),
     ])
   return {
     ciudades: sinError(ciudades),
@@ -52,6 +55,8 @@ export async function cargarCatalogo(): Promise<Catalogo> {
     ofertas: sinError(ofertas),
     alojamientos: sinError(alojamientos),
     servicios: sinError(servicios),
+    // Si la tabla aún no existe o falla, el sitio sigue funcionando en pesos.
+    ajustes: Object.fromEntries((ajustes.data ?? []).map((a: { clave: string; valor: number | string }) => [a.clave, Number(a.valor)])),
   }
 }
 

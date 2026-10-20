@@ -66,6 +66,17 @@ confirmación de correo ni los de recuperación de contraseña.
 - **Directorio de especialistas** (`/especialistas`) con filtros por ciudad, procedimiento, idioma y valoración virtual.
 - En el panel, cada institución y alojamiento tiene **galería** (hasta 20 fotos) y **coordenadas** para el mapa.
 
+### Idiomas y moneda
+- El sitio público está en **español e inglés** (selector ES | EN en la cabecera, el menú y el pie). El idioma inicial sale
+  del navegador y la elección se recuerda. Los textos de la interfaz viven en cada componente con `tx('español', 'English')`
+  (`apps/cliente/src/idioma.tsx`).
+- Los textos del catálogo tienen columnas `*_en` (nombre, descripción, servicios, presentación…). Se editan en el panel
+  («… (inglés)»); si están vacías, el sitio muestra el español.
+- Los precios se guardan en **pesos (COP)**. Quien elige **USD** ve el equivalente aproximado con la tasa
+  `px_ajustes.tasa_usd_cop`, que el admin cambia en Catálogo → Moneda. Los dólares se redondean a decenas y el sitio
+  aclara que la clínica cotiza y cobra en su moneda. Por defecto ven pesos quienes navegan desde Colombia y dólares el resto.
+- Los términos y el aviso de privacidad en inglés son una traducción de cortesía; prevalece la versión en español.
+
 ### Diseño
 Estilo de casa de lujo internacional: blanco y negro puros, una sola tipografía geométrica (Jost), títulos en mayúsculas
 espaciadas, logotipo centrado con la fila de categorías debajo, botones rectos, animaciones con `motion` y desplazamiento
