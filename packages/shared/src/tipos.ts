@@ -275,4 +275,6 @@ export interface NuevaSolicitud {
   presupuesto?: number
   canal?: string
   utm?: Record<string, string>
+  /** Identificador del intento de envío: si la red falla y se reintenta, no se crea otra solicitud. */
+  clave?: string
 }

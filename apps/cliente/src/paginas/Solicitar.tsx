@@ -29,6 +29,8 @@ export default function Solicitar() {
   const [servicioIds, setServicioIds] = useState<string[]>([])
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // Una clave por visita al formulario: reenviar tras un error de red devuelve la misma solicitud.
+  const [clave] = useState(() => crypto.randomUUID())
   const [error, setError] = useState<string | null>(null)
 
   if (!datos || cargando) return null
@@ -67,6 +69,7 @@ export default function Solicitar() {
         presupuesto: presupuesto ? Number(presupuesto) : undefined,
         canal: 'web',
         utm: leerUTM(),
+        clave,
       })
       navigate('/solicitud-enviada', { state: { codigo } })
     } catch (err) {
