@@ -72,6 +72,10 @@ confirmación de correo ni los de recuperación de contraseña.
 - **Ficha de clínica** con galería y visor de fotos, servicios, especialistas, ubicación, alojamiento cercano y una
   **tarjeta de reserva** fija: procedimiento, fechas de llegada y salida, alojamiento y total estimado.
 - **Alojamiento** (`/alojamientos`, `/alojamiento/:id`) con mapa de precios por noche y cálculo por fechas.
+- **Registro de médicos** (`/para-clinicas/registro`): el cirujano crea su cuenta, envía su registro profesional, su
+  clínica y sus procedimientos, y ve el estado de la revisión. En el panel, «Registros de médicos» permite pedir cambios
+  o aprobar: se crean el perfil, la clínica y los procedimientos **sin publicar** y el usuario recibe el rol «Clínica»
+  para atender sus solicitudes. Migración `20261022150000_px_postulaciones.sql`.
 - **Directorio de especialistas** (`/especialistas`) con filtros por país, ciudad, especialidad, procedimiento, idioma y
   valoración virtual.
 - En el panel, cada institución y alojamiento tiene **galería** (hasta 20 fotos) y **coordenadas** para el mapa.

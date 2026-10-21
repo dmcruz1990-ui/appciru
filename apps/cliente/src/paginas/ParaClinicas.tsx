@@ -103,15 +103,20 @@ export default function ParaClinicas() {
               'PLASTINEX helps plastic surgery clinics, surgeons and licensed institutions attract opportunities, manage leads, organize consultations and measure the process. The indication, the risks and the treatment remain in the hands of the professional.',
             )}
           </p>
-          {contacto ? (
-            <a href={`mailto:${contacto}?subject=${tx('Quiero conocer PLASTINEX', 'I would like to learn about PLASTINEX')}`} className="btn-claro mt-12">
-              {tx('Agendar una conversación', 'Schedule a conversation')}
-            </a>
-          ) : (
-            <Link to="/explorar" className="btn-claro mt-12">
-              {tx('Ver cómo se ve un perfil', 'See what a profile looks like')}
+          <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <Link to="/para-clinicas/registro" className="btn-claro">
+              {tx('Registrar mi práctica', 'Register my practice')}
             </Link>
-          )}
+            {contacto ? (
+              <a href={`mailto:${contacto}?subject=${tx('Quiero conocer PLASTINEX', 'I would like to learn about PLASTINEX')}`} className="enlace text-sm text-marfil/80">
+                {tx('Agendar una conversación', 'Schedule a conversation')}
+              </a>
+            ) : (
+              <Link to="/explorar" className="enlace text-sm text-marfil/80">
+                {tx('Ver cómo se ve un perfil', 'See what a profile looks like')}
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
@@ -169,6 +174,33 @@ export default function ParaClinicas() {
             'PLASTINEX does not charge the patient or receive payment for the surgery. We do not promise “guaranteed additional surgeries”: our promise is better management, traceability and follow-up of opportunities.',
           )}
         </p>
+      </section>
+
+      <section className="bg-espresso text-marfil">
+        <div className="contenedor flex flex-wrap items-end justify-between gap-10 py-24">
+          <div>
+            <div className="rotulo !text-marfil/50">04 · {tx('Registro', 'Registration')}</div>
+            <h2 className="display mt-6 max-w-2xl text-4xl md:text-5xl">
+              {tx(
+                <>
+                  Crea tu perfil <em>de cirujano.</em>
+                </>,
+                <>
+                  Create your <em>surgeon profile.</em>
+                </>,
+              )}
+            </h2>
+            <p className="mt-6 max-w-lg text-sm leading-relaxed text-marfil/70">
+              {tx(
+                'Cuenta, registro profesional, clínica y procedimientos en un solo formulario. Lo verificamos antes de publicarlo y después atiendes tus solicitudes desde tu panel.',
+                'Account, professional license, clinic and procedures in one form. We verify it before publishing, and then you handle your requests from your dashboard.',
+              )}
+            </p>
+          </div>
+          <Link to="/para-clinicas/registro" className="btn-claro">
+            {tx('Empezar el registro', 'Start registration')}
+          </Link>
+        </div>
       </section>
     </>
   )

@@ -11,6 +11,7 @@ import Solicitudes from './paginas/Solicitudes'
 import SolicitudDetalle from './paginas/SolicitudDetalle'
 import Catalogo from './paginas/Catalogo'
 import Verificacion from './paginas/Verificacion'
+import Registros from './paginas/Registros'
 import Clientes from './paginas/Clientes'
 import Usuarios from './paginas/Usuarios'
 
@@ -30,6 +31,7 @@ function App() {
           <Route path="solicitudes/:id" element={<SolicitudDetalle />} />
           <Route path="catalogo" element={<Navigate to="/catalogo/ofertas" replace />} />
           <Route path="catalogo/:tab" element={<Catalogo />} />
+          <Route path="registros" element={<Registros />} />
           <Route path="verificacion" element={<Verificacion />} />
           {esAdmin && <Route path="clientes" element={<Clientes />} />}
           {esAdmin && <Route path="usuarios" element={<Usuarios />} />}

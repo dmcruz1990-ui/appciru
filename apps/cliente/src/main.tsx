@@ -22,6 +22,7 @@ import Ingresar from './paginas/Ingresar'
 import CompletarPerfil from './paginas/CompletarPerfil'
 import NuevaClave from './paginas/NuevaClave'
 import Cuenta from './paginas/Cuenta'
+import RegistroMedico from './paginas/RegistroMedico'
 import ParaClinicas from './paginas/ParaClinicas'
 import Privacidad from './paginas/Privacidad'
 import Terminos from './paginas/Terminos'
@@ -55,6 +56,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="cuenta/completar" element={<CompletarPerfil />} />
                 <Route path="cuenta/nueva-clave" element={<NuevaClave />} />
                 <Route path="para-clinicas" element={<ParaClinicas />} />
+                <Route path="para-clinicas/registro" element={<RegistroMedico />} />
                 <Route path="privacidad" element={<Privacidad />} />
                 <Route path="terminos" element={<Terminos />} />
                 <Route path="*" element={<NoEncontrado />} />

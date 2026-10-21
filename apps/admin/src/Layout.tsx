@@ -1,5 +1,5 @@
 import { nombreRol } from '@plastinex/shared'
-import { Briefcase, ClipboardList, ExternalLink, LayoutDashboard, LogOut, Package, RefreshCw, ShieldCheck, Users } from 'lucide-react'
+import { Briefcase, ClipboardList, ExternalLink, LayoutDashboard, LogOut, Package, RefreshCw, ShieldCheck, UserPlus, Users } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useEstadoDatos } from './datos'
 import { useSesion } from './sesion'
@@ -14,10 +14,13 @@ export default function Layout() {
     (datos?.instituciones.filter((i) => i.verificacion !== 'verificado').length ?? 0) +
     (datos?.profesionales.filter((p) => p.verificacion !== 'verificado').length ?? 0)
 
+  const registrosNuevos = datos?.postulaciones.filter((p) => p.estado === 'nueva' || p.estado === 'en_revision').length ?? 0
+
   const enlaces = [
     { to: '/', icono: LayoutDashboard, t: 'Resumen', end: true, ver: true },
     { to: '/solicitudes', icono: ClipboardList, t: 'Solicitudes', ver: true, badge: nuevas },
     { to: '/catalogo/ofertas', icono: Package, t: 'Catálogo', ver: esStaff },
+    { to: '/registros', icono: UserPlus, t: 'Registros de médicos', ver: esStaff, badge: registrosNuevos },
     { to: '/verificacion', icono: ShieldCheck, t: 'Verificación', ver: esStaff, badge: pendientesVerif },
     { to: '/clientes', icono: Briefcase, t: 'Clientes B2B', ver: esAdmin },
     { to: '/usuarios', icono: Users, t: 'Usuarios', ver: esAdmin },
