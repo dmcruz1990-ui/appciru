@@ -3,7 +3,7 @@ import { Building2, Gem, Globe, ScanFace, Search, Stethoscope, Waves, type Lucid
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
-import { coincide, sinTildes } from '../busqueda'
+import { coincide, SINONIMOS, sinTildes } from '../busqueda'
 import { useIdioma } from '../idioma'
 
 export const iconoCategoria: Record<Categoria, LucideIcon> = { mamaria: Gem, corporal: Waves, facial: ScanFace }
@@ -76,7 +76,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   // Sugerencias del campo «qué»: procedimientos, cirujanos y clínicas que contienen lo escrito.
   const t = texto.trim()
   const enPais = (ciudadId: string) => (!ciudad || ciudadId === ciudad) && (!pais || datos.ciudades.find((x) => x.id === ciudadId)?.pais === pais)
-  const sugProc = t ? datos.procedimientos.filter((x) => coincide(t, x.nombre, x.nombre_en, categoria(x.categoria))).slice(0, 5) : []
+  const sugProc = t ? datos.procedimientos.filter((x) => coincide(t, x.nombre, x.nombre_en, categoria(x.categoria), SINONIMOS[x.id])).slice(0, 5) : []
   const sugProf = t
     ? datos.profesionales.filter((x) => x.publicado && coincide(t, x.nombre, x.especialidad, x.especialidad_en, ciudadDe(x.ciudad_id))).sort((a, b) => Number(enPais(b.ciudad_id)) - Number(enPais(a.ciudad_id))).slice(0, 5)
     : []
@@ -115,7 +115,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
         >
           <Search size={18} strokeWidth={1.6} className="shrink-0" />
           <span className="min-w-0">
-            <span className="block truncate text-[14px] font-medium">{textoProc ?? tx('Cirugía, cirujano o clínica', 'Surgery, surgeon or clinic')}</span>
+            <span className="block truncate text-[14px] font-medium">{textoProc ?? tx('¿Qué cirugía te quieres hacer?', 'Which surgery do you want?')}</span>
             <span className="block truncate text-xs text-piedra">
               {[textoLugar, textoFechas ?? tx('Fechas flexibles', 'Flexible dates'), presu ? dinero(Number(presu)) : tx('Sin presupuesto', 'Any budget')].join(' · ')}
             </span>
@@ -149,7 +149,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                   value={texto}
                   onChange={(e) => (setTexto(e.target.value), e.target.value && setProc(''))}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), enviar())}
-                  placeholder={tx('Rinoplastia, Dra. …, Clínica …', 'Rhinoplasty, Dr. …, Clinic …')}
+                  placeholder={tx('¿Qué cirugía te quieres hacer? Lipo, nariz, senos…', 'Which surgery do you want? Lipo, nose, breasts…')}
                   aria-label={tx('Buscar procedimiento, cirujano o clínica', 'Search procedure, surgeon or clinic')}
                   className="w-full bg-transparent py-1 text-[16px] outline-none placeholder:text-niebla"
                 />

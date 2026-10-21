@@ -81,10 +81,10 @@ export default function RegistroMedico() {
           <h1 className="display mt-6 max-w-4xl text-4xl md:text-5xl">
             {tx(
               <>
-                Registra tu práctica <em>en PLASTINEX.</em>
+                Regístrate y llega más lejos <em>con tus leads.</em>
               </>,
               <>
-                Register your practice <em>on PLASTINEX.</em>
+                Sign up and take your leads <em>further.</em>
               </>,
             )}
           </h1>
@@ -303,7 +303,7 @@ function Formulario({ inicial, email, onEnviado }: { inicial: Postulacion | null
         </div>
       </Bloque>
 
-      <Bloque n="03" t={tx('Dónde operas', 'Where you practice')}>
+      <Bloque n="03" t={tx('Dónde atiendes', 'Where you operate')}>
         <div className="grid gap-8 sm:grid-cols-2">
           <label>
             <span className="etiqueta">{tx('País', 'Country')}</span>

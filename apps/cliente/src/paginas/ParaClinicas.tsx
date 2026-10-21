@@ -105,7 +105,7 @@ export default function ParaClinicas() {
           </p>
           <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4">
             <Link to="/para-clinicas/registro" className="btn-claro">
-              {tx('Registrar mi práctica', 'Register my practice')}
+              {tx('Regístrate', 'Sign up')}
             </Link>
             {contacto ? (
               <a href={`mailto:${contacto}?subject=${tx('Quiero conocer PLASTINEX', 'I would like to learn about PLASTINEX')}`} className="enlace text-sm text-marfil/80">
@@ -183,10 +183,10 @@ export default function ParaClinicas() {
             <h2 className="display mt-6 max-w-2xl text-4xl md:text-5xl">
               {tx(
                 <>
-                  Crea tu perfil <em>de cirujano.</em>
+                  Regístrate y llega más lejos <em>con tus leads.</em>
                 </>,
                 <>
-                  Create your <em>surgeon profile.</em>
+                  Sign up and take your leads <em>further.</em>
                 </>,
               )}
             </h2>
@@ -198,7 +198,7 @@ export default function ParaClinicas() {
             </p>
           </div>
           <Link to="/para-clinicas/registro" className="btn-claro">
-            {tx('Empezar el registro', 'Start registration')}
+            {tx('Regístrate', 'Sign up')}
           </Link>
         </div>
       </section>
