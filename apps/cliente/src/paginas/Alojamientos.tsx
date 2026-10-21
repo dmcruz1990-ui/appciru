@@ -8,6 +8,7 @@ import { BotonFavorito } from '../componentes/favoritos'
 import { EtiquetaDemo } from '../componentes/Insignias'
 import Mapa from '../componentes/Mapa'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 const iconoTipo: Record<TipoAlojamiento, ReactNode> = {
   casa_recobro: <House size={20} strokeWidth={1.4} />,
@@ -19,6 +20,7 @@ const iconoTipo: Record<TipoAlojamiento, ReactNode> = {
 export default function Alojamientos() {
   const { datos } = useCatalogo()
   const { tx, dinero, corto, loc, tipoAlojamiento, pais, ciudadDe, ciudad: nombreCiudad } = useIdioma()
+  useSeo({ titulo: tx('Alojamiento para tu recuperación', 'Recovery stays'), descripcion: tx('Casas de recuperación, hoteles y apartamentos cerca de las clínicas, con enfermería y alimentación opcionales.', 'Recovery houses, hotels and apartments near the clinics, with optional nursing care and meals.') })
   const [params, setParams] = useSearchParams()
   const [resaltado, setResaltado] = useState<string | null>(null)
   const [seleccionado, setSeleccionado] = useState<string | null>(null)

@@ -5,12 +5,14 @@ import Carrusel from '../componentes/Carrusel'
 import { BotonFavorito, useFavoritos } from '../componentes/favoritos'
 import OfertaCard from '../componentes/OfertaCard'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 /** Lo que el visitante guardó con el corazón (vive en su navegador). */
 export default function Favoritos() {
   const { datos } = useCatalogo()
   const { lista } = useFavoritos()
   const { tx, dinero, tipoAlojamiento } = useIdioma()
+  useSeo({ titulo: tx('Favoritos', 'Saved'), indexar: false })
   if (!datos) return null
   const ids = (tipo: string) => lista.filter((x) => x.startsWith(tipo + ':')).map((x) => x.slice(tipo.length + 1))
   const ofertas = detallarOfertas(datos).filter((d) => ids('oferta').includes(d.oferta.id))

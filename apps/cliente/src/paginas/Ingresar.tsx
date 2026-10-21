@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Lienzo } from '../componentes/base'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 import { useSesion } from '../sesion'
 
 type Modo = 'entrar' | 'registro' | 'olvido'
@@ -15,6 +16,7 @@ export default function Ingresar() {
   const volver = destinoSeguro(params.get('volver'))
   const { sesion, listo, cargando } = useSesion()
   const { tx } = useIdioma()
+  useSeo({ titulo: tx('Ingresar', 'Sign in'), indexar: false })
   const navigate = useNavigate()
   const [modo, setModo] = useState<Modo>(params.get('modo') === 'registro' ? 'registro' : 'entrar')
   const [email, setEmail] = useState('')

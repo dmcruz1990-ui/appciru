@@ -1,7 +1,7 @@
 import { destinos, type Categoria } from '@plastinex/shared'
 import { Building2, Gem, Globe, ScanFace, Search, Stethoscope, Waves, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { coincide, SINONIMOS, sinTildes } from '../busqueda'
 import { useIdioma } from '../idioma'
@@ -22,14 +22,16 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   const { datos } = useCatalogo()
   const { tx, dinero, loc, categoria, fecha, numero, pais: nombrePais, ciudad: nombreCiudad, ciudadDe, desdeCop, aCop, chipsPresupuesto, moneda } = useIdioma()
   const [params] = useSearchParams()
+  // En las rutas limpias (/cirugia/rinoplastia/medellin) los filtros vienen en la ruta.
+  const ruta = useParams<{ proc?: string; ciudad?: string }>()
   const navigate = useNavigate()
   const raiz = useRef<HTMLFormElement>(null)
   const [panel, setPanel] = useState<Panel>(null)
   // En celular el buscador empieza plegado en una píldora, como en las apps de reservas.
   const [desplegado, setDesplegado] = useState(false)
-  const [proc, setProc] = useState(params.get('procedimiento') ?? '')
+  const [proc, setProc] = useState(params.get('procedimiento') ?? ruta.proc ?? '')
   const [texto, setTexto] = useState(params.get('q') ?? '')
-  const [ciudad, setCiudad] = useState(params.get('ciudad') ?? '')
+  const [ciudad, setCiudad] = useState(params.get('ciudad') ?? ruta.ciudad ?? '')
   const [pais, setPais] = useState(params.get('pais') ?? '')
   const [filtroLugar, setFiltroLugar] = useState('')
   const [llegada, setLlegada] = useState(params.get('llegada') ?? '')

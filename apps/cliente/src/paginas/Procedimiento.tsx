@@ -1,19 +1,60 @@
-import { detallarOfertas, guiaPrecios } from '@plastinex/shared'
+import { destinos, detallarOfertas, guiaPrecios } from '@plastinex/shared'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { Foto, Revelar, Rotulo } from '../componentes/base'
 import NoEncontrado from '../componentes/NoEncontrado'
 import OfertaCard from '../componentes/OfertaCard'
 import { NotaMoneda, useIdioma } from '../idioma'
+import { rutaCirugia, SITIO, useSeo } from '../seo'
 
 export default function ProcedimientoPagina() {
   const { id } = useParams()
   const { datos } = useCatalogo()
-  const { tx, dinero, loc, categoria } = useIdioma()
+  const { tx, dinero, loc, categoria, pais, ciudad: nombreCiudad } = useIdioma()
   const proc = datos?.procedimientos.find((p) => p.id === id)
+  const todas = datos && proc ? detallarOfertas(datos).filter((d) => d.procedimiento.id === proc.id) : []
+  const precios = todas.map((d) => d.oferta.precio_min).filter((x): x is number => x != null)
+  const paises = new Set(todas.map((d) => d.ciudad.pais)).size
+  const ciudades = new Set(todas.map((d) => d.ciudad.id)).size
+  useSeo({
+    titulo: proc ? tx(`${proc.nombre}: precios, cirujanos y clínicas`, `${loc(proc, 'nombre')}: prices, surgeons and clinics`) : undefined,
+    descripcion: proc
+      ? tx(
+          `Compara ${proc.nombre.toLowerCase()} en ${ciudades} ciudades de ${paises} países: cirujanos plásticos, clínicas y precios orientativos. Solicita tu valoración.`,
+          `Compare ${loc(proc, 'nombre').toLowerCase()} in ${ciudades} cities across ${paises} countries: plastic surgeons, clinics and indicative prices. Request your consultation.`,
+        )
+      : undefined,
+    jsonld: proc && {
+      '@context': 'https://schema.org',
+      '@type': 'MedicalProcedure',
+      name: loc(proc, 'nombre'),
+      description: loc(proc, 'descripcion'),
+      procedureType: 'https://schema.org/SurgicalProcedure',
+      url: SITIO + `/procedimiento/${proc.id}`,
+      ...(precios.length && {
+        offers: { '@type': 'AggregateOffer', priceCurrency: 'COP', lowPrice: Math.min(...precios), highPrice: Math.max(...precios), offerCount: todas.length },
+      }),
+    },
+  })
   if (!datos || !proc) return <NoEncontrado texto={tx('Este procedimiento no está disponible.', 'This procedure is not available.')} />
 
-  const opciones = detallarOfertas(datos).filter((d) => d.procedimiento.id === proc.id)
+  // Las mejores primero: verificadas y con precio; el resto, en la búsqueda.
+  const opciones = [...todas]
+    .sort((a, b) => Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado') || Number(b.oferta.precio_min != null) - Number(a.oferta.precio_min != null))
+    .slice(0, 12)
+  // Dónde se ofrece, por país: enlaces indexables a /cirugia/<procedimiento>/<ciudad>.
+  const donde = destinos(datos)
+    .map((d) => ({
+      pais: d.pais,
+      ciudades: d.ciudades
+        .map(({ ciudad }) => {
+          const aqui = todas.filter((o) => o.ciudad.id === ciudad.id)
+          const p = aqui.map((o) => o.oferta.precio_min).filter((x): x is number => x != null)
+          return { ciudad, n: aqui.length, desde: p.length ? Math.min(...p) : null }
+        })
+        .filter((c) => c.n > 0),
+    }))
+    .filter((d) => d.ciudades.length > 0)
   const guia = guiaPrecios(datos, proc.id)
   const nombre = loc(proc, 'nombre')
   const datosClave = [
@@ -92,7 +133,7 @@ export default function ProcedimientoPagina() {
               <div className="etiqueta">{tx('Por ciudad', 'By city')}</div>
               <table className="mt-4 w-full text-sm">
                 <tbody className="divide-y divide-linea border-y border-linea">
-                  {guia.porCiudad.map((c) => (
+                  {guia.porCiudad.slice(0, 10).map((c) => (
                     <tr key={c.ciudad}>
                       <td className="py-4 font-serif text-2xl">{c.ciudad}</td>
                       <td className="py-4 text-piedra">
@@ -116,8 +157,8 @@ export default function ProcedimientoPagina() {
           <div>
             <Rotulo>
               {tx(
-                `${opciones.length} ${opciones.length === 1 ? 'opción' : 'opciones'} en la red`,
-                `${opciones.length} ${opciones.length === 1 ? 'option' : 'options'} in our network`,
+                `${todas.length} ${todas.length === 1 ? 'opción' : 'opciones'} en la red`,
+                `${todas.length} ${todas.length === 1 ? 'option' : 'options'} in our network`,
               )}
             </Rotulo>
             <h2 className="display mt-5 text-4xl">
@@ -131,9 +172,14 @@ export default function ProcedimientoPagina() {
               )}
             </h2>
           </div>
-          <Link to={`/solicitar?procedimiento=${proc.id}`} className="btn-linea">
-            {tx('Pedir orientación general', 'Ask for general guidance')}
-          </Link>
+          <div className="flex flex-wrap gap-4">
+            <Link to={rutaCirugia(proc.id)} className="btn">
+              {tx(`Ver las ${todas.length} opciones en el mapa`, `See all ${todas.length} options on the map`)}
+            </Link>
+            <Link to={`/solicitar?procedimiento=${proc.id}`} className="btn-linea">
+              {tx('Pedir orientación general', 'Ask for general guidance')}
+            </Link>
+          </div>
         </div>
         <div className="mt-14 grid gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
           {opciones.map((d, i) => (
@@ -143,6 +189,41 @@ export default function ProcedimientoPagina() {
           ))}
         </div>
       </section>
+
+      {donde.length > 0 && (
+        <section className="bg-papel py-24">
+          <div className="contenedor">
+            <Rotulo>{tx(`${ciudades} ciudades · ${paises} países`, `${ciudades} cities · ${paises} countries`)}</Rotulo>
+            <h2 className="display mt-5 text-4xl">
+              {tx(
+                <>
+                  Dónde hacerte <em>{nombre.toLowerCase()}</em>
+                </>,
+                <>
+                  Where to get <em>{nombre.toLowerCase()}</em>
+                </>,
+              )}
+            </h2>
+            <div className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+              {donde.map((d) => (
+                <div key={d.pais}>
+                  <div className="border-b border-espresso pb-2 text-[11px] font-medium tracking-[0.2em] uppercase">{pais(d.pais)}</div>
+                  <ul className="mt-2">
+                    {d.ciudades.map(({ ciudad, desde }) => (
+                      <li key={ciudad.id}>
+                        <Link to={rutaCirugia(proc.id, ciudad.id)} className="flex items-baseline justify-between gap-3 py-1.5 text-sm hover:underline">
+                          <span>{tx(`${nombre} en ${nombreCiudad(ciudad)}`, `${nombre} in ${nombreCiudad(ciudad)}`)}</span>
+                          {desde != null && <span className="shrink-0 text-xs text-piedra">{dinero(desde)}</span>}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   )
 }

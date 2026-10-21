@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Revelar, Rotulo } from '../componentes/base'
 import Planes, { usePlanes } from '../componentes/Planes'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 const contacto = (import.meta.env.VITE_CONTACTO_EMAIL as string | undefined) ?? ''
 
@@ -81,6 +82,7 @@ const ruta: Par[] = [
 
 export default function ParaClinicas() {
   const { tx } = useIdioma()
+  useSeo({ titulo: tx('Para clínicas y cirujanos plásticos', 'For plastic surgery clinics and surgeons'), descripcion: tx('Regístrate en PLASTINEX y llega más lejos con tus leads: perfil verificado, pacientes de todo el mundo y CRM para gestionar tus valoraciones.', 'Join PLASTINEX and take your leads further: verified profile, patients from around the world and a CRM to manage your consultations.') })
   const planes = usePlanes()
   const t = ([es, en]: Par) => tx(es, en)
 

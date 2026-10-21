@@ -1,5 +1,6 @@
 import { EMPRESA } from '@plastinex/shared'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 const direccion = EMPRESA.direccion.join(', ')
 const direccionEn = [...EMPRESA.direccion.slice(0, -1), 'United States'].join(', ')
@@ -74,6 +75,7 @@ const secciones: { es: [string, string]; en: [string, string] }[] = [
 
 export default function Privacidad() {
   const { tx, idioma } = useIdioma()
+  useSeo({ titulo: tx('Aviso de privacidad', 'Privacy notice') })
   return (
     <article className="contenedor pt-48 pb-28">
       <div className="mx-auto max-w-3xl">

@@ -1,9 +1,11 @@
 import { EMPRESA, TERMINOS_VERSION } from '@plastinex/shared'
 import type { ReactNode } from 'react'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 export default function Terminos() {
   const { tx, idioma } = useIdioma()
+  useSeo({ titulo: tx('Términos e intermediación', 'Terms and intermediation') })
   const direccion = tx(EMPRESA.direccion.join(', '), [...EMPRESA.direccion.slice(0, -1), 'United States'].join(', '))
 
   return (

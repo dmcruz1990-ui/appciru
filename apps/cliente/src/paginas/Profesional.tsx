@@ -6,12 +6,34 @@ import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import NoEncontrado from '../componentes/NoEncontrado'
 import OfertaCard from '../componentes/OfertaCard'
 import { useIdioma } from '../idioma'
+import { SITIO, useSeo } from '../seo'
 
 export default function ProfesionalPagina() {
   const { id } = useParams()
   const { datos } = useCatalogo()
   const { tx, loc, lengua, ciudadDe } = useIdioma()
   const prof = datos?.profesionales.find((p) => p.id === id)
+  useSeo({
+    titulo: prof ? `${prof.nombre} · ${tx('Cirujano plástico', 'Plastic surgeon')} · ${ciudadDe(prof.ciudad_id)}` : undefined,
+    descripcion: prof
+      ? tx(
+          `${prof.nombre}, ${loc(prof, 'especialidad').toLowerCase()} en ${ciudadDe(prof.ciudad_id)}. Procedimientos, clínicas, idiomas y solicitud de valoración en PLASTINEX.`,
+          `${prof.nombre}, ${loc(prof, 'especialidad').toLowerCase()} in ${ciudadDe(prof.ciudad_id)}. Procedures, clinics, languages and consultation requests on PLASTINEX.`,
+        )
+      : undefined,
+    // Los perfiles de demostración no se indexan en buscadores.
+    indexar: !prof?.es_demo,
+    jsonld: prof && {
+      '@context': 'https://schema.org',
+      '@type': 'Physician',
+      name: prof.nombre,
+      url: `${SITIO}/profesional/${prof.id}`,
+      medicalSpecialty: 'PlasticSurgery',
+      knowsLanguage: prof.idiomas,
+      ...(prof.foto_url && { image: prof.foto_url }),
+      address: { '@type': 'PostalAddress', addressLocality: ciudadDe(prof.ciudad_id) },
+    },
+  })
   if (!datos || !prof) return <NoEncontrado texto={tx('Este perfil no está disponible.', 'This profile is not available.')} />
 
   const opciones = detallarOfertas(datos).filter((d) => d.profesional?.id === prof.id)

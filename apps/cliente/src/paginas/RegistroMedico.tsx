@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import Planes, { usePlanes } from '../componentes/Planes'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 import { useSesion } from '../sesion'
 
 /** Panel donde la clínica aprobada atiende sus solicitudes (mismo usuario y contraseña). */
@@ -52,6 +53,7 @@ const vacio: NuevaPostulacion = {
 export default function RegistroMedico() {
   const { sesion, cargando } = useSesion()
   const { tx } = useIdioma()
+  useSeo({ titulo: tx('Registro de cirujanos plásticos', 'Plastic surgeon registration'), descripcion: tx('Regístrate y llega más lejos con tus leads. Crea tu perfil de cirujano plástico, verificamos tus documentos y recibe pacientes de todo el mundo.', 'Sign up and take your leads further. Create your plastic surgeon profile, we verify your documents and you receive patients from around the world.') })
   const [postulacion, setPostulacion] = useState<Postulacion | null | undefined>(undefined)
   const [editando, setEditando] = useState(false)
 

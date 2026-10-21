@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { EnlaceFlecha, Revelar } from '../componentes/base'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 import { useSesion } from '../sesion'
 
 export default function Cuenta() {
@@ -10,6 +11,7 @@ export default function Cuenta() {
   const sol = useCarga(misSolicitudes, [sesion?.user.id])
   const { datos } = useCatalogo()
   const { tx, loc, fecha, fechaHora, etapa } = useIdioma()
+  useSeo({ titulo: tx('Mi cuenta', 'My account'), indexar: false })
 
   // La solicitud trae los nombres en español; si están en el catálogo, se muestran traducidos.
   const nombreProc = (nombre: string) => {

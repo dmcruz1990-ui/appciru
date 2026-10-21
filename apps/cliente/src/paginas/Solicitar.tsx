@@ -5,6 +5,7 @@ import { useCatalogo } from '../catalogo'
 import { Foto } from '../componentes/base'
 import { EstadoVerificacion } from '../componentes/Insignias'
 import { NotaMoneda, useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 import { useSesion } from '../sesion'
 import { leerUTM } from '../utm'
 
@@ -12,6 +13,7 @@ export default function Solicitar() {
   const { datos } = useCatalogo()
   const { sesion, paciente, listo, cargando } = useSesion()
   const { tx, dinero, precio, loc, tipoAlojamiento, aCop, desdeCop, locale, moneda, ciudad, pais } = useIdioma()
+  useSeo({ titulo: tx('Solicitar valoración', 'Request a consultation'), indexar: false })
   const [params] = useSearchParams()
   const { pathname, search } = useLocation()
   const navigate = useNavigate()

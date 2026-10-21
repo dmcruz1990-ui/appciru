@@ -8,6 +8,7 @@ import { EnlaceFlecha, Flecha, Foto, Lienzo, Revelar, Rotulo } from '../componen
 import Buscador from '../componentes/Buscador'
 import OfertaCard from '../componentes/OfertaCard'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 /** Pasos del proceso: [título, descripción], cada uno como [español, inglés]. */
 type Texto = [es: string, en: string]
@@ -67,6 +68,7 @@ const rango = (id: string) => (INSIGNIA.includes(id) ? INSIGNIA.indexOf(id) : IN
 export default function Inicio() {
   const { datos } = useCatalogo()
   const { tx, dinero, loc, pais, ciudad: nombreCiudad } = useIdioma()
+  useSeo({})
   const heroRef = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const escala = useTransform(scrollYProgress, [0, 1], [1, 1.12])

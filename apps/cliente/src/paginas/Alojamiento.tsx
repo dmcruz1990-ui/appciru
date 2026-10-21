@@ -10,6 +10,7 @@ import { EtiquetaDemo } from '../componentes/Insignias'
 import Mapa from '../componentes/Mapa'
 import NoEncontrado from '../componentes/NoEncontrado'
 import { NotaMoneda, useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 /** Ficha de un alojamiento de recuperación con reserva por fechas (se cotiza junto con la valoración). */
 export default function AlojamientoPagina() {
@@ -21,6 +22,7 @@ export default function AlojamientoPagina() {
   const { es, alternar } = useFavoritos()
   const { tx, dinero, loc, tipoAlojamiento, ciudadDe } = useIdioma()
   const a = datos?.alojamientos.find((x) => x.id === id)
+  useSeo({ titulo: a ? `${a.nombre} · ${ciudadDe(a.ciudad_id)}` : undefined, descripcion: a ? loc(a, 'descripcion') : undefined, indexar: !a?.es_demo })
   if (!datos || !a) return <NoEncontrado texto={tx('Este alojamiento no está disponible.', 'This stay is not available.')} />
 
   const ciudad = ciudadDe(a.ciudad_id)

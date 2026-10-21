@@ -1,13 +1,14 @@
 import { detallarOfertas, type Categoria } from '@plastinex/shared'
 import { LayoutGrid, List, Map as IconoMapa, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import Buscador, { iconoCategoria } from '../componentes/Buscador'
 import Mapa, { type Limites } from '../componentes/Mapa'
 import OfertaCard from '../componentes/OfertaCard'
 import { coincide, textosOferta } from '../busqueda'
 import { useIdioma } from '../idioma'
+import { SITIO, useSeo } from '../seo'
 
 /** Tarjetas por tanda: con cientos de opciones en el mundo, la lista crece al pedir más. */
 const TANDA = 24
@@ -16,14 +17,17 @@ export default function Explorar() {
   const { datos } = useCatalogo()
   const { tx, dinero, corto, loc, locale, categoria: nombreCategoria, ciudadDe, pais: nombrePais } = useIdioma()
   const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
+  // Rutas limpias para buscadores: /cirugia/<procedimiento>/<ciudad>.
+  const ruta = useParams<{ proc?: string; ciudad?: string }>()
   const [resaltada, setResaltada] = useState<string | null>(null)
   const [seleccionada, setSeleccionada] = useState<string | null>(null)
   const [alMover, setAlMover] = useState(false)
   const [limites, setLimites] = useState<Limites | null>(null)
 
-  const procedimiento = params.get('procedimiento') ?? ''
+  const procedimiento = params.get('procedimiento') ?? ruta.proc ?? ''
   const texto = params.get('q') ?? ''
-  const ciudad = params.get('ciudad') ?? ''
+  const ciudad = params.get('ciudad') ?? ruta.ciudad ?? ''
   const pais = params.get('pais') ?? ''
   const categoria = (params.get('categoria') ?? '') as Categoria | ''
   const presupuesto = Number(params.get('presupuesto')) || 0
@@ -33,10 +37,14 @@ export default function Explorar() {
 
   const set = (k: string, v: string) => {
     const p = new URLSearchParams(params)
+    // Desde una ruta limpia, los filtros de la ruta pasan a la URL de búsqueda.
+    if (ruta.proc && !p.has('procedimiento')) p.set('procedimiento', ruta.proc)
+    if (ruta.ciudad && !p.has('ciudad')) p.set('ciudad', ruta.ciudad)
     if (v) p.set(k, v)
     else p.delete(k)
     if (k === 'categoria') p.delete('procedimiento')
-    setParams(p, { replace: true })
+    if (ruta.proc) navigate(`/explorar?${p}`, { replace: true })
+    else setParams(p, { replace: true })
   }
 
   // Lo que viaja de la búsqueda a las fichas (fechas y presupuesto).
@@ -96,6 +104,32 @@ export default function Explorar() {
   const [cuantas, setCuantas] = useState(TANDA)
   useEffect(() => setCuantas(TANDA), [params])
 
+  // Título y SEO de la búsqueda: «Rinoplastia en Medellín, Colombia».
+  const procSel = datos?.procedimientos.find((p) => p.id === procedimiento)
+  const ciudadSel = datos?.ciudades.find((c) => c.id === ciudad)
+  const lugar = ciudadSel ? `${loc(ciudadSel, 'nombre')}, ${nombrePais(ciudadSel.pais)}` : pais ? nombrePais(pais) : ''
+  const que = procSel ? loc(procSel, 'nombre') : categoria ? nombreCategoria(categoria) : tx('Cirugía plástica', 'Plastic surgery')
+  const titulo = lugar ? tx(`${que} en ${lugar}`, `${que} in ${lugar}`) : tx(`${que} en el mundo`, `${que} worldwide`)
+  const instituciones = [...new Map(filtradas.map((d) => [d.institucion.id, d.institucion])).values()]
+  useSeo({
+    titulo,
+    descripcion: tx(
+      `${filtradas.length} opciones de ${que.toLowerCase()}${lugar ? ` en ${lugar}` : ' en 35 países'}: compara cirujanos plásticos, clínicas y precios orientativos, y solicita tu valoración.`,
+      `${filtradas.length} ${que.toLowerCase()} options${lugar ? ` in ${lugar}` : ' in 35 countries'}: compare plastic surgeons, clinics and indicative prices, and request your consultation.`,
+    ),
+    // Se indexan las rutas limpias con al menos una clínica real (no solo perfiles de demostración);
+    // las búsquedas con filtros en la URL (?presupuesto=…) no.
+    indexar: !params.toString() && instituciones.some((i) => !i.es_demo),
+    jsonld: instituciones.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: titulo,
+          itemListElement: instituciones.slice(0, 20).map((i, k) => ({ '@type': 'ListItem', position: k + 1, url: `${SITIO}/institucion/${i.id}`, name: i.nombre })),
+        }
+      : null,
+  })
+
   if (!datos) return null
 
   const dentroDelMapa = (instId: string) => {
@@ -140,6 +174,7 @@ export default function Explorar() {
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(400px,40%)]">
         {/* Lista */}
         <div className={`contenedor !max-w-none py-8 lg:!px-10 ${vista === 'mapa' ? 'hidden lg:block' : ''}`}>
+          <h1 className="display mb-6 text-2xl md:text-3xl">{titulo}</h1>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
             <span className="font-medium">
               {tx(
@@ -152,7 +187,7 @@ export default function Explorar() {
               {tx('Solo verificadas', 'Verified only')}
             </label>
             {activos > 0 && (
-              <button onClick={() => setParams(new URLSearchParams(), { replace: true })} className="enlace text-piedra">
+              <button onClick={() => navigate('/explorar', { replace: true })} className="enlace text-piedra">
                 {tx('Limpiar filtros', 'Clear filters')}
               </button>
             )}

@@ -7,6 +7,7 @@ import { Revelar } from '../componentes/base'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import { coincide } from '../busqueda'
 import { useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 const TANDA = 20
 
@@ -14,6 +15,7 @@ const TANDA = 20
 export default function Especialistas() {
   const { datos } = useCatalogo()
   const { tx, dinero, loc, ciudadDe, ciudad: nombreCiudad, pais: nombrePais, categoria: nombreCategoria } = useIdioma()
+  useSeo({ titulo: tx('Cirujanos plásticos en el mundo', 'Plastic surgeons worldwide'), descripcion: tx('Directorio de cirujanos plásticos por país, ciudad y especialidad: registro profesional, idiomas, clínicas y valoración virtual.', 'Directory of plastic surgeons by country, city and specialty: professional license, languages, clinics and virtual consultations.') })
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const ciudad = params.get('ciudad') ?? ''

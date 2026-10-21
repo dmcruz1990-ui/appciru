@@ -41,6 +41,8 @@ createRoot(document.getElementById('root')!).render(
               <Route element={<Layout />}>
                 <Route index element={<Inicio />} />
                 <Route path="explorar" element={<Explorar />} />
+                <Route path="cirugia/:proc" element={<Explorar />} />
+                <Route path="cirugia/:proc/:ciudad" element={<Explorar />} />
                 <Route path="especialistas" element={<Especialistas />} />
                 <Route path="alojamientos" element={<Alojamientos />} />
                 <Route path="alojamiento/:id" element={<AlojamientoPagina />} />

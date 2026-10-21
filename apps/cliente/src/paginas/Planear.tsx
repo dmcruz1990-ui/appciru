@@ -14,6 +14,7 @@ import { useCatalogo } from '../catalogo'
 import { Foto, Revelar } from '../componentes/base'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import { NotaMoneda, useIdioma } from '../idioma'
+import { useSeo } from '../seo'
 
 type Tx = ReturnType<typeof useIdioma>['tx']
 
@@ -35,6 +36,7 @@ export const horasTexto = (h: number, tx: Tx) => {
 export default function Planear() {
   const { datos } = useCatalogo()
   const { tx, dinero, loc, numero, pais, tipoAlojamiento, aCop, desdeCop, chipsPresupuesto, moneda, ciudad: nombreCiudad } = useIdioma()
+  useSeo({ titulo: tx('Planea tu cirugía por presupuesto', 'Plan your surgery by budget'), descripcion: tx('Calcula cirugía, alojamiento y servicios según tu presupuesto y compara opciones en varias ciudades.', 'Estimate surgery, stay and services within your budget and compare options across cities.') })
   const tiempos = useCarga(tiemposRespuesta)
   const [params, setParams] = useSearchParams()
 

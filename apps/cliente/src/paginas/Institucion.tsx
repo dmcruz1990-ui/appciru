@@ -12,6 +12,7 @@ import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import Mapa from '../componentes/Mapa'
 import NoEncontrado from '../componentes/NoEncontrado'
 import { NotaMoneda, useIdioma } from '../idioma'
+import { SITIO, useSeo } from '../seo'
 
 export default function InstitucionPagina() {
   const { id } = useParams()
@@ -26,6 +27,31 @@ export default function InstitucionPagina() {
   const [copiado, setCopiado] = useState(false)
   const { es, alternar } = useFavoritos()
   const { tx, dinero, precio, loc, locLista, tipoInstitucion, tipoAlojamiento, ciudadDe } = useIdioma()
+  const ciudadInst = datos?.ciudades.find((c) => c.id === inst?.ciudad_id)
+  const procsInst = [...new Set(opciones.map((d) => loc(d.procedimiento, 'nombre')))]
+  useSeo({
+    titulo: inst ? `${inst.nombre} · ${ciudadDe(inst.ciudad_id)}` : undefined,
+    descripcion: inst
+      ? tx(
+          `${inst.nombre}, ${tipoInstitucion(inst.tipo).toLowerCase()} de cirugía plástica en ${ciudadDe(inst.ciudad_id)}. ${procsInst.slice(0, 5).join(', ')}. Precios orientativos y solicitud de valoración.`,
+          `${inst.nombre}, plastic surgery ${tipoInstitucion(inst.tipo).toLowerCase()} in ${ciudadDe(inst.ciudad_id)}. ${procsInst.slice(0, 5).join(', ')}. Indicative prices and consultation requests.`,
+        )
+      : undefined,
+    // Los perfiles de demostración no se indexan en buscadores.
+    indexar: !inst?.es_demo,
+    jsonld: inst && {
+      '@context': 'https://schema.org',
+      '@type': 'MedicalClinic',
+      name: inst.nombre,
+      url: `${SITIO}/institucion/${inst.id}`,
+      medicalSpecialty: 'PlasticSurgery',
+      ...(inst.imagen_url && { image: inst.imagen_url }),
+      ...(inst.telefono_publico && { telephone: inst.telefono_publico }),
+      address: { '@type': 'PostalAddress', addressLocality: ciudadInst?.nombre, addressRegion: ciudadInst?.departamento, addressCountry: ciudadInst?.pais, ...(inst.direccion && { streetAddress: inst.direccion }) },
+      ...(inst.lat != null && inst.lng != null && { geo: { '@type': 'GeoCoordinates', latitude: inst.lat, longitude: inst.lng } }),
+      availableService: procsInst.map((n) => ({ '@type': 'MedicalProcedure', name: n })),
+    },
+  })
 
   if (!datos || !inst) return <NoEncontrado texto={tx('Esta institución no está disponible.', 'This clinic is not available.')} />
 
