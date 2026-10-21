@@ -1,4 +1,4 @@
-import { detallarOfertas, type Procedimiento } from '@plastinex/shared'
+import { destinos, detallarOfertas, type Procedimiento } from '@plastinex/shared'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
@@ -61,9 +61,12 @@ const verificaciones: [Texto, Texto][] = [
   ],
 ]
 
+const INSIGNIA = ['medellin', 'miami', 'ciudad-de-mexico', 'madrid', 'estambul', 'seul', 'sao-paulo', 'dubai']
+const rango = (id: string) => (INSIGNIA.includes(id) ? INSIGNIA.indexOf(id) : INSIGNIA.length)
+
 export default function Inicio() {
   const { datos } = useCatalogo()
-  const { tx, dinero, loc } = useIdioma()
+  const { tx, dinero, loc, pais, ciudad: nombreCiudad } = useIdioma()
   const heroRef = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const escala = useTransform(scrollYProgress, [0, 1], [1, 1.12])
@@ -80,9 +83,14 @@ export default function Inicio() {
     )
 
 
-  const porCiudad = datos.ciudades
+  // Filas de la portada: los destinos insignia primero y una sola ciudad por país.
+  const vistos = new Set<string>()
+  const porCiudad = [...datos.ciudades]
+    .sort((a, b) => rango(a.id) - rango(b.id) || a.orden - b.orden)
     .map((ciudad) => ({ ciudad, lista: destacadas.filter((d) => d.ciudad.id === ciudad.id) }))
-    .filter((x) => x.lista.length > 0)
+    .filter((x) => x.lista.length > 0 && !vistos.has(x.ciudad.pais) && vistos.add(x.ciudad.pais))
+    .slice(0, 6)
+  const mundo = destinos(datos).filter((d) => d.opciones > 0)
 
   const desde = (p: Procedimiento) => {
     const precios = ofertas.filter((o) => o.procedimiento.id === p.id && o.oferta.precio_min != null).map((o) => o.oferta.precio_min!)
@@ -184,7 +192,7 @@ export default function Inicio() {
           </EnlaceFlecha>
         </div>
         {porCiudad.map(({ ciudad, lista }) => (
-          <FilaCiudad key={ciudad.id} titulo={tx(`En ${ciudad.nombre}`, `In ${ciudad.nombre}`)} to={`/explorar?ciudad=${ciudad.id}`}>
+          <FilaCiudad key={ciudad.id} titulo={tx(`En ${ciudad.nombre}`, `In ${nombreCiudad(ciudad)}`)} to={`/explorar?ciudad=${ciudad.id}`}>
             {lista.map((d) => (
               <div key={d.oferta.id} className="w-[78vw] max-w-[320px] shrink-0 snap-start sm:w-[300px]">
                 <OfertaCard d={d} />
@@ -192,6 +200,25 @@ export default function Inicio() {
             ))}
           </FilaCiudad>
         ))}
+
+        {/* Todos los países, como el índice de destinos de un comparador de viajes. */}
+        <div className="contenedor mt-24">
+          <div className="rotulo">{tx(`${mundo.length} países`, `${mundo.length} countries`)}</div>
+          <h3 className="display mt-4 text-3xl md:text-4xl">{tx('Destinos en todo el mundo', 'Destinations worldwide')}</h3>
+          <ul className="mt-10 grid gap-x-8 border-t border-linea sm:grid-cols-2 lg:grid-cols-4">
+            {mundo.map((d) => (
+              <li key={d.pais} className="border-b border-linea">
+                <Link to={`/explorar?pais=${d.pais}`} className="group flex items-baseline justify-between gap-4 py-4">
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-medium tracking-[0.16em] uppercase group-hover:underline group-hover:underline-offset-4">{pais(d.pais)}</span>
+                    <span className="mt-1 block truncate text-xs text-piedra">{d.ciudades.filter((c) => c.opciones > 0).map((c) => nombreCiudad(c.ciudad)).join(' · ')}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-piedra">{d.opciones}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       {/* Proceso */}

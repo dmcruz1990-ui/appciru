@@ -34,7 +34,7 @@ export const horasTexto = (h: number, tx: Tx) => {
 /** Buscador tipo Booking: la persona dice cuánto quiere invertir y ve los planes completos que le alcanzan. */
 export default function Planear() {
   const { datos } = useCatalogo()
-  const { tx, dinero, loc, numero, pais, tipoAlojamiento, aCop, desdeCop, chipsPresupuesto, moneda } = useIdioma()
+  const { tx, dinero, loc, numero, pais, tipoAlojamiento, aCop, desdeCop, chipsPresupuesto, moneda, ciudad: nombreCiudad } = useIdioma()
   const tiempos = useCarga(tiemposRespuesta)
   const [params, setParams] = useSearchParams()
 
@@ -108,7 +108,7 @@ export default function Planear() {
                         .filter((x) => x.opciones > 0)
                         .map(({ ciudad: c }) => (
                           <option key={c.id} value={c.id}>
-                            {c.nombre}
+                            {nombreCiudad(c)}
                           </option>
                         ))}
                     </optgroup>
@@ -246,7 +246,7 @@ export default function Planear() {
 
 function FilaPlan({ plan, presupuesto, tiempo }: { plan: PlanEstimado; presupuesto?: number; tiempo?: number }) {
   const { d, alojamiento, noches, desde, hasta, encaje } = plan
-  const { tx, dinero, loc, tipoAlojamiento } = useIdioma()
+  const { tx, dinero, loc, tipoAlojamiento, ciudad } = useIdioma()
   const nombre = loc(d.procedimiento, 'nombre')
   const e = encajes[encaje]
   const q = new URLSearchParams({ oferta: d.oferta.id })
@@ -262,7 +262,7 @@ function FilaPlan({ plan, presupuesto, tiempo }: { plan: PlanEstimado; presupues
       </Link>
       <div className="p-7">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rotulo !text-[10px]">{d.ciudad.nombre}</span>
+          <span className="rotulo !text-[10px]">{ciudad(d.ciudad)}</span>
           {d.institucion.es_demo && <EtiquetaDemo />}
         </div>
         <h3 className="mt-3 font-serif text-3xl leading-tight">{nombre}</h3>

@@ -1,4 +1,4 @@
-import { detallarOfertas, iniciales, nombreCiudad } from '@plastinex/shared'
+import { detallarOfertas, iniciales } from '@plastinex/shared'
 import { CalendarDays, Check, Share2, ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -25,7 +25,7 @@ export default function InstitucionPagina() {
   const [alojamientoId, setAlojamientoId] = useState('')
   const [copiado, setCopiado] = useState(false)
   const { es, alternar } = useFavoritos()
-  const { tx, dinero, precio, loc, locLista, tipoInstitucion, tipoAlojamiento } = useIdioma()
+  const { tx, dinero, precio, loc, locLista, tipoInstitucion, tipoAlojamiento, ciudadDe } = useIdioma()
 
   if (!datos || !inst) return <NoEncontrado texto={tx('Esta institución no está disponible.', 'This clinic is not available.')} />
 
@@ -33,7 +33,7 @@ export default function InstitucionPagina() {
   const profesionales = datos.profesionales.filter((p) => profIds.includes(p.id) && p.publicado)
   const alojamientos = datos.alojamientos.filter((a) => a.ciudad_id === inst.ciudad_id && a.publicado)
   const fotos = [inst.imagen_url, ...(inst.galeria ?? [])].filter((x): x is string => !!x)
-  const ciudad = nombreCiudad(datos, inst.ciudad_id)
+  const ciudad = ciudadDe(inst.ciudad_id)
   const servicios = locLista(inst, 'servicios')
 
   const elegida = opciones.find((d) => d.oferta.id === ofertaId) ?? opciones[0]

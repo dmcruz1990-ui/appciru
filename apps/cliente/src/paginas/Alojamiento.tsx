@@ -1,4 +1,3 @@
-import { nombreCiudad } from '@plastinex/shared'
 import { Check, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -20,11 +19,11 @@ export default function AlojamientoPagina() {
   const [llegada, setLlegada] = useState(params.get('llegada') ?? '')
   const [salida, setSalida] = useState(params.get('salida') ?? '')
   const { es, alternar } = useFavoritos()
-  const { tx, dinero, loc, tipoAlojamiento } = useIdioma()
+  const { tx, dinero, loc, tipoAlojamiento, ciudadDe } = useIdioma()
   const a = datos?.alojamientos.find((x) => x.id === id)
   if (!datos || !a) return <NoEncontrado texto={tx('Este alojamiento no está disponible.', 'This stay is not available.')} />
 
-  const ciudad = nombreCiudad(datos, a.ciudad_id)
+  const ciudad = ciudadDe(a.ciudad_id)
   const noches = nochesEntre(llegada, salida)
   const total = a.precio_noche_desde && noches ? a.precio_noche_desde * noches : 0
   const clinicas = datos.instituciones.filter((i) => i.ciudad_id === a.ciudad_id && i.publicado)

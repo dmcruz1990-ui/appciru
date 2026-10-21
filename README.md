@@ -55,15 +55,25 @@ En Supabase → Authentication → URL Configuration → **Redirect URLs** deben
 confirmación de correo ni los de recuperación de contraseña.
 
 ### Experiencia tipo marketplace
-- **Buscador en píldora** (procedimiento · dónde · fechas del viaje · presupuesto) con paneles desplegables; en celular
+- **Buscador en píldora** (qué · dónde · fechas del viaje · presupuesto) con paneles desplegables; en celular
   empieza plegado. La búsqueda queda en la URL, así se puede compartir.
-- **Explorar** con lista y **mapa con precios** (Leaflet + teselas de CARTO/OpenStreetMap). Al pasar por una tarjeta se
+- **«Qué buscas» tipo comparador**: un solo campo encuentra procedimientos, cirujanos y clínicas mientras se escribe
+  (cirujano → su perfil, clínica → su ficha, procedimiento → filtro). «Ver todos los resultados» filtra Explorar con `q`.
+- **Cobertura mundial**: 35 países y 62 ciudades. El panel «Dónde» solo muestra destinos con opciones publicadas (no hay
+  «próximamente»). La portada lista todos los países y, con un procedimiento elegido, Explorar **compara el precio desde
+  por país**. Explorar y Especialistas cargan por tandas («Mostrar más»).
+- **Perfiles de demostración**: la migración `20261021120000_px_cobertura_mundial_demo.sql` crea una clínica, un cirujano,
+  siete ofertas y un hotel por ciudad, todos con `es_demo = true`, etiqueta «Perfil demo», verificación pendiente y sin
+  registro ni sociedad. Los precios son rangos orientativos por país. **Deben reemplazarse por prestadores reales
+  verificados** antes de recibir pacientes.
+- **Explorar** con lista y **mapa con precios** (Leaflet + teselas de CARTO/OpenStreetMap); los marcadores cercanos se agrupan y al tocarlos el mapa se acerca. Al pasar por una tarjeta se
   resalta su marcador; «Buscar al mover el mapa» filtra por la zona visible. En celular, botón «Mostrar mapa».
 - **Tarjetas con carrusel de fotos** y **favoritos** (corazón). Los favoritos viven solo en el navegador del visitante.
 - **Ficha de clínica** con galería y visor de fotos, servicios, especialistas, ubicación, alojamiento cercano y una
   **tarjeta de reserva** fija: procedimiento, fechas de llegada y salida, alojamiento y total estimado.
 - **Alojamiento** (`/alojamientos`, `/alojamiento/:id`) con mapa de precios por noche y cálculo por fechas.
-- **Directorio de especialistas** (`/especialistas`) con filtros por ciudad, procedimiento, idioma y valoración virtual.
+- **Directorio de especialistas** (`/especialistas`) con filtros por país, ciudad, especialidad, procedimiento, idioma y
+  valoración virtual.
 - En el panel, cada institución y alojamiento tiene **galería** (hasta 20 fotos) y **coordenadas** para el mapa.
 
 ### Idiomas y moneda

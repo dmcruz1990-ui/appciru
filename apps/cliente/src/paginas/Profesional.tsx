@@ -1,4 +1,4 @@
-import { detallarOfertas, iniciales, nombreCiudad } from '@plastinex/shared'
+import { detallarOfertas, iniciales } from '@plastinex/shared'
 import { Link, useParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { Foto, Revelar, Rotulo } from '../componentes/base'
@@ -10,14 +10,14 @@ import { useIdioma } from '../idioma'
 export default function ProfesionalPagina() {
   const { id } = useParams()
   const { datos } = useCatalogo()
-  const { tx, loc } = useIdioma()
+  const { tx, loc, lengua, ciudadDe } = useIdioma()
   const prof = datos?.profesionales.find((p) => p.id === id)
   if (!datos || !prof) return <NoEncontrado texto={tx('Este perfil no está disponible.', 'This profile is not available.')} />
 
   const opciones = detallarOfertas(datos).filter((d) => d.profesional?.id === prof.id)
   const instIds = datos.vinculos.filter((v) => v.profesional_id === prof.id).map((v) => v.institucion_id)
   const instituciones = datos.instituciones.filter((i) => instIds.includes(i.id))
-  const idiomas = prof.idiomas.map((i) => (i === 'Español' ? tx(i, 'Spanish') : i === 'Inglés' ? tx(i, 'English') : i))
+  const idiomas = prof.idiomas.map(lengua)
 
   return (
     <>
@@ -34,7 +34,7 @@ export default function ProfesionalPagina() {
         <div className="flex flex-col">
           <div className="flex items-center gap-3">
             <span className="rotulo">
-              {tx('Perfil profesional', 'Professional profile')} · {nombreCiudad(datos, prof.ciudad_id)}
+              {tx('Perfil profesional', 'Professional profile')} · {ciudadDe(prof.ciudad_id)}
             </span>
             {prof.es_demo && <EtiquetaDemo />}
           </div>

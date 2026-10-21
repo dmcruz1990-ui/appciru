@@ -20,6 +20,8 @@ export type EstadoSuscripcion = 'prueba' | 'activa' | 'pausada' | 'cancelada'
 export interface Ciudad {
   id: string
   nombre: string
+  /** Nombre en inglés cuando difiere (Nueva York → New York). */
+  nombre_en?: string | null
   /** Estado, provincia o departamento, según el país. */
   departamento: string
   /** Código ISO 3166-1 alfa-2 (CO, US, MX…). */

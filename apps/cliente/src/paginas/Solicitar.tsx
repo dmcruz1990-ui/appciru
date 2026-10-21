@@ -1,4 +1,4 @@
-import { crearSolicitud, detallarOfertas } from '@plastinex/shared'
+import { crearSolicitud, destinos, detallarOfertas } from '@plastinex/shared'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
@@ -11,7 +11,7 @@ import { leerUTM } from '../utm'
 export default function Solicitar() {
   const { datos } = useCatalogo()
   const { sesion, paciente, listo, cargando } = useSesion()
-  const { tx, dinero, precio, loc, tipoAlojamiento, aCop, desdeCop, locale, moneda } = useIdioma()
+  const { tx, dinero, precio, loc, tipoAlojamiento, aCop, desdeCop, locale, moneda, ciudad, pais } = useIdioma()
   const [params] = useSearchParams()
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
@@ -105,7 +105,7 @@ export default function Solicitar() {
                 <div>
                   <div className="font-serif text-4xl">{loc(oferta.procedimiento, 'nombre')}</div>
                   <div className="mt-1 text-piedra">
-                    {oferta.institucion.nombre} · {oferta.ciudad.nombre}
+                    {oferta.institucion.nombre} · {ciudad(oferta.ciudad)}
                     {oferta.profesional && ` · ${oferta.profesional.nombre}`}
                   </div>
                   <div className="mt-3">
@@ -149,10 +149,14 @@ export default function Solicitar() {
                   <span className="etiqueta">{tx('Ciudad preferida', 'Preferred city')}</span>
                   <select value={ciudadId} onChange={(e) => setCiudadId(e.target.value)} className="campo">
                     <option value="">{tx('Sin preferencia', 'No preference')}</option>
-                    {datos.ciudades.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nombre}
-                      </option>
+                    {destinos(datos).map((d) => (
+                      <optgroup key={d.pais} label={pais(d.pais)}>
+                        {d.ciudades.map(({ ciudad: c }) => (
+                          <option key={c.id} value={c.id}>
+                            {ciudad(c)}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </label>

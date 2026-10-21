@@ -18,7 +18,7 @@ const iconoTipo: Record<TipoAlojamiento, ReactNode> = {
 /** Alojamiento de recuperación cerca de las clínicas, con precio por noche en el mapa. */
 export default function Alojamientos() {
   const { datos } = useCatalogo()
-  const { tx, dinero, corto, loc, tipoAlojamiento, pais } = useIdioma()
+  const { tx, dinero, corto, loc, tipoAlojamiento, pais, ciudadDe, ciudad: nombreCiudad } = useIdioma()
   const [params, setParams] = useSearchParams()
   const [resaltado, setResaltado] = useState<string | null>(null)
   const [seleccionado, setSeleccionado] = useState<string | null>(null)
@@ -42,7 +42,7 @@ export default function Alojamientos() {
     [datos, ciudad, tipo, enfermeria],
   )
   const puntos = useMemo(
-    () => lista.filter((a) => a.lat != null && a.lng != null).map((a) => ({ id: a.id, lat: a.lat!, lng: a.lng!, etiqueta: corto(a.precio_noche_desde) })),
+    () => lista.filter((a) => a.lat != null && a.lng != null).map((a) => ({ id: a.id, lat: a.lat!, lng: a.lng!, etiqueta: corto(a.precio_noche_desde), desde: a.precio_noche_desde })),
     [lista, corto],
   )
   if (!datos) return null
@@ -96,7 +96,7 @@ export default function Alojamientos() {
                   <optgroup key={d.pais} label={pais(d.pais)}>
                     {conAloj.map(({ ciudad: c }) => (
                       <option key={c.id} value={c.id}>
-                        {c.nombre}
+                        {nombreCiudad(c)}
                       </option>
                     ))}
                   </optgroup>
@@ -120,7 +120,7 @@ export default function Alojamientos() {
                   )}
                 </Carrusel>
                 <div className="mt-4 rotulo !text-[10px]">
-                  {tipoAlojamiento(a.tipo)} · {datos.ciudades.find((c) => c.id === a.ciudad_id)?.nombre}
+                  {tipoAlojamiento(a.tipo)} · {ciudadDe(a.ciudad_id)}
                 </div>
                 <div className="mt-2 text-[15px] font-medium tracking-[0.12em] uppercase">{a.nombre}</div>
                 <div className="mt-1.5 text-[13px] text-piedra">

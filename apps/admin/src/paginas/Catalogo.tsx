@@ -226,6 +226,7 @@ const colecciones: Coleccion[] = [
     campos: [
       { k: 'id', t: 'Identificador', tipo: 'texto', requerido: true },
       { k: 'nombre', t: 'Nombre', tipo: 'texto', requerido: true },
+      { k: 'nombre_en', t: 'Nombre en inglés', tipo: 'texto', ayuda: 'Solo si cambia: New York, Mexico City…' },
       { k: 'pais', t: 'País', tipo: 'select', requerido: true, opciones: () => Object.entries(PAISES).map(([v, t]) => ({ v, t })) },
       { k: 'departamento', t: 'Estado / departamento', tipo: 'texto', requerido: true },
       { k: 'orden', t: 'Orden', tipo: 'numero' },

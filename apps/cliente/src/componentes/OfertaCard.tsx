@@ -23,7 +23,7 @@ export default function OfertaCard({
   /** Avisa al mapa qué tarjeta tiene el cursor encima. */
   onResaltar?: (id: string | null) => void
 }) {
-  const { tx, precio, loc, categoria } = useIdioma()
+  const { tx, precio, loc, categoria, ciudad: nombreCiudad } = useIdioma()
   const { oferta, procedimiento, institucion, profesional, ciudad } = d
   const nombre = loc(procedimiento, 'nombre')
   const ficha = `/institucion/${institucion.id}?oferta=${oferta.id}${consulta ? `&${consulta}` : ''}`
@@ -42,7 +42,7 @@ export default function OfertaCard({
       <div className="mt-4 min-w-0">
         <div className="rotulo !text-[10px]">
           {indice != null && <span className="mr-2 text-arcilla">{String(indice + 1).padStart(2, '0')}</span>}
-          {categoria(procedimiento.categoria)} · {ciudad.nombre}
+          {categoria(procedimiento.categoria)} · {nombreCiudad(ciudad)}
         </div>
         <h3 className="mt-2 text-[15px] leading-snug font-medium tracking-[0.12em] uppercase">
           <Link to={ficha} className="underline-offset-4 hover:underline">

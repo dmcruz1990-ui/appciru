@@ -55,18 +55,60 @@ const EN = {
   pais: {
     CO: 'Colombia',
     US: 'United States',
+    CA: 'Canada',
     MX: 'Mexico',
     DO: 'Dominican Republic',
+    GT: 'Guatemala',
     CR: 'Costa Rica',
     PA: 'Panama',
     PE: 'Peru',
+    EC: 'Ecuador',
     BR: 'Brazil',
     AR: 'Argentina',
+    CL: 'Chile',
+    UY: 'Uruguay',
     ES: 'Spain',
+    GB: 'United Kingdom',
+    FR: 'France',
+    DE: 'Germany',
+    IT: 'Italy',
+    PT: 'Portugal',
+    CH: 'Switzerland',
+    PL: 'Poland',
+    CZ: 'Czech Republic',
+    HU: 'Hungary',
+    GR: 'Greece',
     TR: 'Turkey',
     AE: 'United Arab Emirates',
-    KR: 'South Korea',
+    IN: 'India',
     TH: 'Thailand',
+    MY: 'Malaysia',
+    SG: 'Singapore',
+    KR: 'South Korea',
+    JP: 'Japan',
+    AU: 'Australia',
+    ZA: 'South Africa',
+  } as Record<string, string>,
+  lengua: {
+    Español: 'Spanish',
+    Inglés: 'English',
+    Francés: 'French',
+    Portugués: 'Portuguese',
+    Alemán: 'German',
+    Italiano: 'Italian',
+    Polaco: 'Polish',
+    Checo: 'Czech',
+    Húngaro: 'Hungarian',
+    Griego: 'Greek',
+    Turco: 'Turkish',
+    Árabe: 'Arabic',
+    Hindi: 'Hindi',
+    Tailandés: 'Thai',
+    Malayo: 'Malay',
+    Chino: 'Chinese',
+    Coreano: 'Korean',
+    Japonés: 'Japanese',
+    Afrikáans: 'Afrikaans',
   } as Record<string, string>,
 }
 
@@ -129,6 +171,10 @@ function crear(idioma: Idioma, moneda: Moneda, tasa: number) {
     verificacion: (v: Verificacion) => tx(infoVerificacion(v).publico, EN.verificacion[v]),
     etapa: (e: Etapa) => tx(etapas.find((x) => x.id === e)?.paciente ?? e, EN.etapa[e]),
     pais: (codigo: string | null | undefined) => (idioma === 'en' && codigo && EN.pais[codigo] ? EN.pais[codigo] : nombrePais(codigo)),
+    /** Nombre de una ciudad en el idioma actual (Nueva York / New York). */
+    ciudad: (c: { nombre: string; nombre_en?: string | null } | null | undefined) => (c ? (idioma === 'en' && c.nombre_en ? c.nombre_en : c.nombre) : ''),
+    /** Idioma que habla un profesional (se guarda en español). */
+    lengua: (l: string) => (idioma === 'en' ? (EN.lengua[l] ?? l) : l),
     /** Presupuesto: de la moneda que ve la persona a pesos (para filtrar) y al revés (para mostrar el campo). */
     aCop: (valor: number) => (enUsd ? Math.round(valor * tasa) : valor),
     desdeCop: (cop: number) => (enUsd ? Math.round(cop / tasa) : cop),
@@ -139,7 +185,7 @@ function crear(idioma: Idioma, moneda: Moneda, tasa: number) {
   }
 }
 
-type Valor = ReturnType<typeof crear> & { setIdioma: (i: Idioma) => void; setMoneda: (m: Moneda) => void }
+type Valor = ReturnType<typeof crear> & { ciudadDe: (id: string | null | undefined) => string; setIdioma: (i: Idioma) => void; setMoneda: (m: Moneda) => void }
 const Ctx = createContext<Valor | null>(null)
 
 export function IdiomaProvider({ children }: { children: ReactNode }) {
@@ -154,7 +200,12 @@ export function IdiomaProvider({ children }: { children: ReactNode }) {
 
   const setIdioma = useCallback((i: Idioma) => (setIdiomaEstado(i), guardar('px-idioma', i)), [])
   const setMoneda = useCallback((m: Moneda) => (setMonedaEstado(m), guardar('px-moneda', m)), [])
-  const valor = useMemo(() => ({ ...crear(idioma, moneda, tasa), setIdioma, setMoneda }), [idioma, moneda, tasa, setIdioma, setMoneda])
+  const valor = useMemo(() => {
+    const base = crear(idioma, moneda, tasa)
+    /** Nombre de la ciudad por su id, en el idioma actual. */
+    const ciudadDe = (id: string | null | undefined) => base.ciudad(datos?.ciudades.find((c) => c.id === id)) || '—'
+    return { ...base, ciudadDe, setIdioma, setMoneda }
+  }, [idioma, moneda, tasa, datos, setIdioma, setMoneda])
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>
 }
 

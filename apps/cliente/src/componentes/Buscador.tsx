@@ -1,8 +1,9 @@
 import { destinos, type Categoria } from '@plastinex/shared'
-import { Gem, Globe, ScanFace, Search, Waves, type LucideIcon } from 'lucide-react'
+import { Building2, Gem, Globe, ScanFace, Search, Stethoscope, Waves, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import { coincide, sinTildes } from '../busqueda'
 import { useIdioma } from '../idioma'
 
 export const iconoCategoria: Record<Categoria, LucideIcon> = { mamaria: Gem, corporal: Waves, facial: ScanFace }
@@ -14,12 +15,12 @@ const iso = (d: Date) => d.toISOString().slice(0, 10)
 export const nochesEntre = (a: string, b: string) => (a && b ? Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / DIA)) : 0)
 
 /**
- * Buscador en píldora con paneles desplegables: procedimiento, ciudad, fechas del viaje y presupuesto.
+ * Buscador en píldora con paneles desplegables: qué (procedimiento, cirujano o clínica), dónde, fechas y presupuesto.
  * Lleva a /explorar con los filtros en la URL, así la búsqueda se puede compartir.
  */
 export default function Buscador({ className = '', destino = '/explorar', arriba = false }: { className?: string; destino?: string; /** Abre los paneles hacia arriba (portada). */ arriba?: boolean }) {
   const { datos } = useCatalogo()
-  const { tx, dinero, loc, categoria, fecha, numero, pais: nombrePais, desdeCop, aCop, chipsPresupuesto, moneda } = useIdioma()
+  const { tx, dinero, loc, categoria, fecha, numero, pais: nombrePais, ciudad: nombreCiudad, ciudadDe, desdeCop, aCop, chipsPresupuesto, moneda } = useIdioma()
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const raiz = useRef<HTMLFormElement>(null)
@@ -27,6 +28,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   // En celular el buscador empieza plegado en una píldora, como en las apps de reservas.
   const [desplegado, setDesplegado] = useState(false)
   const [proc, setProc] = useState(params.get('procedimiento') ?? '')
+  const [texto, setTexto] = useState(params.get('q') ?? '')
   const [ciudad, setCiudad] = useState(params.get('ciudad') ?? '')
   const [pais, setPais] = useState(params.get('pais') ?? '')
   const [filtroLugar, setFiltroLugar] = useState('')
@@ -52,8 +54,8 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
   const c = datos.ciudades.find((x) => x.id === ciudad)
   const noches = nochesEntre(llegada, salida)
   const corta = (s: string) => (s ? fecha(s, { day: 'numeric', month: 'short' }) : '')
-  const textoProc = p ? loc(p, 'nombre') : null
-  const textoLugar = c ? `${c.nombre}, ${nombrePais(c.pais)}` : pais ? nombrePais(pais) : tx('Todo el mundo', 'Anywhere')
+  const textoProc = p ? loc(p, 'nombre') : texto.trim() ? `«${texto.trim()}»` : null
+  const textoLugar = c ? `${nombreCiudad(c)}, ${nombrePais(c.pais)}` : pais ? nombrePais(pais) : tx('Todo el mundo', 'Anywhere')
   const textoFechas = llegada ? `${corta(llegada)}${salida && noches ? ` – ${corta(salida)}` : ''}` : null
   const elegirLugar = (nuevoPais: string, nuevaCiudad: string) => {
     setPais(nuevoPais)
@@ -61,17 +63,37 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
     setFiltroLugar('')
     setPanel('fechas')
   }
-  const sinTildes = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   const q = sinTildes(filtroLugar.trim())
+  // Solo destinos con opciones publicadas: nada de «próximamente».
   const visibles = lugares
-    .map((d) => ({ ...d, ciudades: q && !sinTildes(`${d.nombre} ${nombrePais(d.pais)}`).includes(q) ? d.ciudades.filter((x) => sinTildes(x.ciudad.nombre).includes(q)) : d.ciudades }))
+    .map((d) => ({ ...d, ciudades: d.ciudades.filter((x) => x.opciones > 0) }))
+    .map((d) => ({
+      ...d,
+      ciudades: q && !coincide(q, d.nombre, nombrePais(d.pais)) ? d.ciudades.filter((x) => coincide(q, x.ciudad.nombre, x.ciudad.nombre_en, x.ciudad.departamento)) : d.ciudades,
+    }))
     .filter((d) => d.ciudades.length > 0)
+
+  // Sugerencias del campo «qué»: procedimientos, cirujanos y clínicas que contienen lo escrito.
+  const t = texto.trim()
+  const enPais = (ciudadId: string) => (!ciudad || ciudadId === ciudad) && (!pais || datos.ciudades.find((x) => x.id === ciudadId)?.pais === pais)
+  const sugProc = t ? datos.procedimientos.filter((x) => coincide(t, x.nombre, x.nombre_en, categoria(x.categoria))).slice(0, 5) : []
+  const sugProf = t
+    ? datos.profesionales.filter((x) => x.publicado && coincide(t, x.nombre, x.especialidad, x.especialidad_en, ciudadDe(x.ciudad_id))).sort((a, b) => Number(enPais(b.ciudad_id)) - Number(enPais(a.ciudad_id))).slice(0, 5)
+    : []
+  const sugInst = t
+    ? datos.instituciones.filter((x) => x.publicado && coincide(t, x.nombre, ciudadDe(x.ciudad_id))).sort((a, b) => Number(enPais(b.ciudad_id)) - Number(enPais(a.ciudad_id))).slice(0, 5)
+    : []
+  const lugarDe = (ciudadId: string) => {
+    const x = datos.ciudades.find((y) => y.id === ciudadId)
+    return x ? `${nombreCiudad(x)}, ${nombrePais(x.pais)}` : ''
+  }
   const minLlegada = iso(new Date(Date.now() + 7 * DIA))
 
   const enviar = (e?: FormEvent) => {
     e?.preventDefault()
     const q = new URLSearchParams()
     if (proc) q.set('procedimiento', proc)
+    else if (texto.trim()) q.set('q', texto.trim())
     if (ciudad) q.set('ciudad', ciudad)
     else if (pais) q.set('pais', pais)
     if (llegada) q.set('llegada', llegada)
@@ -93,7 +115,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
         >
           <Search size={18} strokeWidth={1.6} className="shrink-0" />
           <span className="min-w-0">
-            <span className="block truncate text-[14px] font-medium">{textoProc ?? tx('¿Qué procedimiento buscas?', 'Which procedure are you looking for?')}</span>
+            <span className="block truncate text-[14px] font-medium">{textoProc ?? tx('Cirugía, cirujano o clínica', 'Surgery, surgeon or clinic')}</span>
             <span className="block truncate text-xs text-piedra">
               {[textoLugar, textoFechas ?? tx('Fechas flexibles', 'Flexible dates'), presu ? dinero(Number(presu)) : tx('Sin presupuesto', 'Any budget')].join(' · ')}
             </span>
@@ -101,7 +123,7 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
         </button>
       )}
       <div className={`${desplegado ? 'flex' : 'hidden md:flex'} flex-col border border-linea bg-marfil shadow-[0_10px_40px_rgba(0,0,0,0.12)] md:flex-row md:items-stretch`}>
-        <Segmento t={tx('Procedimiento', 'Procedure')} v={textoProc ?? tx('Todos', 'All')} activo={panel === 'proc'} onClick={() => alternar('proc')} ancho />
+        <Segmento t={tx('Qué buscas', 'What')} v={textoProc ?? tx('Cirugía, cirujano o clínica', 'Surgery, surgeon or clinic')} tenue={!textoProc} activo={panel === 'proc'} onClick={() => alternar('proc')} ancho />
         <Segmento t={tx('Dónde', 'Where')} v={textoLugar} activo={panel === 'ciudad'} onClick={() => alternar('ciudad')} />
         <Segmento
           t={tx('Fechas del viaje', 'Travel dates')}
@@ -119,33 +141,74 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
       {panel && (
         <div data-lenis-prevent className={`z-40 mt-2 max-h-[70vh] overflow-y-auto border border-linea bg-marfil p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] md:absolute md:inset-x-0 md:p-8 ${arriba ? 'md:bottom-full md:mb-3 md:max-h-[min(60vh,520px)]' : 'md:top-full md:mt-3'}`}>
           {panel === 'proc' && (
-            <div className="grid gap-8 md:grid-cols-3">
-              {(Object.keys(iconoCategoria) as Categoria[]).map((cat) => {
-                const I = iconoCategoria[cat]
-                return (
-                  <div key={cat}>
-                    <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] text-piedra uppercase">
-                      <I size={15} strokeWidth={1.5} /> {categoria(cat)}
-                    </div>
-                    <ul className="mt-3">
+            <div>
+              <label className="flex items-center gap-3 border-b border-espresso pb-2">
+                <Search size={16} strokeWidth={1.6} className="text-piedra" />
+                <input
+                  autoFocus
+                  value={texto}
+                  onChange={(e) => (setTexto(e.target.value), e.target.value && setProc(''))}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), enviar())}
+                  placeholder={tx('Rinoplastia, Dra. …, Clínica …', 'Rhinoplasty, Dr. …, Clinic …')}
+                  aria-label={tx('Buscar procedimiento, cirujano o clínica', 'Search procedure, surgeon or clinic')}
+                  className="w-full bg-transparent py-1 text-[16px] outline-none placeholder:text-niebla"
+                />
+              </label>
+
+              {t ? (
+                <div className="mt-4 grid gap-8 md:grid-cols-3">
+                  <Grupo icono={Gem} titulo={tx('Procedimientos', 'Procedures')} vacio={!sugProc.length}>
+                    {sugProc.map((x) => (
+                      <Opcion key={x.id} activo={proc === x.id} onClick={() => (setProc(x.id), setTexto(''), elegir('ciudad'))}>
+                        {loc(x, 'nombre')}
+                        <span className="block text-xs text-piedra">{categoria(x.categoria)}</span>
+                      </Opcion>
+                    ))}
+                  </Grupo>
+                  <Grupo icono={Stethoscope} titulo={tx('Cirujanos', 'Surgeons')} vacio={!sugProf.length}>
+                    {sugProf.map((x) => (
+                      <Opcion key={x.id} activo={false} onClick={() => (setPanel(null), navigate(`/profesional/${x.id}`))}>
+                        {x.nombre}
+                        <span className="block text-xs text-piedra">{lugarDe(x.ciudad_id)}</span>
+                      </Opcion>
+                    ))}
+                  </Grupo>
+                  <Grupo icono={Building2} titulo={tx('Clínicas', 'Clinics')} vacio={!sugInst.length}>
+                    {sugInst.map((x) => (
+                      <Opcion key={x.id} activo={false} onClick={() => (setPanel(null), navigate(`/institucion/${x.id}`))}>
+                        {x.nombre}
+                        <span className="block text-xs text-piedra">{lugarDe(x.ciudad_id)}</span>
+                      </Opcion>
+                    ))}
+                  </Grupo>
+                  <div className="md:col-span-3">
+                    <Opcion activo={false} onClick={() => enviar()}>
+                      <span className="flex items-center gap-2 !text-current">
+                        <Search size={15} strokeWidth={1.6} /> {tx(`Ver todos los resultados para «${t}»`, `See all results for “${t}”`)}
+                      </span>
+                    </Opcion>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 grid gap-8 md:grid-cols-3">
+                  {(Object.keys(iconoCategoria) as Categoria[]).map((cat) => (
+                    <Grupo key={cat} icono={iconoCategoria[cat]} titulo={categoria(cat)}>
                       {datos.procedimientos
                         .filter((x) => x.categoria === cat)
                         .map((x) => (
-                          <li key={x.id}>
-                            <Opcion activo={proc === x.id} onClick={() => (setProc(x.id), elegir('ciudad'))}>
-                              {loc(x, 'nombre')}
-                            </Opcion>
-                          </li>
+                          <Opcion key={x.id} activo={proc === x.id} onClick={() => (setProc(x.id), elegir('ciudad'))}>
+                            {loc(x, 'nombre')}
+                          </Opcion>
                         ))}
-                    </ul>
+                    </Grupo>
+                  ))}
+                  <div className="md:col-span-3">
+                    <Opcion activo={!proc} onClick={() => (setProc(''), elegir('ciudad'))}>
+                      {tx('Todos los procedimientos', 'All procedures')}
+                    </Opcion>
                   </div>
-                )
-              })}
-              <div className="md:col-span-3">
-                <Opcion activo={!proc} onClick={() => (setProc(''), elegir('ciudad'))}>
-                  {tx('Todos los procedimientos', 'All procedures')}
-                </Opcion>
-              </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -178,19 +241,17 @@ export default function Buscador({ className = '', destino = '/explorar', arriba
                       className={`flex w-full items-baseline justify-between gap-3 border-b px-3 pb-2 text-left transition ${pais === d.pais && !ciudad ? 'border-espresso' : 'border-linea hover:border-espresso'}`}
                     >
                       <span className="text-[11px] font-medium tracking-[0.2em] uppercase">{nombrePais(d.pais)}</span>
-                      <span className="text-[11px] text-piedra">{d.opciones
-                          ? tx(`${d.opciones} ${d.opciones === 1 ? 'opción' : 'opciones'}`, `${d.opciones} ${d.opciones === 1 ? 'option' : 'options'}`)
-                          : tx('Próximamente', 'Coming soon')}</span>
+                      <span className="text-[11px] text-piedra">
+                        {tx(`${d.opciones} ${d.opciones === 1 ? 'opción' : 'opciones'}`, `${d.opciones} ${d.opciones === 1 ? 'option' : 'options'}`)}
+                      </span>
                     </button>
                     <ul className="mt-1">
                       {d.ciudades.map(({ ciudad: x, opciones }) => (
                         <li key={x.id}>
                           <Opcion activo={ciudad === x.id} onClick={() => elegirLugar(d.pais, x.id)}>
                             <span className="flex items-baseline justify-between gap-3 !text-current">
-                              <span>{x.nombre}</span>
-                              <span className={`text-xs ${ciudad === x.id ? 'text-marfil/70' : opciones ? 'text-piedra' : 'text-niebla'}`}>
-                                {opciones ? opciones : tx('Próximamente', 'Coming soon')}
-                              </span>
+                              <span>{nombreCiudad(x)}</span>
+                              <span className={`text-xs ${ciudad === x.id ? 'text-marfil/70' : 'text-piedra'}`}>{opciones}</span>
                             </span>
                           </Opcion>
                         </li>
@@ -305,6 +366,18 @@ function Segmento({ t, v, activo, onClick, ancho = false, tenue = false }: { t: 
       <span className="block text-[10px] font-medium tracking-[0.2em] text-piedra uppercase">{t}</span>
       <span className={`mt-0.5 block truncate text-[14px] ${tenue ? 'text-niebla' : ''}`}>{v}</span>
     </button>
+  )
+}
+
+function Grupo({ icono: I, titulo, vacio = false, children }: { icono: LucideIcon; titulo: string; vacio?: boolean; children: ReactNode }) {
+  const { tx } = useIdioma()
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] text-piedra uppercase">
+        <I size={15} strokeWidth={1.5} /> {titulo}
+      </div>
+      <div className="mt-3">{vacio ? <p className="px-3 py-2.5 text-sm text-niebla">{tx('Sin coincidencias', 'No matches')}</p> : children}</div>
+    </div>
   )
 }
 

@@ -1,16 +1,20 @@
 import { detallarOfertas, type Categoria } from '@plastinex/shared'
-import { LayoutGrid, List, Map as IconoMapa } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { LayoutGrid, List, Map as IconoMapa, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import Buscador, { iconoCategoria } from '../componentes/Buscador'
 import Mapa, { type Limites } from '../componentes/Mapa'
 import OfertaCard from '../componentes/OfertaCard'
+import { coincide, textosOferta } from '../busqueda'
 import { useIdioma } from '../idioma'
+
+/** Tarjetas por tanda: con cientos de opciones en el mundo, la lista crece al pedir más. */
+const TANDA = 24
 
 export default function Explorar() {
   const { datos } = useCatalogo()
-  const { tx, dinero, corto, loc, locale, categoria: nombreCategoria } = useIdioma()
+  const { tx, dinero, corto, loc, locale, categoria: nombreCategoria, ciudadDe, pais: nombrePais } = useIdioma()
   const [params, setParams] = useSearchParams()
   const [resaltada, setResaltada] = useState<string | null>(null)
   const [seleccionada, setSeleccionada] = useState<string | null>(null)
@@ -18,6 +22,7 @@ export default function Explorar() {
   const [limites, setLimites] = useState<Limites | null>(null)
 
   const procedimiento = params.get('procedimiento') ?? ''
+  const texto = params.get('q') ?? ''
   const ciudad = params.get('ciudad') ?? ''
   const pais = params.get('pais') ?? ''
   const categoria = (params.get('categoria') ?? '') as Categoria | ''
@@ -45,6 +50,7 @@ export default function Explorar() {
     if (!datos) return []
     const l = detallarOfertas(datos).filter((d) => {
       if (procedimiento && d.procedimiento.id !== procedimiento) return false
+      if (texto && !coincide(texto, ...textosOferta(d, nombrePais))) return false
       if (categoria && d.procedimiento.categoria !== categoria) return false
       if (ciudad && d.ciudad.id !== ciudad) return false
       if (pais && d.ciudad.pais !== pais) return false
@@ -57,7 +63,7 @@ export default function Explorar() {
       if (orden === 'nombre') return loc(a.procedimiento, 'nombre').localeCompare(loc(b.procedimiento, 'nombre'), locale)
       return Number(b.institucion.verificacion === 'verificado') - Number(a.institucion.verificacion === 'verificado')
     })
-  }, [datos, procedimiento, categoria, ciudad, pais, presupuesto, verificadas, orden, loc, locale])
+  }, [datos, procedimiento, texto, categoria, ciudad, pais, presupuesto, verificadas, orden, loc, locale, nombrePais])
 
   // Un marcador por institución con el precio desde más bajo de sus opciones.
   const puntos = useMemo(() => {
@@ -73,6 +79,23 @@ export default function Explorar() {
     return [...porInst.values()].map((x) => ({ ...x, etiqueta: corto(x.desde) }))
   }, [filtradas, corto])
 
+  // Comparador al estilo de los buscadores de viaje: el mismo procedimiento, el precio desde en cada país.
+  const comparador = useMemo(() => {
+    if (!datos || !procedimiento || pais || ciudad) return []
+    const porPais = new Map<string, { pais: string; desde: number; n: number }>()
+    for (const d of detallarOfertas(datos)) {
+      if (d.procedimiento.id !== procedimiento || d.oferta.precio_min == null) continue
+      const x = porPais.get(d.ciudad.pais) ?? { pais: d.ciudad.pais, desde: Infinity, n: 0 }
+      x.desde = Math.min(x.desde, d.oferta.precio_min)
+      x.n++
+      porPais.set(d.ciudad.pais, x)
+    }
+    return [...porPais.values()].sort((a, b) => a.desde - b.desde)
+  }, [datos, procedimiento, pais, ciudad])
+
+  const [cuantas, setCuantas] = useState(TANDA)
+  useEffect(() => setCuantas(TANDA), [params])
+
   if (!datos) return null
 
   const dentroDelMapa = (instId: string) => {
@@ -84,7 +107,7 @@ export default function Explorar() {
   const lista = filtradas.filter((d) => dentroDelMapa(d.institucion.id))
   const sel = seleccionada ? puntos.find((p) => p.id === seleccionada) : null
   const selInst = sel ? datos.instituciones.find((i) => i.id === sel.id) : null
-  const activos = [procedimiento, ciudad, pais, categoria, presupuesto ? '1' : '', verificadas ? '1' : ''].filter(Boolean).length
+  const activos = [procedimiento, texto, ciudad, pais, categoria, presupuesto ? '1' : '', verificadas ? '1' : ''].filter(Boolean).length
 
   return (
     <div className="pt-16 md:pt-[124px]">
@@ -140,12 +163,50 @@ export default function Explorar() {
             </select>
           </div>
 
+          {texto && (
+            <button onClick={() => set('q', '')} className="mt-5 inline-flex items-center gap-2 border border-espresso px-3.5 py-1.5 text-xs">
+              {tx(`Búsqueda: «${texto}»`, `Search: “${texto}”`)} <X size={13} strokeWidth={1.8} aria-label={tx('Quitar', 'Remove')} />
+            </button>
+          )}
+
+          {comparador.length > 1 && (
+            <section className="mt-8 border-y border-linea py-6">
+              <div className="rotulo !text-[10px]">
+                {tx(`Compara ${loc(datos.procedimientos.find((x) => x.id === procedimiento)!, 'nombre')} por país`, `Compare ${loc(datos.procedimientos.find((x) => x.id === procedimiento)!, 'nombre')} by country`)}
+              </div>
+              <ul className="mt-4 flex gap-3 overflow-x-auto pb-1">
+                {comparador.map((x, k) => (
+                  <li key={x.pais} className="shrink-0">
+                    <button onClick={() => set('pais', x.pais)} className="block min-w-[150px] border border-linea px-4 py-3 text-left transition hover:border-espresso">
+                      <span className="block text-[11px] font-medium tracking-[0.16em] uppercase">{nombrePais(x.pais)}</span>
+                      <span className="mt-1 block text-[15px]">{tx('desde', 'from')} {dinero(x.desde)}</span>
+                      <span className="mt-0.5 block text-xs text-piedra">
+                        {k === 0 ? tx('El más bajo', 'Lowest') : tx(`${x.n} ${x.n === 1 ? 'opción' : 'opciones'}`, `${x.n} ${x.n === 1 ? 'option' : 'options'}`)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-niebla">{tx('Rangos orientativos informados por cada clínica; el valor final se fija tras la valoración.', 'Indicative ranges reported by each clinic; the final price is set after the consultation.')}</p>
+            </section>
+          )}
+
           {lista.length ? (
-            <div className="mt-8 grid gap-x-6 gap-y-12 sm:grid-cols-2 2xl:grid-cols-3">
-              {lista.map((d) => (
-                <OfertaCard key={d.oferta.id} d={d} consulta={consulta} onResaltar={setResaltada} />
-              ))}
-            </div>
+            <>
+              <div className="mt-8 grid gap-x-6 gap-y-12 sm:grid-cols-2 2xl:grid-cols-3">
+                {lista.slice(0, cuantas).map((d) => (
+                  <OfertaCard key={d.oferta.id} d={d} consulta={consulta} onResaltar={setResaltada} />
+                ))}
+              </div>
+              {lista.length > cuantas && (
+                <div className="mt-14 text-center">
+                  <p className="text-xs text-piedra">{tx(`Viendo ${cuantas} de ${lista.length}`, `Showing ${cuantas} of ${lista.length}`)}</p>
+                  <button onClick={() => setCuantas((n) => n + TANDA)} className="btn-linea mt-4">
+                    {tx('Mostrar más', 'Show more')}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="mt-12 border-y border-linea py-20 text-center">
               <p className="display normal-case text-3xl">{tx('No hay opciones con esos filtros.', 'No options match these filters.')}</p>
@@ -182,7 +243,7 @@ export default function Explorar() {
                     className="pointer-events-auto flex w-full max-w-sm items-center gap-4 border border-linea bg-marfil p-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="rotulo !text-[10px]">{datos.ciudades.find((c) => c.id === selInst.ciudad_id)?.nombre}</div>
+                      <div className="rotulo !text-[10px]">{ciudadDe(selInst.ciudad_id)}</div>
                       <div className="mt-1 truncate text-[14px] font-medium tracking-[0.1em] uppercase">{selInst.nombre}</div>
                       <div className="mt-1 text-[13px] text-piedra">
                         {tx(

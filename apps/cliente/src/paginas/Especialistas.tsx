@@ -1,19 +1,24 @@
-import { detallarOfertas, iniciales, nombreCiudad } from '@plastinex/shared'
+import { destinos, detallarOfertas, iniciales, type Categoria } from '@plastinex/shared'
 import { Languages, Search, Video } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import { Revelar } from '../componentes/base'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
+import { coincide } from '../busqueda'
 import { useIdioma } from '../idioma'
 
-/** Directorio de cirujanos plásticos: se filtra por ciudad, procedimiento, idioma y valoración virtual. */
+const TANDA = 20
+
+/** Directorio de cirujanos plásticos: se filtra por país, ciudad, especialidad, procedimiento, idioma y valoración virtual. */
 export default function Especialistas() {
   const { datos } = useCatalogo()
-  const { tx, dinero, loc } = useIdioma()
+  const { tx, dinero, loc, ciudadDe, ciudad: nombreCiudad, pais: nombrePais, categoria: nombreCategoria } = useIdioma()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const ciudad = params.get('ciudad') ?? ''
+  const pais = params.get('pais') ?? ''
+  const especialidad = (params.get('categoria') ?? '') as Categoria | ''
   const proc = params.get('procedimiento') ?? ''
   const virtual = params.get('virtual') === '1'
   const ingles = params.get('ingles') === '1'
@@ -22,6 +27,7 @@ export default function Especialistas() {
     const p = new URLSearchParams(params)
     if (v) p.set(k, v)
     else p.delete(k)
+    if (k === 'pais') p.delete('ciudad')
     setParams(p, { replace: true })
   }
 
@@ -43,14 +49,21 @@ export default function Especialistas() {
       })
   }, [datos])
 
+  const [cuantas, setCuantas] = useState(TANDA)
+  useEffect(() => setCuantas(TANDA), [params])
+  const lugares = useMemo(() => (datos ? destinos(datos) : []), [datos])
+
   if (!datos) return null
-  const texto = q.trim().toLowerCase()
+  const paisDe = (ciudadId: string) => datos.ciudades.find((c) => c.id === ciudadId)?.pais
   const lista = fichas.filter(({ p, procedimientos, instituciones }) => {
+    if (pais && paisDe(p.ciudad_id) !== pais && !instituciones.some((i) => paisDe(i.ciudad_id) === pais)) return false
     if (ciudad && p.ciudad_id !== ciudad && !instituciones.some((i) => i.ciudad_id === ciudad)) return false
+    if (especialidad && !procedimientos.some((x) => x.categoria === especialidad)) return false
     if (proc && !procedimientos.some((x) => x.id === proc)) return false
     if (virtual && !p.valoracion_virtual) return false
     if (ingles && !p.idiomas.some((i) => /ingl|engl/i.test(i))) return false
-    if (texto && ![p.nombre, p.especialidad, loc(p, 'especialidad'), p.sociedad ?? '', ...instituciones.map((i) => i.nombre)].join(' ').toLowerCase().includes(texto)) return false
+    if (q.trim() && !coincide(q, p.nombre, p.especialidad, p.especialidad_en, p.sociedad, ciudadDe(p.ciudad_id), nombrePais(paisDe(p.ciudad_id)), ...instituciones.map((i) => i.nombre), ...procedimientos.flatMap((x) => [x.nombre, x.nombre_en])))
+      return false
     return true
   })
 
@@ -78,26 +91,52 @@ export default function Especialistas() {
         </p>
       </div>
 
-      <div className="mt-12 grid gap-4 border-y border-linea py-6 md:grid-cols-[1.4fr_1fr_1fr] md:items-center">
-        <label className="flex items-center gap-3">
+      <div className="mt-12 grid gap-x-6 gap-y-2 border-y border-linea py-6 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr] lg:items-center">
+        <label className="flex items-center gap-3 md:col-span-2 lg:col-span-1">
           <Search size={16} strokeWidth={1.5} className="text-piedra" />
-          <input value={q} onChange={(e) => set('q', e.target.value)} placeholder={tx('Buscar por nombre, clínica o sociedad', 'Search by name, clinic or society')} className="w-full bg-transparent py-2 text-[15px] outline-none placeholder:text-niebla" aria-label={tx('Buscar especialista', 'Search surgeons')} />
+          <input value={q} onChange={(e) => set('q', e.target.value)} placeholder={tx('Nombre, clínica, ciudad o procedimiento', 'Name, clinic, city or procedure')} className="w-full bg-transparent py-2 text-[15px] outline-none placeholder:text-niebla" aria-label={tx('Buscar especialista', 'Search surgeons')} />
         </label>
+        <select value={pais} onChange={(e) => set('pais', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('País', 'Country')}>
+          <option value="">{tx('Todos los países', 'All countries')}</option>
+          {[...lugares]
+            .sort((a, b) => nombrePais(a.pais).localeCompare(nombrePais(b.pais)))
+            .map((d) => (
+              <option key={d.pais} value={d.pais}>
+                {nombrePais(d.pais)}
+              </option>
+            ))}
+        </select>
         <select value={ciudad} onChange={(e) => set('ciudad', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('Ciudad', 'City')}>
           <option value="">{tx('Todas las ciudades', 'All cities')}</option>
-          {datos.ciudades.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
+          {lugares
+            .filter((d) => !pais || d.pais === pais)
+            .map((d) => (
+              <optgroup key={d.pais} label={nombrePais(d.pais)}>
+                {d.ciudades.map(({ ciudad: c }) => (
+                  <option key={c.id} value={c.id}>
+                    {nombreCiudad(c)}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+        </select>
+        <select value={especialidad} onChange={(e) => set('categoria', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('Especialidad', 'Specialty')}>
+          <option value="">{tx('Todas las especialidades', 'All specialties')}</option>
+          {(['mamaria', 'corporal', 'facial'] as Categoria[]).map((c) => (
+            <option key={c} value={c}>
+              {nombreCategoria(c)}
             </option>
           ))}
         </select>
         <select value={proc} onChange={(e) => set('procedimiento', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('Procedimiento', 'Procedure')}>
           <option value="">{tx('Todos los procedimientos', 'All procedures')}</option>
-          {datos.procedimientos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {loc(p, 'nombre')}
-            </option>
-          ))}
+          {datos.procedimientos
+            .filter((p) => !especialidad || p.categoria === especialidad)
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {loc(p, 'nombre')}
+              </option>
+            ))}
         </select>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px]">
@@ -113,7 +152,7 @@ export default function Especialistas() {
       </div>
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">
-        {lista.map(({ p, procedimientos, instituciones, desde }, k) => (
+        {lista.slice(0, cuantas).map(({ p, procedimientos, instituciones, desde }, k) => (
           <Revelar key={p.id} retraso={(k % 2) * 0.06}>
             <Link to={`/profesional/${p.id}`} className="group grid grid-cols-[120px_1fr] gap-6 border border-linea p-5 transition hover:border-espresso sm:grid-cols-[160px_1fr]">
               <span className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-espresso text-2xl font-light tracking-[0.15em] text-marfil">
@@ -121,7 +160,9 @@ export default function Especialistas() {
               </span>
               <span className="flex min-w-0 flex-col">
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="rotulo !text-[10px]">{nombreCiudad(datos, p.ciudad_id)}</span>
+                  <span className="rotulo !text-[10px]">
+                    {ciudadDe(p.ciudad_id)} · {nombrePais(paisDe(p.ciudad_id))}
+                  </span>
                   {p.es_demo && <EtiquetaDemo />}
                 </span>
                 <span className="mt-2 text-[16px] font-medium tracking-[0.1em] uppercase">{p.nombre}</span>
@@ -148,6 +189,14 @@ export default function Especialistas() {
           </Revelar>
         ))}
       </div>
+      {lista.length > cuantas && (
+        <div className="mt-14 text-center">
+          <p className="text-xs text-piedra">{tx(`Viendo ${cuantas} de ${lista.length}`, `Showing ${cuantas} of ${lista.length}`)}</p>
+          <button onClick={() => setCuantas((n) => n + TANDA)} className="btn-linea mt-4">
+            {tx('Mostrar más', 'Show more')}
+          </button>
+        </div>
+      )}
       {lista.length === 0 && (
         <div className="mt-12 border-y border-linea py-20 text-center">
           <p className="display normal-case text-3xl">{tx('No hay especialistas con esos filtros.', 'No surgeons match those filters.')}</p>
