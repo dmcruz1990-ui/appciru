@@ -95,7 +95,7 @@ Resultado del 21 oct 2026. Las de acceso se repiten con `supabase/pruebas/acepta
 | 7 | Los errores de red permiten reintentar sin duplicar | ✅ Corregido hoy: mismo código en el reintento |
 | 8 | Datos de clínicas y profesionales de fuentes verificadas | ❌ **Hoy son perfiles de demostración**, marcados como tales. Deben reemplazarse por prestadores reales verificados (REPS/ReTHUS o equivalente) |
 | 9 | Formularios en móvil y escritorio | ✅ Verificado con capturas |
-| 10 | Errores con mensajes claros | ✅ Mensajes en español e inglés (sesión, términos, límites, disponibilidad) |
+| 10 | Errores con mensajes claros | ✅ Mensajes concretos (sesión, términos, límites, disponibilidad). ⚠️ Los que vienen de la base de datos solo están en español |
 | 11 | El despliegue publicado supera las pruebas de regresión | ✅ Compila y pasa las pruebas de acceso; ⚠️ falta automatizarlas en CI |
 | 12 | Los logs no exponen contraseñas, tokens ni datos clínicos | ✅ El código no registra datos personales; solo un aviso si faltan variables de entorno |
 
