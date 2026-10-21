@@ -33,6 +33,7 @@ export default function Layout() {
   const { sesion, paciente } = useSesion()
   const { lista: favoritos } = useFavoritos()
   const { tx } = useIdioma()
+  const direccionEmpresa = [...EMPRESA.direccion.slice(0, -1), tx('Wyoming, Estados Unidos', 'Wyoming, United States')]
   const { pathname, hash } = useLocation()
   const [abierto, setAbierto] = useState(false)
   const [scroll, setScroll] = useState(false)
@@ -142,7 +143,7 @@ export default function Layout() {
 
       {!sinCabecera && (
         <footer className="overflow-hidden bg-espresso text-marfil">
-          <div className="contenedor grid gap-12 pt-20 pb-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="contenedor grid gap-12 pt-20 pb-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.1fr]">
             <div>
               <p className="display normal-case max-w-sm text-2xl">{tx('Información clara para una decisión que es tuya.', 'Clear information for a decision that is yours.')}</p>
               <Link to="/solicitar" className="btn-claro mt-8">
@@ -175,6 +176,18 @@ export default function Layout() {
                 ['/terminos', tx('Intermediación y responsabilidad', 'Terms and liability')],
               ]}
             />
+            {/* Sede de la empresa titular, tal como figura en su registro. */}
+            <div>
+              <div className="rotulo !text-marfil/50">{tx('Sede', 'Headquarters')}</div>
+              <address className="mt-6 text-[13px] leading-relaxed text-marfil/80 not-italic">
+                <span className="font-medium text-marfil">{EMPRESA.razonSocial}</span>
+                {direccionEmpresa.map((linea) => (
+                  <span key={linea} className="block">
+                    {linea}
+                  </span>
+                ))}
+              </address>
+            </div>
           </div>
           <div className="contenedor">
             <div className="border-t border-marfil/15 pt-6 pb-4 text-xs leading-relaxed text-marfil/50 md:flex md:justify-between md:gap-10">
@@ -190,7 +203,7 @@ export default function Layout() {
               <p className="mt-3 shrink-0 md:mt-0 md:text-right">
                 © {new Date().getFullYear()} {EMPRESA.razonSocial}
                 <br />
-                {EMPRESA.direccion.slice(0, 3).join(' · ')}
+                {direccionEmpresa.join(' · ')}
               </p>
             </div>
             <div className="pt-16 pb-10 text-center text-[13vw] leading-none font-medium tracking-[0.3em] text-marfil/[0.08] uppercase select-none md:text-[9vw]" aria-hidden>

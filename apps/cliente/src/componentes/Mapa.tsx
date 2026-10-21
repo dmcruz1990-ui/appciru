@@ -60,7 +60,7 @@ export default function Mapa({
   // Crear el mapa una sola vez.
   useEffect(() => {
     if (!caja.current || mapa.current) return
-    const m = L.map(caja.current, { zoomControl: false, scrollWheelZoom: true, attributionControl: true }).setView([4.81, -75.69], 11)
+    const m = L.map(caja.current, { zoomControl: false, scrollWheelZoom: true, attributionControl: true }).setView([20, -30], 2)
     L.control.zoom({ position: 'topright' }).addTo(m)
     m.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>')
     // Si la persona mueve o acerca el mapa, ya no lo reencuadramos por ella.
