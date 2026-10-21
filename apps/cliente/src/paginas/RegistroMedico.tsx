@@ -5,7 +5,9 @@ import {
   PAISES,
   postular,
   supabase,
+  elegirPlan,
   type NuevaPostulacion,
+  type PlanMedico,
   type Postulacion,
   type TipoInstitucion,
 } from '@plastinex/shared'
@@ -13,6 +15,7 @@ import { Check } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
+import Planes, { usePlanes } from '../componentes/Planes'
 import { useIdioma } from '../idioma'
 import { useSesion } from '../sesion'
 
@@ -67,9 +70,18 @@ export default function RegistroMedico() {
     [tx('Crea tu cuenta', 'Create your account'), tx('Con tu correo profesional.', 'With your professional email.')],
     [tx('Completa tu perfil', 'Complete your profile'), tx('Registro profesional, clínica y procedimientos.', 'License, clinic and procedures.')],
     [tx('Verificamos', 'We verify'), tx('Revisamos tus registros antes de publicar.', 'We check your credentials before publishing.')],
-    [tx('Recibe solicitudes', 'Receive requests'), tx('Las atiendes desde tu panel.', 'You handle them from your dashboard.')],
+    [tx('Activa tu plan', 'Activate your plan'), tx('Eliges tu plan y pagas en línea.', 'Choose your plan and pay online.')],
+    [tx('Recibe tus leads', 'Get your leads'), tx('Publicamos tu perfil y los atiendes desde tu panel.', 'We publish your profile and you handle them from your dashboard.')],
   ]
-  const paso = !sesion ? 0 : !postulacion || editando ? 1 : postulacion.estado === 'aprobada' ? 3 : 2
+  const paso = !sesion
+    ? 0
+    : !postulacion || editando
+      ? 1
+      : postulacion.estado !== 'aprobada'
+        ? 2
+        : postulacion.pago_estado === 'pagado'
+          ? 4
+          : 3
 
   return (
     <>
@@ -94,7 +106,7 @@ export default function RegistroMedico() {
               'For plastic surgeons with a current license and accredited clinics, in any country. Your profile is published only after we verify your documents.',
             )}
           </p>
-          <ol className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ol className="mt-12 grid gap-6 sm:grid-cols-3 lg:grid-cols-5">
             {pasos.map(([t, d], i) => (
               <li key={t} className={`border-t pt-4 ${i <= paso ? 'border-marfil' : 'border-marfil/20 text-marfil/40'}`}>
                 <span className="flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] uppercase">
@@ -108,13 +120,13 @@ export default function RegistroMedico() {
       </section>
 
       <div className="contenedor py-20">
-        <div className="mx-auto max-w-3xl">
+        <div className={`mx-auto ${postulacion?.estado === 'aprobada' && !editando ? 'max-w-6xl' : 'max-w-3xl'}`}>
           {cargando || (sesion && postulacion === undefined) ? (
             <p className="text-sm text-piedra">{tx('Cargando…', 'Loading…')}</p>
           ) : !sesion ? (
             <CuentaMedico />
           ) : postulacion && !editando ? (
-            <Estado p={postulacion} onEditar={() => setEditando(true)} />
+            <Estado p={postulacion} onEditar={() => setEditando(true)} onCambio={setPostulacion} />
           ) : (
             <Formulario
               inicial={postulacion}
@@ -416,53 +428,112 @@ function Formulario({ inicial, email, onEnviado }: { inicial: Postulacion | null
   )
 }
 
-function Estado({ p, onEditar }: { p: Postulacion; onEditar: () => void }) {
-  const { tx, fecha, pais: nombrePais, ciudadDe, idioma } = useIdioma()
+function Estado({ p, onEditar, onCambio }: { p: Postulacion; onEditar: () => void; onCambio: (p: Postulacion) => void }) {
+  const { tx, fecha, pais: nombrePais, ciudadDe, idioma, loc } = useIdioma()
+  const planes = usePlanes()
+  const [ocupado, setOcupado] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const pagado = p.pago_estado === 'pagado'
   const e = estadosPostulacion[p.estado]
+  const titulo = p.estado === 'aprobada' ? (pagado ? tx('Plan activo', 'Plan active') : tx('Aprobado: activa tu plan', 'Approved: activate your plan')) : idioma === 'en' ? e.en : e.es
   const texto: Record<Postulacion['estado'], string> = {
     nueva: tx('Recibimos tu registro. Un coordinador lo revisará y te escribirá si necesita algún documento.', 'We received your registration. A coordinator will review it and contact you if any document is needed.'),
     en_revision: tx('Estamos verificando tu registro profesional y la habilitación de tu clínica.', 'We are verifying your professional license and your clinic’s accreditation.'),
-    aprobada: tx(
-      'Tu registro fue aprobado. Ya puedes entrar al panel con este mismo correo y contraseña para atender tus solicitudes. Publicaremos tu perfil cuando completemos precios y fotos contigo.',
-      'Your registration was approved. You can now sign in to the dashboard with this same email and password to handle your requests. We will publish your profile once we complete prices and photos with you.',
-    ),
+    aprobada: pagado
+      ? tx(
+          'Tu pago está confirmado. Entra al panel con este mismo correo y contraseña: allí verás las solicitudes de tus pacientes. Publicamos tu perfil en cuanto completemos precios y fotos contigo.',
+          'Your payment is confirmed. Sign in to the dashboard with this same email and password to see your patients’ requests. We publish your profile as soon as we complete prices and photos with you.',
+        )
+      : tx(
+          'Verificamos tus documentos. Elige tu plan y paga para que publiquemos tu perfil y empieces a recibir pacientes.',
+          'We verified your documents. Choose your plan and pay so we can publish your profile and you start receiving patients.',
+        ),
     rechazada: tx('Tu registro necesita cambios antes de continuar.', 'Your registration needs changes before we can continue.'),
   }
+
+  const elegir = async (plan: PlanMedico) => {
+    setError(null)
+    setOcupado(true)
+    try {
+      const elegido = await elegirPlan(plan.id)
+      onCambio({ ...p, plan_id: plan.id, pago_estado: 'pendiente', plan_elegido_en: new Date().toISOString() })
+      if (elegido.enlace_pago) window.open(elegido.enlace_pago, '_blank', 'noopener')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setOcupado(false)
+    }
+  }
+  const planElegido = planes?.find((x) => x.id === p.plan_id)
+
   return (
-    <div className="border border-linea p-8 md:p-12">
-      <div className="rotulo">{tx('Estado de tu registro', 'Registration status')}</div>
-      <h2 className="display mt-3 text-3xl">{idioma === 'en' ? e.en : e.es}</h2>
-      <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-piedra">{texto[p.estado]}</p>
-      {p.estado === 'rechazada' && p.motivo && <p className="mt-4 border-l-2 border-arcilla pl-5 text-sm">{p.motivo}</p>}
-
-      <dl className="mt-10 grid gap-x-8 gap-y-5 border-t border-linea pt-8 text-sm sm:grid-cols-2">
-        {[
-          [tx('Profesional', 'Professional'), p.nombre],
-          [tx('Registro', 'License'), [p.registro_profesional, p.autoridad_registro].filter(Boolean).join(' · ')],
-          [tx('Clínica', 'Clinic'), p.institucion_nombre],
-          [tx('Ubicación', 'Location'), `${p.ciudad_id ? ciudadDe(p.ciudad_id) : p.ciudad_otra}, ${nombrePais(p.pais)}`],
-          [tx('Enviado', 'Submitted'), fecha(p.actualizado_en)],
-        ].map(([t, v]) => (
-          <div key={t}>
-            <dt className="etiqueta">{t}</dt>
-            <dd className="mt-1">{v}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="mt-10 flex flex-wrap gap-4">
-        {p.estado === 'aprobada' ? (
-          <a href={urlPanel} className="btn">
-            {tx('Ir a mi panel', 'Go to my dashboard')}
-          </a>
-        ) : (
-          (p.estado === 'nueva' || p.estado === 'rechazada') && (
-            <button onClick={onEditar} className="btn-linea">
-              {p.estado === 'rechazada' ? tx('Corregir y enviar de nuevo', 'Fix and resubmit') : tx('Editar mis datos', 'Edit my details')}
-            </button>
-          )
+    <div>
+      <div className="border border-linea p-8 md:p-12">
+        <div className="rotulo">{tx('Estado de tu registro', 'Registration status')}</div>
+        <h2 className="display mt-3 text-3xl">{titulo}</h2>
+        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-piedra">{texto[p.estado]}</p>
+        {p.estado === 'rechazada' && p.motivo && <p className="mt-4 border-l-2 border-arcilla pl-5 text-sm">{p.motivo}</p>}
+        {p.estado === 'aprobada' && !pagado && p.pago_estado === 'pendiente' && planElegido && (
+          <p className="mt-6 border-l-2 border-espresso pl-5 text-sm">
+            {planElegido.enlace_pago
+              ? tx(
+                  `Elegiste ${loc(planElegido, 'nombre')}. Si ya pagaste, confirmaremos el pago y activaremos tu plan; si no, usa el botón del plan para pagar.`,
+                  `You chose ${loc(planElegido, 'nombre')}. If you already paid, we will confirm it and activate your plan; otherwise use the plan button to pay.`,
+                )
+              : tx(
+                  `Elegiste ${loc(planElegido, 'nombre')}. Te enviaremos el enlace de pago a ${p.email}.`,
+                  `You chose ${loc(planElegido, 'nombre')}. We will send the payment link to ${p.email}.`,
+                )}
+          </p>
         )}
+
+        <dl className="mt-10 grid gap-x-8 gap-y-5 border-t border-linea pt-8 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            [tx('Profesional', 'Professional'), p.nombre],
+            [tx('Registro', 'License'), [p.registro_profesional, p.autoridad_registro].filter(Boolean).join(' · ')],
+            [tx('Clínica', 'Clinic'), p.institucion_nombre],
+            [tx('Ubicación', 'Location'), `${p.ciudad_id ? ciudadDe(p.ciudad_id) : p.ciudad_otra}, ${nombrePais(p.pais)}`],
+            [tx('Enviado', 'Submitted'), fecha(p.actualizado_en)],
+            ...(planElegido ? [[tx('Plan', 'Plan'), `${loc(planElegido, 'nombre')} · ${pagado ? tx('activo', 'active') : tx('pago pendiente', 'payment pending')}`]] : []),
+          ].map(([t, v]) => (
+            <div key={t}>
+              <dt className="etiqueta">{t}</dt>
+              <dd className="mt-1">{v}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-10 flex flex-wrap gap-4">
+          {p.estado === 'aprobada' ? (
+            <a href={urlPanel} className={pagado ? 'btn' : 'btn-linea'}>
+              {tx('Ir a mi panel', 'Go to my dashboard')}
+            </a>
+          ) : (
+            (p.estado === 'nueva' || p.estado === 'rechazada') && (
+              <button onClick={onEditar} className="btn-linea">
+                {p.estado === 'rechazada' ? tx('Corregir y enviar de nuevo', 'Fix and resubmit') : tx('Editar mis datos', 'Edit my details')}
+              </button>
+            )
+          )}
+        </div>
       </div>
+
+      {p.estado === 'aprobada' && !pagado && planes && planes.length > 0 && (
+        <section className="mt-16">
+          <div className="rotulo">{tx('Elige tu plan', 'Choose your plan')}</div>
+          <h2 className="display mt-3 text-3xl">{tx('Activa tu perfil', 'Activate your profile')}</h2>
+          <div className="mt-10">
+            <Planes planes={planes} elegido={p.plan_id} ocupado={ocupado} onElegir={(x) => void elegir(x)} />
+          </div>
+          {error && <p className="mt-6 text-sm text-red-800">{error}</p>}
+          <p className="mt-6 text-xs text-niebla">
+            {tx(
+              'El pago se hace en la pasarela segura de nuestro procesador; PLASTINEX no guarda datos de tarjetas. Tu plan se activa cuando confirmamos el pago.',
+              'Payment is made on our processor’s secure checkout; PLASTINEX does not store card details. Your plan is activated once we confirm the payment.',
+            )}
+          </p>
+        </section>
+      )}
     </div>
   )
 }

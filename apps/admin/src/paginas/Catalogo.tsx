@@ -234,6 +234,34 @@ const colecciones: Coleccion[] = [
     ],
     nuevo: { activa: true, orden: 99 },
   },
+  {
+    id: 'planes',
+    t: 'Planes de médicos',
+    tabla: 'px_planes',
+    idTexto: true,
+    filas: (d) => d.planes as unknown as Fila[],
+    columnas: [
+      { t: 'Plan', v: (f) => <span className="font-medium">{f.nombre as string}</span> },
+      { t: 'Mensual (USD)', v: (f) => (f.precio_mensual_usd != null ? `US$ ${Number(f.precio_mensual_usd).toLocaleString('en-US')}` : 'Por definir') },
+      { t: 'Enlace de pago', v: (f) => (f.enlace_pago ? 'Configurado' : '—') },
+    ],
+    campos: [
+      { k: 'id', t: 'Identificador', tipo: 'select', requerido: true, opciones: () => [{ v: 'piloto', t: 'piloto' }, { v: 'tecnologia', t: 'tecnologia' }, { v: 'administrado', t: 'administrado' }] },
+      { k: 'nombre', t: 'Nombre', tipo: 'texto', requerido: true },
+      { k: 'nombre_en', t: 'Nombre (inglés)', tipo: 'texto' },
+      { k: 'precio_mensual_usd', t: 'Precio mensual (USD)', tipo: 'numero', ayuda: 'Vacío = «te enviamos la propuesta»' },
+      { k: 'cuota_inicial_usd', t: 'Cuota de activación (USD)', tipo: 'numero' },
+      { k: 'enlace_pago', t: 'Enlace de pago (https://…)', tipo: 'texto', ancho: true, ayuda: 'Enlace de Stripe, Mercado Pago, Wompi o PayPal para este plan' },
+      { k: 'descripcion', t: 'Descripción', tipo: 'area', ancho: true },
+      { k: 'descripcion_en', t: 'Descripción (inglés)', tipo: 'area', ancho: true },
+      { k: 'beneficios', t: 'Beneficios (separados por comas)', tipo: 'lista', ancho: true },
+      { k: 'beneficios_en', t: 'Beneficios en inglés (mismo orden)', tipo: 'lista', ancho: true },
+      { k: 'orden', t: 'Orden', tipo: 'numero' },
+      { k: 'destacado', t: 'Recomendado', tipo: 'bool' },
+      { k: 'activo', t: 'Visible para los médicos', tipo: 'bool' },
+    ],
+    nuevo: { activo: true, orden: 9, beneficios: [], beneficios_en: [] },
+  },
 ]
 
 export default function Catalogo() {
@@ -243,10 +271,12 @@ export default function Catalogo() {
   const enMoneda = tab === 'moneda'
   const [editando, setEditando] = useState<{ fila: Record<string, unknown>; nueva: boolean } | null>(null)
   const filas = col.filas(datos)
-  const campoPublicado = col.id === 'ciudades' ? 'activa' : 'publicado'
+  const campoPublicado = col.id === 'ciudades' ? 'activa' : col.id === 'planes' ? 'activo' : 'publicado'
 
   const alternar = async (f: Fila) => {
-    await supabase.from(col.tabla).update({ [campoPublicado]: !f[campoPublicado] }).eq('id', f.id)
+    const { error } = await supabase.from(col.tabla).update({ [campoPublicado]: !f[campoPublicado] }).eq('id', f.id)
+    // Por ejemplo: una clínica real sin plan activo no se puede publicar.
+    if (error) window.alert(error.message)
     recargar()
   }
 

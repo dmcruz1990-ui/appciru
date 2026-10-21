@@ -1,7 +1,26 @@
 import { supabase } from './supabase'
-import type { TipoInstitucion } from './tipos'
+import type { Plan, TipoInstitucion } from './tipos'
 
 export type EstadoPostulacion = 'nueva' | 'en_revision' | 'aprobada' | 'rechazada'
+export type EstadoPago = 'sin_plan' | 'pendiente' | 'pagado'
+
+/** Plan que el médico paga después de ser aprobado (mismos ids que px_suscripciones.plan). */
+export interface PlanMedico {
+  id: Plan
+  nombre: string
+  nombre_en: string | null
+  descripcion: string
+  descripcion_en: string | null
+  beneficios: string[]
+  beneficios_en: string[]
+  precio_mensual_usd: number | null
+  cuota_inicial_usd: number | null
+  /** Enlace de pago (Stripe, Mercado Pago, Wompi…) configurado por PLASTINEX. */
+  enlace_pago: string | null
+  destacado: boolean
+  activo: boolean
+  orden: number
+}
 
 /** Registro de un cirujano y su clínica, enviado desde «Para clínicas» y revisado por PLASTINEX. */
 export interface Postulacion {
@@ -35,6 +54,10 @@ export interface Postulacion {
   institucion_id: string | null
   revisado_por: string | null
   revisado_en: string | null
+  plan_id: Plan | null
+  pago_estado: EstadoPago
+  plan_elegido_en: string | null
+  pago_confirmado_en: string | null
   creado_en: string
   actualizado_en: string
 }
@@ -90,6 +113,26 @@ export async function postular(p: NuevaPostulacion): Promise<Postulacion> {
 /** Solo el equipo de PLASTINEX. Al aprobar se crean el perfil, la clínica y sus procedimientos sin publicar. */
 export async function revisarPostulacion(id: string, estado: Exclude<EstadoPostulacion, 'nueva'>, motivo?: string, ciudadId?: string): Promise<Postulacion> {
   const { data, error } = await supabase.rpc('px_revisar_postulacion', { p_id: id, p_estado: estado, p_motivo: motivo ?? null, p_ciudad_id: ciudadId ?? null })
+  if (error) throw new Error(error.message)
+  return data as Postulacion
+}
+
+export async function planesMedico(): Promise<PlanMedico[]> {
+  const { data, error } = await supabase.from('px_planes').select('*').eq('activo', true).order('orden')
+  if (error) throw new Error(error.message)
+  return (data as PlanMedico[] | null) ?? []
+}
+
+/** El médico aprobado elige plan; devuelve el plan con su enlace de pago (si PLASTINEX ya lo configuró). */
+export async function elegirPlan(id: Plan): Promise<PlanMedico> {
+  const { data, error } = await supabase.rpc('px_elegir_plan', { p_plan: id })
+  if (error) throw new Error(error.message)
+  return data as PlanMedico
+}
+
+/** Solo el equipo de PLASTINEX: activa la suscripción de la clínica y permite publicarla. */
+export async function confirmarPago(postulacionId: string): Promise<Postulacion> {
+  const { data, error } = await supabase.rpc('px_confirmar_pago', { p_postulacion: postulacionId })
   if (error) throw new Error(error.message)
   return data as Postulacion
 }

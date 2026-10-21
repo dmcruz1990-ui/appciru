@@ -1,9 +1,15 @@
-import { estadosPostulacion, formatoFecha, nombrePais, nombreTipoInstitucion, revisarPostulacion, type EstadoPostulacion, type Postulacion } from '@plastinex/shared'
+import { confirmarPago, estadosPostulacion, formatoFecha, nombrePais, nombreTipoInstitucion, revisarPostulacion, type EstadoPago, type EstadoPostulacion, type Postulacion } from '@plastinex/shared'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal, Titulo } from '../componentes/ui'
 import { useDatos } from '../datos'
 import { useSesion } from '../sesion'
+
+const pagos: Record<EstadoPago, [string, string]> = {
+  sin_plan: ['Sin plan', 'text-stone-400'],
+  pendiente: ['Pago pendiente', 'bg-amber-100 text-amber-800'],
+  pagado: ['Pagado', 'bg-emerald-100 text-emerald-800'],
+}
 
 const colores: Record<EstadoPostulacion, string> = {
   nueva: 'bg-amber-100 text-amber-800',
@@ -20,7 +26,8 @@ export default function Registros() {
   const [abierto, setAbierto] = useState<Postulacion | null>(null)
   if (!esStaff) return null
 
-  const lista = datos.postulaciones.filter((p) => filtro === 'todos' || p.estado === 'nueva' || p.estado === 'en_revision')
+  // Pendiente = algo que hacer: revisar documentos o confirmar un pago.
+  const lista = datos.postulaciones.filter((p) => filtro === 'todos' || p.estado === 'nueva' || p.estado === 'en_revision' || (p.estado === 'aprobada' && p.pago_estado === 'pendiente'))
   const ciudad = (p: Postulacion) => (p.ciudad_id ? (datos.ciudades.find((c) => c.id === p.ciudad_id)?.nombre ?? p.ciudad_id) : `${p.ciudad_otra} (nueva)`)
 
   return (
@@ -55,6 +62,7 @@ export default function Registros() {
               <th>Ciudad</th>
               <th>Registro</th>
               <th>Estado</th>
+              <th>Pago</th>
               <th>Recibido</th>
               <th />
             </tr>
@@ -74,6 +82,16 @@ export default function Registros() {
                 <td>
                   <span className={`rounded-full px-2 py-0.5 text-xs ${colores[p.estado]}`}>{estadosPostulacion[p.estado].es}</span>
                 </td>
+                <td>
+                  {p.estado === 'aprobada' ? (
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${pagos[p.pago_estado][1]}`}>
+                      {pagos[p.pago_estado][0]}
+                      {p.plan_id ? ` · ${datos.planes.find((x) => x.id === p.plan_id)?.nombre ?? p.plan_id}` : ''}
+                    </span>
+                  ) : (
+                    <span className="text-stone-400">—</span>
+                  )}
+                </td>
                 <td>{formatoFecha(p.actualizado_en)}</td>
                 <td className="text-right">
                   <button onClick={() => setAbierto(p)} className="text-sm text-oro-osc hover:underline">
@@ -84,7 +102,7 @@ export default function Registros() {
             ))}
             {lista.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-stone-400">
+                <td colSpan={8} className="py-10 text-center text-stone-400">
                   {filtro === 'pendientes' ? 'No hay registros pendientes.' : 'Aún no hay registros.'}
                 </td>
               </tr>
@@ -159,6 +177,7 @@ function Revision({ p, onCerrar, onGuardado }: { p: Postulacion; onCerrar: () =>
         </dl>
         {p.bio && <p className="rounded-md bg-stone-50 p-3 text-stone-700">{p.bio}</p>}
 
+        {cerrado && <Pago p={p} onGuardado={onGuardado} />}
         {cerrado ? (
           <p className="rounded-md bg-emerald-50 p-3 text-emerald-800">
             Aprobado el {p.revisado_en ? formatoFecha(p.revisado_en) : '—'}. Perfil y clínica creados sin publicar: complétalos en{' '}
@@ -208,5 +227,52 @@ function Revision({ p, onCerrar, onGuardado }: { p: Postulacion; onCerrar: () =>
         )}
       </div>
     </Modal>
+  )
+}
+
+/** Tras la aprobación: el médico elige plan y paga; aquí se confirma el pago y se activa la suscripción. */
+function Pago({ p, onGuardado }: { p: Postulacion; onGuardado: () => void }) {
+  const { datos } = useDatos()
+  const [error, setError] = useState<string | null>(null)
+  const [guardando, setGuardando] = useState(false)
+  const plan = datos.planes.find((x) => x.id === p.plan_id)
+  const confirmar = async () => {
+    if (!window.confirm(`¿Confirmas que recibiste el pago de ${p.nombre} por el plan ${plan?.nombre}?`)) return
+    setGuardando(true)
+    setError(null)
+    try {
+      await confirmarPago(p.id)
+      onGuardado()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setGuardando(false)
+    }
+  }
+  return (
+    <div className="rounded-md border border-stone-200 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span className="etiqueta">Pago</span>
+          {p.pago_estado === 'pagado' ? (
+            <span className="text-emerald-700">
+              {plan?.nombre} · pagado el {p.pago_confirmado_en ? formatoFecha(p.pago_confirmado_en) : '—'}. Ya puedes publicar su clínica y su perfil.
+            </span>
+          ) : p.pago_estado === 'pendiente' ? (
+            <span>
+              Eligió <b>{plan?.nombre}</b> el {p.plan_elegido_en ? formatoFecha(p.plan_elegido_en) : '—'}. Confirma cuando el dinero esté en la cuenta.
+            </span>
+          ) : (
+            <span className="text-stone-500">Aún no ha elegido plan (lo hace en su página de registro).</span>
+          )}
+        </div>
+        {p.pago_estado === 'pendiente' && (
+          <button disabled={guardando} onClick={() => void confirmar()} className="btn">
+            Confirmar pago
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-2 text-red-700">{error}</p>}
+    </div>
   )
 }

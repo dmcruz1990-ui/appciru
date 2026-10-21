@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Revelar, Rotulo } from '../componentes/base'
+import Planes, { usePlanes } from '../componentes/Planes'
 import { useIdioma } from '../idioma'
 
 const contacto = (import.meta.env.VITE_CONTACTO_EMAIL as string | undefined) ?? ''
@@ -80,6 +81,7 @@ const ruta: Par[] = [
 
 export default function ParaClinicas() {
   const { tx } = useIdioma()
+  const planes = usePlanes()
   const t = ([es, en]: Par) => tx(es, en)
 
   return (
@@ -176,10 +178,37 @@ export default function ParaClinicas() {
         </p>
       </section>
 
+      {planes && planes.length > 0 && (
+        <section className="bg-papel py-28">
+          <div className="contenedor">
+            <Rotulo n="04">{tx('Planes', 'Plans')}</Rotulo>
+            <h2 className="display mt-6 max-w-3xl text-4xl md:text-5xl">
+              {tx(
+                <>
+                  Pagas cuando <em>te aprobamos.</em>
+                </>,
+                <>
+                  You pay once <em>we approve you.</em>
+                </>,
+              )}
+            </h2>
+            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-piedra">
+              {tx(
+                'Primero verificamos tu registro profesional y la habilitación de tu clínica. Con la aprobación eliges tu plan, pagas en línea y publicamos tu perfil para que los pacientes te encuentren.',
+                'First we verify your professional license and your clinic’s accreditation. Once approved, you choose your plan, pay online and we publish your profile so patients can find you.',
+              )}
+            </p>
+            <div className="mt-14">
+              <Planes planes={planes} />
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="bg-espresso text-marfil">
         <div className="contenedor flex flex-wrap items-end justify-between gap-10 py-24">
           <div>
-            <div className="rotulo !text-marfil/50">04 · {tx('Registro', 'Registration')}</div>
+            <div className="rotulo !text-marfil/50">05 · {tx('Registro', 'Registration')}</div>
             <h2 className="display mt-6 max-w-2xl text-4xl md:text-5xl">
               {tx(
                 <>

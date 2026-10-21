@@ -14,7 +14,7 @@ export default function Layout() {
     (datos?.instituciones.filter((i) => i.verificacion !== 'verificado').length ?? 0) +
     (datos?.profesionales.filter((p) => p.verificacion !== 'verificado').length ?? 0)
 
-  const registrosNuevos = datos?.postulaciones.filter((p) => p.estado === 'nueva' || p.estado === 'en_revision').length ?? 0
+  const registrosNuevos = datos?.postulaciones.filter((p) => p.estado === 'nueva' || p.estado === 'en_revision' || (p.estado === 'aprobada' && p.pago_estado === 'pendiente')).length ?? 0
 
   const enlaces = [
     { to: '/', icono: LayoutDashboard, t: 'Resumen', end: true, ver: true },
