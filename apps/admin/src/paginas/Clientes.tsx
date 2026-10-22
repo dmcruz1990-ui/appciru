@@ -53,14 +53,28 @@ export default function Clientes() {
                   <td>{nombrePlan[s.plan]}</td>
                   <td className="text-right tabular-nums">{formatoCOP(s.cuota_instalacion)}</td>
                   <td className="text-right tabular-nums">{formatoCOP(s.cuota_mensual)}</td>
-                  <td>{nombreEstadoSuscripcion[s.estado]}</td>
+                  <td>
+                    {nombreEstadoSuscripcion[s.estado]}
+                    {s.proveedor === 'stripe' && (
+                      <div className="text-xs text-stone-500">
+                        Stripe{s.stripe_estado === 'past_due' ? ' · cobro fallido, reintentando' : ''}
+                        {s.periodo_fin ? ` · renueva ${formatoFecha(s.periodo_fin)}` : ''}
+                      </div>
+                    )}
+                  </td>
                   <td>{formatoFecha(s.inicio)}</td>
                   <td className="text-right tabular-nums">{sol.length}</td>
                   <td className="text-right tabular-nums">{sol.filter((x) => x.etapa === 'programada').length}</td>
                   <td className="text-right">
-                    <button onClick={() => setEditando(s)} className="text-sm text-oro-osc hover:underline">
-                      Editar
-                    </button>
+                    {s.proveedor === 'stripe' ? (
+                      <span className="text-xs text-stone-400" title="Se gestiona en Stripe: cambios de plan, reintentos y cancelaciones llegan solos">
+                        Automática
+                      </span>
+                    ) : (
+                      <button onClick={() => setEditando(s)} className="text-sm text-oro-osc hover:underline">
+                        Editar
+                      </button>
+                    )}
                   </td>
                 </tr>
               )

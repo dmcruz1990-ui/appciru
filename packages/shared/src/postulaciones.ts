@@ -14,7 +14,11 @@ export interface PlanMedico {
   beneficios: string[]
   beneficios_en: string[]
   precio_mensual_usd: number | null
+  precio_anual_usd: number | null
   cuota_inicial_usd: number | null
+  /** Precios de Stripe Billing (price_…); con ellos el plan se paga con tarjeta y se renueva solo. */
+  stripe_price_mensual: string | null
+  stripe_price_anual: string | null
   /** Enlace de pago (Stripe, Mercado Pago, Wompi…) configurado por PLASTINEX. */
   enlace_pago: string | null
   destacado: boolean
@@ -58,6 +62,7 @@ export interface Postulacion {
   pago_estado: EstadoPago
   plan_elegido_en: string | null
   pago_confirmado_en: string | null
+  stripe_customer_id: string | null
   creado_en: string
   actualizado_en: string
 }
@@ -135,4 +140,30 @@ export async function confirmarPago(postulacionId: string): Promise<Postulacion>
   const { data, error } = await supabase.rpc('px_confirmar_pago', { p_postulacion: postulacionId })
   if (error) throw new Error(error.message)
   return data as Postulacion
+}
+
+/** Página de pago de Stripe para suscribirse al plan (cobro mensual o anual automático). Devuelve su URL. */
+export async function pagarConTarjeta(plan: Plan, intervalo: 'mes' | 'anio'): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('px-stripe', { body: { accion: 'checkout', plan, intervalo } })
+  if (error) throw new Error(await mensajeFuncion(error))
+  return (data as { url: string }).url
+}
+
+/** Portal de Stripe: cambiar de plan o de tarjeta, descargar facturas o cancelar. Devuelve su URL. */
+export async function portalSuscripcion(): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('px-stripe', { body: { accion: 'portal' } })
+  if (error) throw new Error(await mensajeFuncion(error))
+  return (data as { url: string }).url
+}
+
+/** El mensaje que devolvió la función (en lugar del genérico de supabase-js). */
+async function mensajeFuncion(error: unknown): Promise<string> {
+  const ctx = (error as { context?: Response }).context
+  try {
+    const cuerpo = (await ctx?.json()) as { error?: string } | undefined
+    if (cuerpo?.error) return cuerpo.error
+  } catch {
+    /* sin cuerpo JSON */
+  }
+  return error instanceof Error ? error.message : String(error)
 }

@@ -6,6 +6,8 @@ import {
   postular,
   supabase,
   elegirPlan,
+  pagarConTarjeta,
+  portalSuscripcion,
   type NuevaPostulacion,
   type PlanMedico,
   type Postulacion,
@@ -13,7 +15,7 @@ import {
 } from '@plastinex/shared'
 import { Check } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCatalogo } from '../catalogo'
 import Planes, { usePlanes } from '../componentes/Planes'
 import { useIdioma } from '../idioma'
@@ -67,6 +69,22 @@ export default function RegistroMedico() {
       vivo = false
     }
   }, [sesion])
+
+  // Tras pagar en Stripe, consultar unas veces hasta que el webhook marque el plan como pagado.
+  const [params] = useSearchParams()
+  const esperandoPago = params.get('pago') === 'ok' && postulacion?.estado === 'aprobada' && postulacion.pago_estado !== 'pagado'
+  useEffect(() => {
+    if (!esperandoPago) return
+    let intentos = 0
+    const t = window.setInterval(() => {
+      intentos++
+      miPostulacion()
+        .then((p) => p && setPostulacion(p))
+        .catch(() => {})
+      if (intentos >= 10) window.clearInterval(t)
+    }, 3000)
+    return () => window.clearInterval(t)
+  }, [esperandoPago])
 
   const pasos: [string, string][] = [
     [tx('Crea tu cuenta', 'Create your account'), tx('Con tu correo profesional.', 'With your professional email.')],
@@ -453,10 +471,15 @@ function Estado({ p, onEditar, onCambio }: { p: Postulacion; onEditar: () => voi
     rechazada: tx('Tu registro necesita cambios antes de continuar.', 'Your registration needs changes before we can continue.'),
   }
 
-  const elegir = async (plan: PlanMedico) => {
+  const elegir = async (plan: PlanMedico, intervalo: 'mes' | 'anio') => {
     setError(null)
     setOcupado(true)
     try {
+      // Con precio en Stripe: página de pago segura y renovación automática.
+      if (intervalo === 'anio' ? plan.stripe_price_anual : plan.stripe_price_mensual) {
+        window.location.href = await pagarConTarjeta(plan.id, intervalo)
+        return
+      }
       const elegido = await elegirPlan(plan.id)
       onCambio({ ...p, plan_id: plan.id, pago_estado: 'pendiente', plan_elegido_en: new Date().toISOString() })
       if (elegido.enlace_pago) window.open(elegido.enlace_pago, '_blank', 'noopener')
@@ -467,6 +490,19 @@ function Estado({ p, onEditar, onCambio }: { p: Postulacion; onEditar: () => voi
     }
   }
   const planElegido = planes?.find((x) => x.id === p.plan_id)
+  const abrirPortal = async () => {
+    setError(null)
+    setOcupado(true)
+    try {
+      window.location.href = await portalSuscripcion()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      setOcupado(false)
+    }
+  }
+  // Al volver de Stripe el webhook tarda unos segundos en confirmar el pago.
+  const [params] = useSearchParams()
+  const vuelta = params.get('pago')
 
   return (
     <div>
@@ -475,6 +511,13 @@ function Estado({ p, onEditar, onCambio }: { p: Postulacion; onEditar: () => voi
         <h2 className="display mt-3 text-3xl">{titulo}</h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-piedra">{texto[p.estado]}</p>
         {p.estado === 'rechazada' && p.motivo && <p className="mt-4 border-l-2 border-arcilla pl-5 text-sm">{p.motivo}</p>}
+        {vuelta === 'ok' && !pagado && (
+          <p className="mt-6 border-l-2 border-espresso pl-5 text-sm">
+            {tx('Recibimos tu pago y lo estamos confirmando con el banco. Esta página se actualizará en unos segundos.', 'We received your payment and are confirming it with the bank. This page will update in a few seconds.')}
+          </p>
+        )}
+        {vuelta === 'cancelado' && !pagado && <p className="mt-6 border-l-2 border-arcilla pl-5 text-sm">{tx('El pago no se completó. Puedes intentarlo de nuevo.', 'The payment was not completed. You can try again.')}</p>}
+        {error && p.estado === 'aprobada' && pagado && <p className="mt-6 text-sm text-red-800">{error}</p>}
         {p.estado === 'aprobada' && !pagado && p.pago_estado === 'pendiente' && planElegido && (
           <p className="mt-6 border-l-2 border-espresso pl-5 text-sm">
             {planElegido.enlace_pago
@@ -507,9 +550,16 @@ function Estado({ p, onEditar, onCambio }: { p: Postulacion; onEditar: () => voi
 
         <div className="mt-10 flex flex-wrap gap-4">
           {p.estado === 'aprobada' ? (
-            <a href={urlPanel} className={pagado ? 'btn' : 'btn-linea'}>
-              {tx('Ir a mi panel', 'Go to my dashboard')}
-            </a>
+            <>
+              <a href={urlPanel} className={pagado ? 'btn' : 'btn-linea'}>
+                {tx('Ir a mi panel', 'Go to my dashboard')}
+              </a>
+              {p.stripe_customer_id && (
+                <button disabled={ocupado} onClick={() => void abrirPortal()} className="btn-linea">
+                  {tx('Gestionar suscripción y facturas', 'Manage subscription and invoices')}
+                </button>
+              )}
+            </>
           ) : (
             (p.estado === 'nueva' || p.estado === 'rechazada') && (
               <button onClick={onEditar} className="btn-linea">
@@ -525,7 +575,7 @@ function Estado({ p, onEditar, onCambio }: { p: Postulacion; onEditar: () => voi
           <div className="rotulo">{tx('Elige tu plan', 'Choose your plan')}</div>
           <h2 className="display mt-3 text-3xl">{tx('Activa tu perfil', 'Activate your profile')}</h2>
           <div className="mt-10">
-            <Planes planes={planes} elegido={p.plan_id} ocupado={ocupado} onElegir={(x) => void elegir(x)} />
+            <Planes planes={planes} elegido={p.plan_id} ocupado={ocupado} onElegir={(x, i) => void elegir(x, i)} />
           </div>
           {error && <p className="mt-6 text-sm text-red-800">{error}</p>}
           <p className="mt-6 text-xs text-niebla">

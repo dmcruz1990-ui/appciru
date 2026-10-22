@@ -88,14 +88,20 @@ export default function Terminos() {
           <Seccion n="4" t={tx('Cómo se remunera PLASTINEX', 'How PLASTINEX is compensated')}>
             {tx(
               <>
-                PLASTINEX <b>no cobra al paciente</b> por usar la plataforma ni recibe pagos por la cirugía. Factura a la clínica
-                una comisión o tarifa comercial pactada en un contrato de intermediación independiente, que fija sus reglas de
-                cálculo, facturación y pago.
+                PLASTINEX <b>no cobra al paciente</b> por usar la plataforma ni recibe pagos por la cirugía. Sus ingresos provienen de
+                los profesionales y las clínicas: (i) una <b>suscripción</b> mensual o anual por su perfil y las herramientas de la
+                plataforma; (ii) donde la ley lo permita, una <b>comisión comercial</b> por operaciones atribuibles a la plataforma,
+                pactada en un contrato de intermediación independiente y separado de la suscripción; y (iii) servicios opcionales de
+                visibilidad y marketing. Todo contenido patrocinado se identifica como tal. Pagar una suscripción no equivale a una
+                acreditación: los perfiles se publican solo después de la verificación documental, que es independiente del pago.
               </>,
               <>
-                PLASTINEX <b>does not charge the patient</b> for using the platform and does not receive payments for the surgery.
-                It invoices the clinic for a commission or commercial fee agreed in a separate intermediation agreement, which sets
-                the rules for its calculation, invoicing and payment.
+                PLASTINEX <b>does not charge the patient</b> for using the platform and does not receive payments for the surgery. Its
+                revenue comes from professionals and clinics: (i) a monthly or yearly <b>subscription</b> for their profile and the
+                platform’s tools; (ii) where permitted by law, a <b>commercial fee</b> for operations attributable to the platform,
+                agreed in a separate intermediation agreement independent of the subscription; and (iii) optional visibility and
+                marketing services. All sponsored content is labeled as such. Paying a subscription is not an accreditation:
+                profiles are published only after document verification, which is independent of payment.
               </>,
             )}
           </Seccion>

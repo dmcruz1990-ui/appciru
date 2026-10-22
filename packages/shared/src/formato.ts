@@ -74,9 +74,9 @@ export const nombreRol: Record<Rol, string> = {
 }
 
 export const nombrePlan: Record<Plan, string> = {
-  piloto: 'Piloto',
-  tecnologia: 'Suscripción tecnológica',
-  administrado: 'Servicio administrado',
+  piloto: 'Starter',
+  tecnologia: 'Professional',
+  administrado: 'Clinic Premium',
 }
 
 export const nombreEstadoSuscripcion: Record<EstadoSuscripcion, string> = {
@@ -96,7 +96,7 @@ export const iniciales = (nombre: string) =>
     .join('')
 
 /** Debe coincidir con px_privado.px_version_terminos() en la base de datos. */
-export const TERMINOS_VERSION = 'v2-2026-10'
+export const TERMINOS_VERSION = 'v3-2026-10'
 
 /** Titular de la plataforma. */
 export const EMPRESA = {

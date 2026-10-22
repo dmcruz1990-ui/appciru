@@ -30,15 +30,30 @@ export default function Planes({
   planes: PlanMedico[]
   elegido?: Plan | null
   ocupado?: boolean
-  onElegir?: (p: PlanMedico) => void
+  onElegir?: (p: PlanMedico, intervalo: 'mes' | 'anio') => void
   oscuro?: boolean
 }) {
   const { tx, loc, locLista } = useIdioma()
+  const [intervalo, setIntervalo] = useState<'mes' | 'anio'>('mes')
+  const hayAnual = planes.some((p) => p.precio_anual_usd != null)
   const borde = oscuro ? 'border-marfil/20' : 'border-linea'
   return (
+    <div>
+      {hayAnual && (
+        <div className="mb-8 inline-flex border border-linea p-1 text-[11px] font-medium tracking-[0.18em] uppercase" role="group" aria-label={tx('Forma de pago', 'Billing')}>
+          {(['mes', 'anio'] as const).map((i) => (
+            <button key={i} type="button" aria-pressed={intervalo === i} onClick={() => setIntervalo(i)} className={`px-4 py-2 transition ${intervalo === i ? 'bg-espresso text-marfil' : ''}`}>
+              {i === 'mes' ? tx('Mensual', 'Monthly') : tx('Anual', 'Yearly')}
+            </button>
+          ))}
+        </div>
+      )}
     <div className="grid gap-6 lg:grid-cols-3">
       {planes.map((p) => {
         const marcado = elegido === p.id
+        const anual = intervalo === 'anio' && p.precio_anual_usd != null
+        const precio = anual ? p.precio_anual_usd : p.precio_mensual_usd
+        const conTarjeta = !!(anual ? p.stripe_price_anual : p.stripe_price_mensual)
         return (
           <article key={p.id} className={`relative flex flex-col border p-8 ${p.destacado || marcado ? (oscuro ? 'border-marfil' : 'border-espresso') : borde}`}>
             {p.destacado && (
@@ -49,10 +64,10 @@ export default function Planes({
             <h3 className="text-[15px] font-medium tracking-[0.14em] uppercase">{loc(p, 'nombre')}</h3>
             <p className={`mt-3 text-sm leading-relaxed ${oscuro ? 'text-marfil/70' : 'text-piedra'}`}>{loc(p, 'descripcion')}</p>
             <div className="mt-6">
-              {p.precio_mensual_usd != null ? (
+              {precio != null ? (
                 <>
-                  <span className="display text-4xl">{usd(p.precio_mensual_usd)}</span>
-                  <span className={`ml-2 text-sm ${oscuro ? 'text-marfil/60' : 'text-piedra'}`}>{tx('al mes', 'per month')}</span>
+                  <span className="display text-4xl">{usd(precio)}</span>
+                  <span className={`ml-2 text-sm ${oscuro ? 'text-marfil/60' : 'text-piedra'}`}>{anual ? tx('al año', 'per year') : tx('al mes', 'per month')}</span>
                   {p.cuota_inicial_usd ? (
                     <div className={`mt-1 text-xs ${oscuro ? 'text-marfil/60' : 'text-piedra'}`}>
                       {tx(`+ ${usd(p.cuota_inicial_usd)} de activación`, `+ ${usd(p.cuota_inicial_usd)} setup`)}
@@ -71,13 +86,20 @@ export default function Planes({
               ))}
             </ul>
             {onElegir && (
-              <button disabled={ocupado} onClick={() => onElegir(p)} className={`mt-8 ${marcado ? 'btn' : 'btn-linea'}`}>
-                {marcado ? tx('Plan elegido · pagar', 'Chosen plan · pay') : tx('Elegir este plan', 'Choose this plan')}
+              <button disabled={ocupado} onClick={() => onElegir(p, anual ? 'anio' : 'mes')} className={`mt-8 ${marcado || conTarjeta ? 'btn' : 'btn-linea'}`}>
+                {conTarjeta ? tx('Suscribirme', 'Subscribe') : marcado ? tx('Plan elegido · pagar', 'Chosen plan · pay') : tx('Elegir este plan', 'Choose this plan')}
               </button>
             )}
           </article>
         )
       })}
+    </div>
+      <p className={`mt-6 text-xs ${oscuro ? 'text-marfil/50' : 'text-niebla'}`}>
+        {tx(
+          'Precios en dólares estadounidenses, sin impuestos. Renovación automática; puedes cambiar de plan o cancelar cuando quieras desde tu cuenta.',
+          'Prices in US dollars, taxes not included. Renews automatically; you can change plans or cancel anytime from your account.',
+        )}
+      </p>
     </div>
   )
 }

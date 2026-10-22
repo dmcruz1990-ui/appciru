@@ -62,10 +62,10 @@ const roles: [Par, Par, Par][] = [
   ],
   [
     ['Clínica y PLASTINEX', 'Clinic and PLASTINEX'],
-    ['Comisión comercial', 'Commercial fee'],
+    ['Suscripción y comisión', 'Subscription and fee'],
     [
-      'PLASTINEX factura a la clínica su comisión o tarifa comercial, según un contrato de intermediación independiente con reglas de cálculo, facturación y pago.',
-      'PLASTINEX invoices the clinic for its commission or commercial fee under a separate intermediation agreement that sets the rules for calculation, invoicing and payment.',
+      'La clínica paga una suscripción mensual o anual por su perfil y las herramientas. Donde la ley lo permite, una comisión comercial por operaciones atribuibles a la plataforma se pacta en un contrato aparte.',
+      'The clinic pays a monthly or yearly subscription for its profile and tools. Where the law allows it, a commercial fee for operations attributable to the platform is agreed in a separate contract.',
     ],
   ],
 ]

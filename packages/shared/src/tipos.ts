@@ -217,6 +217,12 @@ export interface Suscripcion {
   fin: string | null
   notas: string | null
   creado_en: string
+  /** 'stripe': la gestiona Stripe Billing (renovación, reintentos y cancelación automáticos). */
+  proveedor: 'manual' | 'stripe'
+  stripe_estado: string | null
+  intervalo: 'mes' | 'anio' | null
+  /** Fin del periodo pagado (próxima renovación). */
+  periodo_fin: string | null
 }
 
 /** Lo que el paciente ve al consultar su solicitud (px_consultar_solicitud). */

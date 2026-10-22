@@ -85,8 +85,8 @@ export default function CompletarPerfil() {
         {paciente && !paciente.terminos_vigentes && (
           <p className="mt-6 border-l-2 border-arcilla pl-5 text-sm text-piedra">
             {tx(
-              `Actualizamos los documentos (versión ${TERMINOS_VERSION}): ahora indican quién es el titular de la plataforma y cómo se relacionan el paciente, la clínica y PLASTINEX. Revísalos y acéptalos de nuevo para seguir.`,
-              `We have updated our documents (version ${TERMINOS_VERSION}): they now state who owns the platform and how the patient, the clinic and PLASTINEX relate to one another. Please review and accept them again to continue.`,
+              `Actualizamos los documentos (versión ${TERMINOS_VERSION}): ahora explican cómo se financia PLASTINEX (suscripción de las clínicas y, donde la ley lo permite, comisión comercial) y que la verificación de los médicos es independiente del pago. Revísalos y acéptalos de nuevo para seguir.`,
+              `We have updated our documents (version ${TERMINOS_VERSION}): they now explain how PLASTINEX is funded (clinic subscriptions and, where permitted by law, a commercial fee) and that doctor verification is independent of payment. Please review and accept them again to continue.`,
             )}
           </p>
         )}
@@ -120,8 +120,8 @@ export default function CompletarPerfil() {
               titulo={tx('Entiendo que PLASTINEX es un intermediario', 'I understand that PLASTINEX is an intermediary')}
             >
               {tx(
-                `PLASTINEX (${EMPRESA.razonSocial}) conecta pacientes con cirujanos e instituciones habilitadas. No presta servicios de salud, no realiza diagnósticos ni determina si soy candidato a una cirugía. Contrato directamente con la clínica que elija: ella me da el presupuesto, fija el precio, me cobra y firma conmigo los consentimientos. PLASTINEX no me cobra; recibe de la clínica una comisión o tarifa comercial pactada con ella.`,
-                `PLASTINEX (${EMPRESA.razonSocial}) connects patients with licensed surgeons and institutions. It does not provide healthcare services, make diagnoses or determine whether I am a candidate for surgery. I contract directly with the clinic I choose: the clinic gives me the quote, sets the price, charges me and signs the consent forms with me. PLASTINEX does not charge me; it receives from the clinic a commission or commercial fee agreed with that clinic.`,
+                `PLASTINEX (${EMPRESA.razonSocial}) conecta pacientes con cirujanos e instituciones habilitadas. No presta servicios de salud, no realiza diagnósticos ni determina si soy candidato a una cirugía. Contrato directamente con la clínica que elija: ella me da el presupuesto, fija el precio, me cobra y firma conmigo los consentimientos. PLASTINEX no me cobra: se financia con la suscripción que pagan las clínicas y, donde la ley lo permite, una comisión comercial pactada con ellas.`,
+                `PLASTINEX (${EMPRESA.razonSocial}) connects patients with licensed surgeons and institutions. It does not provide healthcare services, make diagnoses or determine whether I am a candidate for surgery. I contract directly with the clinic I choose: the clinic gives me the quote, sets the price, charges me and signs the consent forms with me. PLASTINEX does not charge me: it is funded by the subscription clinics pay and, where permitted by law, a commercial fee agreed with them.`,
               )}
             </Casilla>
             <Casilla

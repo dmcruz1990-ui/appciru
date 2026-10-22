@@ -76,8 +76,10 @@ confirmación de correo ni los de recuperación de contraseña.
   clínica y sus procedimientos, y ve el estado de la revisión. En el panel, «Registros de médicos» permite pedir cambios
   o aprobar: se crean el perfil, la clínica y los procedimientos **sin publicar** y el usuario recibe el rol «Clínica»
   para atender sus solicitudes. Migración `20261022150000_px_postulaciones.sql`.
-- **Planes y pago**: tras la aprobación el médico elige plan (Catálogo → Planes: precio en USD y enlace de pago) y paga;
-  el equipo confirma el pago en «Registros de médicos». Una clínica o un cirujano real no se publica sin plan activo.
+- **Planes y pago**: Starter 49, Professional 149 y Clinic Premium 299 USD/mes (precios de prueba). Tras la aprobación
+  el médico se suscribe con **Stripe Billing** (renovación, reintentos, facturas y cancelación automáticos; si queda
+  impago, la clínica se retira sola del sitio). Sin Stripe configurado, el equipo confirma pagos a mano en «Registros».
+  Puesta en marcha en `docs/STRIPE.md`. Una clínica o un cirujano real no se publica sin plan vigente.
 - **Indexación en buscadores**: título, descripción, URL canónica y datos estructurados (JSON-LD de clínica, médico y
   procedimiento) por página; rutas limpias `/cirugia/<procedimiento>/<ciudad>`; `sitemap.xml` y `robots.txt` generados
   al compilar (`apps/cliente/scripts/sitemap.mjs`). Los perfiles de demostración no se indexan: el sitemap y las rutas
