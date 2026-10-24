@@ -6,6 +6,7 @@ import { useCatalogo } from '../catalogo'
 import { Revelar } from '../componentes/base'
 import { EstadoVerificacion, EtiquetaDemo } from '../componentes/Insignias'
 import { coincide } from '../busqueda'
+import Desplegable from '../componentes/Desplegable'
 import { useIdioma } from '../idioma'
 import { useSeo } from '../seo'
 
@@ -30,6 +31,8 @@ export default function Especialistas() {
     if (v) p.set(k, v)
     else p.delete(k)
     if (k === 'pais') p.delete('ciudad')
+    // Al cambiar de especialidad se quita el procedimiento si no pertenece a ella.
+    if (k === 'categoria' && v && datos?.procedimientos.find((x) => x.id === p.get('procedimiento'))?.categoria !== v) p.delete('procedimiento')
     setParams(p, { replace: true })
   }
 
@@ -93,53 +96,50 @@ export default function Especialistas() {
         </p>
       </div>
 
-      <div className="mt-12 grid gap-x-6 gap-y-2 border-y border-linea py-6 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr] lg:items-center">
+      <div className="mt-12 grid gap-x-6 gap-y-3 border-y border-linea py-6 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr] lg:items-end">
         <label className="flex items-center gap-3 md:col-span-2 lg:col-span-1">
           <Search size={16} strokeWidth={1.5} className="text-piedra" />
           <input value={q} onChange={(e) => set('q', e.target.value)} placeholder={tx('Nombre, clínica, ciudad o procedimiento', 'Name, clinic, city or procedure')} className="w-full bg-transparent py-2 text-[15px] outline-none placeholder:text-niebla" aria-label={tx('Buscar especialista', 'Search surgeons')} />
         </label>
-        <select value={pais} onChange={(e) => set('pais', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('País', 'Country')}>
-          <option value="">{tx('Todos los países', 'All countries')}</option>
-          {[...lugares]
-            .sort((a, b) => nombrePais(a.pais).localeCompare(nombrePais(b.pais)))
-            .map((d) => (
-              <option key={d.pais} value={d.pais}>
-                {nombrePais(d.pais)}
-              </option>
-            ))}
-        </select>
-        <select value={ciudad} onChange={(e) => set('ciudad', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('Ciudad', 'City')}>
-          <option value="">{tx('Todas las ciudades', 'All cities')}</option>
-          {lugares
+        {/* Selectores propios: en el celular la lista se abre debajo, sin la ventana del sistema. */}
+        <Desplegable
+          etiqueta={tx('País', 'Country')}
+          todas={tx('Todos los países', 'All countries')}
+          valor={pais}
+          onCambio={(v) => set('pais', v)}
+          buscar
+          opciones={[...lugares].sort((a, b) => nombrePais(a.pais).localeCompare(nombrePais(b.pais))).map((d) => ({ v: d.pais, t: nombrePais(d.pais) }))}
+        />
+        <Desplegable
+          etiqueta={tx('Ciudad', 'City')}
+          todas={tx('Todas las ciudades', 'All cities')}
+          valor={ciudad}
+          onCambio={(v) => set('ciudad', v)}
+          buscar
+          opciones={lugares
             .filter((d) => !pais || d.pais === pais)
-            .map((d) => (
-              <optgroup key={d.pais} label={nombrePais(d.pais)}>
-                {d.ciudades.map(({ ciudad: c }) => (
-                  <option key={c.id} value={c.id}>
-                    {nombreCiudad(c)}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-        </select>
-        <select value={especialidad} onChange={(e) => set('categoria', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('Especialidad', 'Specialty')}>
-          <option value="">{tx('Todas las especialidades', 'All specialties')}</option>
-          {(['mamaria', 'corporal', 'facial'] as Categoria[]).map((c) => (
-            <option key={c} value={c}>
-              {nombreCategoria(c)}
-            </option>
-          ))}
-        </select>
-        <select value={proc} onChange={(e) => set('procedimiento', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-2 outline-none" aria-label={tx('Procedimiento', 'Procedure')}>
-          <option value="">{tx('Todos los procedimientos', 'All procedures')}</option>
-          {datos.procedimientos
-            .filter((p) => !especialidad || p.categoria === especialidad)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {loc(p, 'nombre')}
-              </option>
-            ))}
-        </select>
+            .flatMap((d) => d.ciudades.map(({ ciudad: c }) => ({ v: c.id, t: nombreCiudad(c), grupo: nombrePais(d.pais) })))}
+        />
+        <Desplegable
+          etiqueta={tx('Procedimiento', 'Procedure')}
+          todas={tx('Todos los procedimientos', 'All procedures')}
+          valor={proc}
+          onCambio={(v) => set('procedimiento', v)}
+          opciones={datos.procedimientos.filter((p) => !especialidad || p.categoria === especialidad).map((p) => ({ v: p.id, t: loc(p, 'nombre') }))}
+        />
+      </div>
+      {/* Especialidades a la vista, sin abrir ningún menú. */}
+      <div className="mt-6 flex flex-wrap gap-2 text-[13px]" role="group" aria-label={tx('Especialidad', 'Specialty')}>
+        {(['', 'mamaria', 'corporal', 'facial'] as (Categoria | '')[]).map((c) => (
+          <button
+            key={c || 'todas'}
+            onClick={() => set('categoria', c)}
+            aria-pressed={especialidad === c}
+            className={`shrink-0 border px-4 py-2 transition ${especialidad === c ? 'border-espresso bg-espresso text-marfil' : 'border-linea hover:border-espresso'}`}
+          >
+            {c ? nombreCategoria(c) : tx('Todas las especialidades', 'All specialties')}
+          </button>
+        ))}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px]">
         <Chip activo={virtual} onClick={() => set('virtual', virtual ? '' : '1')}>

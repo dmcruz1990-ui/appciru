@@ -7,6 +7,7 @@ import Buscador, { iconoCategoria } from '../componentes/Buscador'
 import Mapa, { type Limites } from '../componentes/Mapa'
 import OfertaCard from '../componentes/OfertaCard'
 import { coincide, textosOferta } from '../busqueda'
+import Desplegable from '../componentes/Desplegable'
 import { useIdioma } from '../idioma'
 import { SITIO, useSeo } from '../seo'
 
@@ -191,11 +192,18 @@ export default function Explorar() {
                 {tx('Limpiar filtros', 'Clear filters')}
               </button>
             )}
-            <select value={orden} onChange={(e) => set('orden', e.target.value)} className="ml-auto cursor-pointer border-b border-linea bg-transparent py-1 outline-none" aria-label={tx('Ordenar', 'Sort')}>
-              <option value="relevancia">{tx('Relevancia', 'Relevance')}</option>
-              <option value="precio">{tx('Precio menor', 'Lowest price')}</option>
-              <option value="nombre">{tx('Nombre', 'Name')}</option>
-            </select>
+            <div className="ml-auto w-48">
+              <Desplegable
+                etiqueta={tx('Ordenar', 'Sort')}
+                todas={tx('Relevancia', 'Relevance')}
+                valor={orden === 'relevancia' ? '' : orden}
+                onCambio={(v) => set('orden', v)}
+                opciones={[
+                  { v: 'precio', t: tx('Precio menor', 'Lowest price') },
+                  { v: 'nombre', t: tx('Nombre', 'Name') },
+                ]}
+              />
+            </div>
           </div>
 
           {texto && (

@@ -7,6 +7,7 @@ import Carrusel from '../componentes/Carrusel'
 import { BotonFavorito } from '../componentes/favoritos'
 import { EtiquetaDemo } from '../componentes/Insignias'
 import Mapa from '../componentes/Mapa'
+import Desplegable from '../componentes/Desplegable'
 import { useIdioma } from '../idioma'
 import { useSeo } from '../seo'
 
@@ -90,21 +91,20 @@ export default function Alojamientos() {
             <span className="font-medium">
               {tx(`${lista.length} ${lista.length === 1 ? 'alojamiento' : 'alojamientos'}`, `${lista.length} ${lista.length === 1 ? 'stay' : 'stays'}`)}
             </span>
-            <select value={ciudad} onChange={(e) => set('ciudad', e.target.value)} className="cursor-pointer border-b border-linea bg-transparent py-1 outline-none" aria-label={tx('Ciudad', 'City')}>
-              <option value="">{tx('Todos los destinos', 'All destinations')}</option>
-              {destinos(datos).map((d) => {
-                const conAloj = d.ciudades.filter(({ ciudad: c }) => datos.alojamientos.some((a) => a.publicado && a.ciudad_id === c.id))
-                return conAloj.length ? (
-                  <optgroup key={d.pais} label={pais(d.pais)}>
-                    {conAloj.map(({ ciudad: c }) => (
-                      <option key={c.id} value={c.id}>
-                        {nombreCiudad(c)}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : null
-              })}
-            </select>
+            <div className="w-full sm:w-72">
+              <Desplegable
+                etiqueta={tx('Destino', 'Destination')}
+                todas={tx('Todos los destinos', 'All destinations')}
+                valor={ciudad}
+                onCambio={(v) => set('ciudad', v)}
+                buscar
+                opciones={destinos(datos).flatMap((d) =>
+                  d.ciudades
+                    .filter(({ ciudad: c }) => datos.alojamientos.some((a) => a.publicado && a.ciudad_id === c.id))
+                    .map(({ ciudad: c }) => ({ v: c.id, t: nombreCiudad(c), grupo: pais(d.pais) })),
+                )}
+              />
+            </div>
             <label className="flex cursor-pointer items-center gap-2 text-piedra">
               <input type="checkbox" checked={enfermeria} onChange={(e) => set('enfermeria', e.target.checked ? '1' : '')} className="accent-espresso" />
               {tx('Con enfermería', 'With nursing care')}
